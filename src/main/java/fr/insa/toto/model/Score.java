@@ -18,13 +18,27 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.beuvron.utils.database.ClasseMiroir;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 /**
  *
- * @author francois
+ * @author elio
  */
-public class ReadMe {
-    public static void main(String[] args) {
-        System.out.println("TODO voir sujet M3 TD3");
+public class Score extends ClasseMiroir {
+    private int score;
+    private int idEquipe;
+    private int idMatch;
+
+    @Override
+    protected Statement saveSansId(Connection con) throws SQLException {
+        var st = con.prepareStatement("insert into score (score, idEquipe, idMatch) values (?, ?, ?)");
+        st.setInt(1, score);
+        st.setInt(2, idEquipe);
+        st.setInt(3, idMatch);
+
+        return st;
     }
-    
 }
