@@ -23,6 +23,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
@@ -38,12 +39,15 @@ import java.util.List;
  *
  * @author elio
  */
-@Route("tournois/specific/:id?")
+@Route(value = "tournois/specific")
 public class TournoisSpecific extends VerticalLayout implements HasUrlParameter<Integer> {
 
     private Select<Tournois> select;
     private Tournois tournois;
     private List<Tournois> list;
+
+    private TextField nom;
+    private TextField nombreRondes;
 
     @Override
     public void setParameter(BeforeEvent be, @OptionalParameter Integer id) {
@@ -55,19 +59,33 @@ public class TournoisSpecific extends VerticalLayout implements HasUrlParameter<
     private void setTournois(int id) {
         try {
             var con = ConnectionPool.getConnection();
-            var ans = Tournois.findById(con, id);
-
-            ans.ifPresentOrElse(t -> setTournois(t), () -> Notification.show("Erreur: le tournois id=" + id + "n'existe pas"));
+            Tournois.findById(con, id)
+                    .ifPresentOrElse(t -> setTournois(t), () -> Notification.show("Erreur: le tournois id=" + id + "n'existe pas"));
 
         } catch (SQLException ex) {
-            this.add(new Text("Erreur: '" + ex.getMessage() + "'"));
+            this.add(new Text("Erreur SQL: '" + ex.getMessage() + "'"));
         }
     }
 
     private void setTournois(Tournois tournois) {
         this.tournois = tournois;
-        //this.select.setValue(this.tournois);
-        Notification.show("On a mis le tournois " + tournois.getNom() + " id=" + this.select.getValue().getId());
+        this.select.setValue(this.tournois);
+
+        updateFields();
+    }
+
+    private void updateFields() {
+        if (tournois == null) {
+            this.nom.setValue("");
+            this.nom.setEnabled(false);
+            this.nombreRondes.setValue("");
+            this.nombreRondes.setEnabled(false);
+        } else {
+            this.nom.setValue(this.tournois.getNom());
+            this.nom.setEnabled(true);
+            this.nombreRondes.setValue("" + this.tournois.getNombreRondes());
+            this.nombreRondes.setEnabled(true);
+        }
     }
 
     public enum EditionState {
@@ -87,14 +105,22 @@ public class TournoisSpecific extends VerticalLayout implements HasUrlParameter<
             this.list = Tournois.tousLesTournois(con);
 
             select = new Select<>();
-            select.setItemLabelGenerator(t -> t.getNom() + t.getId());
+            select.setItemLabelGenerator(Tournois::getNom);
             select.setItems(this.list);
             select.setPlaceholder("Choisir un tournois...");
             select.setValue(tournois);
+            select.addValueChangeListener(t -> this.setTournois(t.getValue()));
 
-            select.addValueChangeListener(t -> Notification.show("Changed to " + t.getValue().getNom()));
+            nom = new TextField();
+            nom.setLabel("Nom du tournois");
+            nombreRondes = new TextField();
+            nombreRondes.setLabel("Nombre de rondes");
+            nombreRondes.setAllowedCharPattern("[0-9]");
+            nombreRondes.setMaxLength(2);
 
-            this.add(select);
+            updateFields();
+
+            this.add(select, nom, nombreRondes);
 
         } catch (SQLException ex) {
             this.add(new Text("Erreur: '" + ex.getMessage() + "'"));
