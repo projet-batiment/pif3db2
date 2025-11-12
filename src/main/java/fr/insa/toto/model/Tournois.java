@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,6 +64,32 @@ public class Tournois extends ClasseMiroir {
         this.nombreRondes = nombreRondes;
     }
 
+    public Tournois(int id) {
+        super(id);
+        this.nom = "";
+        this.nombreRondes = 0;
+    }
+
+    public Tournois() {
+        this.nom = "";
+        this.nombreRondes = 0;
+    }
+
+    public Tournois clone() {
+        return new Tournois(getId(), nom, nombreRondes);
+    }
+
+    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        } else {
+            var st = con.prepareStatement("delete from tournois where id = ?");
+            st.setInt(1, super.getId());
+
+            st.executeUpdate();
+        }
+    }
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into tournois (nom, nombreRondes) values (?, ?)",
@@ -72,6 +99,28 @@ public class Tournois extends ClasseMiroir {
 
         st.executeUpdate();
         return st;
+    }
+
+    public int updateOrNew(Connection con) throws SQLException {
+        try {
+            this.update(con);
+            return -3;
+        } catch (EntiteNonSauvegardee e) {
+            return this.saveInDB(con);
+        }
+    }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update tournois set nom = ?, nombreRondes = ? where id = ?");
+        st.setString(1, nom);
+        st.setInt(2, nombreRondes);
+        st.setInt(3, super.getId());
+
+        st.executeUpdate();
     }
 
     private static List<Tournois> fromResultSetToList(ResultSet list) throws SQLException {

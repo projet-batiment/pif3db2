@@ -19,6 +19,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.webui;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -27,7 +28,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.TournoisSpecific;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -37,14 +37,24 @@ import java.sql.SQLException;
  */
 @Route("tournois")
 public class TournoisListe extends VerticalLayout {
+    Grid<Tournois> grid;
+
     private static void notifyTodo() {
         Notification.show("Still to be done...");
+    }
+
+    private void updateGridList() {
+        try (Connection con = ConnectionPool.getConnection()) {
+            grid.setItems(Tournois.tousLesTournois(con));
+        } catch (SQLException ex) {
+            Notification.show("Problème : " + ex.getLocalizedMessage());
+        }
     }
 
     public TournoisListe() {
         this.add(new H2("Liste des tournois"));
 
-        Grid<Tournois> grid = new Grid<>();
+        this.grid = new Grid<>();
         grid.addColumn(Tournois::getNom).setHeader("Nom");
         grid.addColumn(Tournois::getNombreRondes).setHeader("Nombre de rondes");
         grid.addColumn(new ComponentRenderer<>(t -> {
@@ -53,13 +63,34 @@ public class TournoisListe extends VerticalLayout {
                 bt.getUI().ifPresent(ui -> ui.navigate(TournoisSpecific.class, t.getId()));
             });
             return bt;
-        })).setHeader("admin ?");
+        }));
+        grid.addColumn(new ComponentRenderer<>(t -> {
+            Button bt = new Button("Supprimer");
+            bt.addClickListener(event -> {
+                var d = new ConfirmDialog();
 
-        try (Connection con = ConnectionPool.getConnection()) {
-            grid.setItems(Tournois.tousLesTournois(con));
-        } catch (SQLException ex) {
-            Notification.show("Problème : " + ex.getLocalizedMessage());
-        }
+                d.setHeader("Suppression");
+                d.setText("Supprimer le tournois " + t.getNom() + " ?");
+
+                d.setCancelable(true);
+                d.setRejectable(false);
+
+                d.setConfirmText("Supprimer");
+                d.addConfirmListener(e -> {
+                    try (Connection con = ConnectionPool.getConnection()) {
+                        t.deleteFromDB(con);
+                        this.updateGridList();
+                    } catch (SQLException ex) {
+                        Notification.show("Erreur : " + ex.getMessage());
+                    }
+                });
+
+                d.open();
+            });
+            return bt;
+        }));
+
+        this.updateGridList();
 
         this.add(new PageList(grid, t -> notifyTodo(), t -> notifyTodo()));
     }
