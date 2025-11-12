@@ -20,8 +20,13 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -32,11 +37,19 @@ public class Matchs extends ClasseMiroir {
     private int idEquipeA;
     private int idEquipeB;
 
-    public Matchs(int score, int idEquipeA, int idEquipeB) {
-        this.ronde = score;
+    public Matchs(int ronde, int idEquipeA, int idEquipeB) {
+        this.ronde = ronde;
         this.idEquipeA = idEquipeA;
         this.idEquipeB = idEquipeB;
     }
+
+    public Matchs(int id, int ronde, int idEquipeA, int idEquipeB) {
+        super(id);
+        this.ronde = ronde;
+        this.idEquipeA = idEquipeA;
+        this.idEquipeB = idEquipeB;
+    }
+    
 
     public int getIdEquipeA() {
         return idEquipeA;
@@ -71,4 +84,38 @@ public class Matchs extends ClasseMiroir {
 
         return st;
     }
+    
+    private static List<Matchs> fromResultSetToList(ResultSet list) throws SQLException {
+        List<Matchs> res = new ArrayList<>();
+        while (list.next()) {
+            res.add(new Matchs(list.getInt("ronde"), list.getInt("idEquipeA"), list.getInt("idEquipeB")));
+        }
+        return res; 
+    }
+    
+    public static List<Matchs> tousLesMatchs(Connection con) throws SQLException {
+        List<Matchs> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select ronde,idEquipeA,idEquipeB from matchs")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+    
+    public static Optional<Matchs> findById(Connection con, int id) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select ronde,idEquipeA,idEquipeB from score where id=?")) {
+            pst.setInt(1, id);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                int score = res.getInt(2);
+                int idEquipeA = res.getInt(3);
+                int idEquipeB = res.getInt(4);
+                return Optional.of(new Matchs(id, score, idEquipeA, idEquipeB));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+    
 }
