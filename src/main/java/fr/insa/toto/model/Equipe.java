@@ -20,8 +20,13 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -37,16 +42,53 @@ public class Equipe extends ClasseMiroir {
     public String getNom() {
         return nom;
     }
-
+    
     public void setNom(String nom) {
         this.nom = nom;
     }
 
+    public Equipe(int id, String nom) {
+        super(id);
+        this.nom = nom;
+    }
+    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into equipe (nom) values (?)");
         st.setString(1, nom);
 
         return st;
+    }
+    
+    private static List<Equipe> fromResultSetToList(ResultSet list) throws SQLException {
+        List<Equipe> res = new ArrayList<>();
+        while (list.next()) {
+            res.add(new Equipe(list.getInt("id"), list.getString("nom")));
+        }
+        return res; 
+    }
+    
+    public static List<Equipe> toutesLesEquipes(Connection con) throws SQLException {
+        List<Equipe> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,nom from equipe")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+    
+    public static Optional<Equipe> findById(Connection con, int id) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom from equipe where id=?")) {
+            pst.setInt(1, id);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                String nom = res.getString(2);
+                return Optional.of(new Equipe(id, nom));
+            } else {
+                return Optional.empty();
+            }
+            
+        }
     }
 }

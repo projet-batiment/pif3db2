@@ -20,8 +20,13 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -37,7 +42,7 @@ public class Joueur extends ClasseMiroir {
         this.categorie = categorie;
         this.taillecm = taillecm;
     }
-
+    
     public String getSurnom() {
         return surnom;
     }
@@ -62,6 +67,14 @@ public class Joueur extends ClasseMiroir {
         this.taillecm = taillecm;
     }
 
+    public Joueur(int id, String surnom, String categorie, int taillecm) {
+        super(id);
+        this.surnom = surnom;
+        this.categorie = categorie;
+        this.taillecm = taillecm;
+    }
+
+    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm) values (?, ?, ?)");
@@ -70,5 +83,39 @@ public class Joueur extends ClasseMiroir {
         st.setInt(3, taillecm);
 
         return st;
+    }
+    
+    private static List<Joueur> fromResultSetToList(ResultSet list) throws SQLException {
+        List<Joueur> res = new ArrayList<>();
+        while (list.next()) {
+            res.add(new Joueur(list.getInt("id"), list.getString("surnom"), list.getString("categorie"), list.getInt("taillecm")));
+        }
+        return res;
+    }
+    
+    public static List<Joueur> tousLesJoueurs(Connection con) throws SQLException {
+        List<Joueur> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm from joueur")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+    
+    public static Optional<Joueur> findById(Connection con, int id) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm from joueur where id=?")) {
+            pst.setInt(1, id);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                String surnom = res.getString(2);
+                String categorie = res.getString(3);
+                int taillecm = res.getInt(4);
+                return Optional.of(new Joueur(id, surnom, categorie, taillecm));
+            } else {
+                return Optional.empty();
+            }
+            
+        }
     }
 }
