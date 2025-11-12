@@ -1,0 +1,8 @@
+- / : main, tableau de bord + bouton connection
+- /signin : page de connection
+
+- /joueurs : lister les joueurs
+- /joueurs/specific : afficher les données d'un joueur
+
+si connecté en tant qu'admin, permet aussi l'édition
+idem matchs, equipes, etc

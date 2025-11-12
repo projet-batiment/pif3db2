@@ -348,6 +348,21 @@ public class GestionSchema {
 
         /// tables and unshared columns
 
+        Beton.TableSkeleton tournois = new Beton.TableSkeleton(
+                "tournois",
+                new Beton.ColumnSkeleton[]{
+                    new Beton.ColumnSkeleton(
+                            "nom",
+                            Beton.ColumnSkeleton.SQLType.VARCHAR,
+                            24
+                    ).setUnique(),
+                    new Beton.ColumnSkeleton(
+                            "nombreRondes",
+                            Beton.ColumnSkeleton.SQLType.INTEGER
+                    ),
+                }
+        );
+
         Beton.TableSkeleton joueur = new Beton.TableSkeleton(
                 "joueur",
                 new Beton.ColumnSkeleton[]{
@@ -440,6 +455,7 @@ public class GestionSchema {
 
         return new SkeletonList(
             new Beton.TableSkeleton[] {
+                tournois,
                 joueur,
                 equipe,
                 matchs,
