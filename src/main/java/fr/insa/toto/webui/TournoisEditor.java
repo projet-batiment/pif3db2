@@ -18,14 +18,22 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
+import java.sql.Connection;
 import java.sql.SQLException;
+import org.aspectj.weaver.ast.Not;
 
 /**
  *
@@ -41,18 +49,20 @@ public class TournoisEditor extends Editor {
     private TextField nom;
     private TextField nombreRondes;
 
+    // Toujours appeler setTournois depuis select.setValue !!
     private void setTournois(Tournois tournois) {
         if (tournois == this.nouveau) {
             this.tournois = new Tournois();
+            super.setEnabled(false);
         } else {
             this.tournois = tournois;
+            super.setEnabled(true);
         }
 
         if (tournois == null) {
             this.nom.setValue("");
             this.nom.setEnabled(false);
             this.nombreRondes.setValue("");
-            this.nombreRondes.setEnabled(false);
         } else {
             this.nom.setValue(this.tournois.getNom());
             this.nom.setEnabled(true);
@@ -78,15 +88,34 @@ public class TournoisEditor extends Editor {
     }
 
     public ClasseMiroir compile() {
+        if (this.nom.getValue().isBlank()) {
+            Notification.show("Il manque le nom du tournois");
+            return null;
+        }
+        if (this.nombreRondes.getValue().isBlank()) {
+            Notification.show("Il manque le nombre de rondes");
+            return null;
+        }
+
         this.tournois.setNom(nom.getValue());
         this.tournois.setNombreRondes(Integer.parseInt(nombreRondes.getValue()));
 
         return (ClasseMiroir)this.tournois;
     }
 
-    public TournoisEditor(Runnable callback) {
-        super(callback);
-        super.setHeaderTitle("Éditer un tournois...");
+    public TournoisEditor() {
+        super.setHeaderTitle("Apperçu du tournois");
+
+        super.addSavedCallback(() -> {
+            this.select.setValue(this.tournois);
+            Notification.show("Le tournois " + this.tournois.getNom() + " a bien été sauvegardé");
+        });
+        super.setOpenBoard(() -> {
+            if (this.tournois != null) {
+                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + tournois.getId() + "/match"));
+                this.close();
+            }
+        });
 
         select = new Select<>();
         select.setItemLabelGenerator(Tournois::getNom);

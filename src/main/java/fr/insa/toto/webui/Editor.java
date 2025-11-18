@@ -21,43 +21,66 @@ package fr.insa.toto.webui;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 /**
  *
  * @author elio
  */
 public abstract class Editor extends Dialog {
-    private final Button close = new Button("Annuler");
+    private final Button close = new Button("Fermer");
     private final Button apply = new Button("Enregistrer");
-    private final Runnable callback;
+    private final Button board = new Button("Tableau de bord");
+    private final ArrayList<Runnable> callbacks = new ArrayList<>();
+    private Runnable openBoard;
 
-    public Editor(Runnable callback) {
+    public Editor() {
         this.close.addThemeVariants(ButtonVariant.LUMO_ERROR);
         this.close.addClickListener(e -> super.close());
         this.close.getStyle().set("margin-right", "auto");
         this.apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         this.apply.addClickListener(e -> this.save());
 
-        this.callback = callback;
+        board.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
+        board.setWidth("100%");
+        board.addClickListener(t -> openBoard.run());
 
-        super.getFooter().add(close, apply);
+        var view = new VerticalLayout(board, new HorizontalLayout(close, apply));
+        view.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        super.getFooter().add(view);
     }
 
     public abstract ClasseMiroir compile();
 
     private void save() {
-        try {
-            var con = ConnectionPool.getConnection();
-            this.compile().updateOrNew(con);
-
-            super.close();
-            this.callback.run();
-        } catch (SQLException ex) {
-            NotificationError.show(ex.getMessage());
+        if (this.compile() instanceof ClasseMiroir obj) {
+            try {
+                var con = ConnectionPool.getConnection();
+                obj.updateOrNew(con);
+                callbacks.forEach(each -> each.run());
+            } catch (SQLException ex) {
+                NotificationError.show(ex.getMessage());
+            }
         }
+    }
+
+    public void addSavedCallback(Runnable c) {
+        callbacks.add(c);
+    }
+
+    public void setOpenBoard(Runnable openBoard) {
+        this.openBoard = openBoard;
+    }
+
+    public void setEnabled(boolean value) {
+        this.board.setEnabled(value);
     }
 }

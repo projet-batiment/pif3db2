@@ -79,17 +79,6 @@ public class Tournois extends ClasseMiroir {
         return new Tournois(getId(), nom, nombreRondes);
     }
 
-    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
-        if (super.getId() == -1) {
-            throw new EntiteNonSauvegardee();
-        } else {
-            var st = con.prepareStatement("delete from tournois where id = ?");
-            st.setInt(1, super.getId());
-
-            st.executeUpdate();
-        }
-    }
-
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into tournois (nom, nombreRondes) values (?, ?)",

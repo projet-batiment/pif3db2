@@ -39,11 +39,7 @@ import java.sql.SQLException;
  */
 @Route("tournois")
 public class TournoisListe extends VerticalLayout {
-    Grid<Tournois> grid;
-
-    private static void notifyTodo() {
-        Notification.show("Still to be done...");
-    }
+    private Grid<Tournois> grid;
 
     private void updateGridList() {
         try (Connection con = ConnectionPool.getConnection()) {
@@ -58,8 +54,9 @@ public class TournoisListe extends VerticalLayout {
 
         var bNew = new Button("Nouveau");
 
-        var editor = new TournoisEditor(() -> updateGridList());
-        bNew.addClickListener(t -> editor.open(null));
+        var tournoisEditor = new TournoisEditor();
+        tournoisEditor.addSavedCallback(() -> updateGridList());
+        bNew.addClickListener(t -> tournoisEditor.open(null));
 
         this.grid = new Grid<>();
         grid.addColumn(Tournois::getNom).setHeader("Nom");
@@ -67,7 +64,7 @@ public class TournoisListe extends VerticalLayout {
         grid.addColumn(new ComponentRenderer<>(t -> {
             Button bEdit = new Button("Afficher");
             bEdit.addClickListener(event -> {
-                editor.open(t);
+                tournoisEditor.open(t);
             });
 
             Button bDelete = new Button("Supprimer");

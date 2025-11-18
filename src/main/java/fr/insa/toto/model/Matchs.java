@@ -19,6 +19,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.beuvron.utils.database.ConnectionPool;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +27,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -34,28 +36,135 @@ import java.util.Optional;
  */
 public class Matchs extends ClasseMiroir {
     private int ronde;
+
+    private ModifiedState state;
+
     private int idEquipeA;
     private int idEquipeB;
+    private String nomA;
+    private String nomB;
+    private int scoreA;
+    private int scoreB;
 
-    public Matchs(int ronde, int idEquipeA, int idEquipeB) {
-        this.ronde = ronde;
-        this.idEquipeA = idEquipeA;
-        this.idEquipeB = idEquipeB;
+    public Matchs() {
+        this.ronde = -1;
+
+        this.state = ModifiedState.CREATED;
     }
 
-    public Matchs(int id, int ronde, int idEquipeA, int idEquipeB) {
+    public Matchs(int ronde) {
+        this.ronde = ronde;
+
+        this.state = ModifiedState.CREATED;
+    }
+
+    public Matchs(int id, int ronde) {
         super(id);
         this.ronde = ronde;
-        this.idEquipeA = idEquipeA;
-        this.idEquipeB = idEquipeB;
+
+        this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
+    }
+
+    private class ScoreEquipe {
+        public final Score score;
+        public final Equipe equipe;
+
+        public ScoreEquipe(Score score, Equipe equipe) {
+            this.score = score;
+            this.equipe = equipe;
+        }
+    }
+
+    private List<ScoreEquipe> retreiveScoreEquipe(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee {
+        var scores = retreiveScore(con);
+
+        List<ScoreEquipe> list = new ArrayList<>();
+
+        for (Score each: scores) {
+            var e = Equipe.findById(con, each.getIdEquipe());
+
+            if (e.isPresent()) {
+                list.add(new ScoreEquipe(each, e.get()));
+            } else {
+                throw new EntiteNonSauvegardee();
+            }
+        }
+
+        return list;
+    }
+
+    private List<Score> retreiveScore(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee {
+        switch (state) {
+            case CREATED, PORCELAINE -> throw new EntiteNonSauvegardee();
+        }
+
+        var scores = Score.findByMatch(con, super.getId());
+        int length = scores.size();
+
+        if (length == 2) {
+            return scores;
+        } else {
+            throw new IndexOutOfBoundsException("1 match should have only 2 scores, retrieved " + length);
+        }
+    }
+
+    public void populate() throws SQLException, NoSuchElementException {
+        this.populate(ConnectionPool.getConnection());
     }
     
+    public void populate(Connection con) throws SQLException, NoSuchElementException, IndexOutOfBoundsException {
+        if (this.state != ModifiedState.POPULATED) {
+            var list = retreiveScoreEquipe(con);
+
+            this.scoreA = list.getFirst().score.getScore();
+            this.scoreB = list.getLast().score.getScore();
+            this.nomA = list.getFirst().equipe.getNom();
+            this.nomB = list.getLast().equipe.getNom();
+
+            this.state = ModifiedState.POPULATED;
+        }
+    }
+
+    public ModifiedState getState() {
+        return state;
+    }
+
+    public String getNom() {
+        return nomA + " vs " + nomB;
+    }
+
+    public String getNomA() {
+        return nomA;
+    }
+
+    public String getNomB() {
+        return nomB;
+    }
+
+    public Integer getScoreA() {
+        return scoreA;
+    }
+
+    public Integer getScoreB() {
+        return scoreB;
+    }
+
+    public void setScoreA(Integer scoreA) {
+        this.state = ModifiedState.DEPTH_EDITED;
+        this.scoreA = scoreA;
+    }
+
+    public void setScoreB(Integer scoreB) {
+        this.state = ModifiedState.DEPTH_EDITED;
+        this.scoreB = scoreB;
+    }
 
     public int getIdEquipeA() {
         return idEquipeA;
     }
 
     public void setIdEquipeA(int idEquipeA) {
+        this.state = ModifiedState.DEPTH_EDITED;
         this.idEquipeA = idEquipeA;
     }
 
@@ -64,6 +173,7 @@ public class Matchs extends ClasseMiroir {
     }
 
     public void setIdEquipeB(int idEquipeB) {
+        this.state = ModifiedState.DEPTH_EDITED;
         this.idEquipeB = idEquipeB;
     }
 
@@ -72,44 +182,56 @@ public class Matchs extends ClasseMiroir {
     }
 
     public void setRonde(int taillecm) {
+        this.state = ModifiedState.EDITED;
         this.ronde = taillecm;
     }
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into matchs (ronde, idEquipeA, idEquipeB) values (?, ?, ?)");
+        var st = con.prepareStatement("insert into matchs (ronde) values (?)");
         st.setInt(1, ronde);
-        st.setInt(2, idEquipeA);
-        st.setInt(3, idEquipeB);
 
         return st;
     }
 
-    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
-        if (super.getId() == -1) {
-            throw new EntiteNonSauvegardee();
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee, IndexOutOfBoundsException {
+        switch (this.state) {
+            case CREATED, PORCELAINE -> throw new EntiteNonSauvegardee();
+            case NORMAL, POPULATED -> {}
+            case EDITED -> {
+                var st = con.prepareStatement("update matchs set ronde = ? where id = ?");
+                st.setInt(1, ronde);
+                st.setInt(2, super.getId());
+            }
+            case DEPTH_EDITED -> {
+                var list = retreiveScore(con);
+
+                var sa = list.getFirst();
+                sa.setScore(this.scoreA);
+                sa.setIdEquipe(this.idEquipeA);
+
+                var sb = list.getLast();
+                sb.setScore(this.scoreA);
+                sb.setIdEquipe(this.idEquipeA);
+
+                for (var each: list) {
+                    each.update(con);
+                }
+            }
         }
-
-        var st = con.prepareStatement("update matchs set ronde = ?, idEquipeA = ?, idEquipeB where id = ?");
-        st.setInt(1, ronde);
-        st.setInt(2, idEquipeA);
-        st.setInt(3, idEquipeB);
-        st.setInt(4, super.getId());
-
-        st.executeUpdate();
     }
     
     private static List<Matchs> fromResultSetToList(ResultSet list) throws SQLException {
         List<Matchs> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Matchs(list.getInt("ronde"), list.getInt("idEquipeA"), list.getInt("idEquipeB")));
+            res.add(new Matchs(list.getInt("ronde")));
         }
         return res; 
     }
     
     public static List<Matchs> tousLesMatchs(Connection con) throws SQLException {
         List<Matchs> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select ronde,idEquipeA,idEquipeB from matchs")) {
+        try (PreparedStatement pst = con.prepareStatement("select ronde from matchs")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -117,7 +239,7 @@ public class Matchs extends ClasseMiroir {
     }
     
     public static Optional<Matchs> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select ronde,idEquipeA,idEquipeB from score where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select ronde from score where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
@@ -125,11 +247,10 @@ public class Matchs extends ClasseMiroir {
                 int score = res.getInt(2);
                 int idEquipeA = res.getInt(3);
                 int idEquipeB = res.getInt(4);
-                return Optional.of(new Matchs(id, score, idEquipeA, idEquipeB));
+                return Optional.of(new Matchs(id, score));
             } else {
                 return Optional.empty();
             }
         }
     }
-    
 }

@@ -99,6 +99,18 @@ public abstract class ClasseMiroir {
         }
     }
 
+    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
+        var id = this.getId();
+
+        if (id == -1) {
+            throw new EntiteNonSauvegardee();
+        } else {
+            var st = con.prepareStatement("delete from tournois where id = ?");
+            st.setInt(1, id);
+
+            st.executeUpdate();
+        }
+    }
 
     public abstract void update(Connection con) throws SQLException, EntiteNonSauvegardee;
     public int updateOrNew(Connection con) throws SQLException {
