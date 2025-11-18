@@ -60,4 +60,17 @@ public class Composition extends ClasseMiroir {
 
         return st;
     }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update composition set idEquipe = ?, idJoueur = ? where id = ?");
+        st.setInt(1, idEquipe);
+        st.setInt(2, idJoueur);
+        st.setInt(3, super.getId());
+
+        st.executeUpdate();
+    }
 }

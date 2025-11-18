@@ -84,6 +84,20 @@ public class Joueur extends ClasseMiroir {
 
         return st;
     }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm where id = ?");
+        st.setString(1, surnom);
+        st.setString(2, categorie);
+        st.setInt(3, taillecm);
+        st.setInt(4, super.getId());
+
+        st.executeUpdate();
+    }
     
     private static List<Joueur> fromResultSetToList(ResultSet list) throws SQLException {
         List<Joueur> res = new ArrayList<>();

@@ -59,6 +59,20 @@ public class Score extends ClasseMiroir {
 
         return st;
     }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update score set score = ?, idEquipe = ?, idMatch where id = ?");
+        st.setInt(1, score);
+        st.setInt(2, idEquipe);
+        st.setInt(3, idMatch);
+        st.setInt(4, super.getId());
+
+        st.executeUpdate();
+    }
     
         private static List<Score> fromResultSetToList(ResultSet list) throws SQLException {
         List<Score> res = new ArrayList<>();

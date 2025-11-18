@@ -84,6 +84,20 @@ public class Matchs extends ClasseMiroir {
 
         return st;
     }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update matchs set ronde = ?, idEquipeA = ?, idEquipeB where id = ?");
+        st.setInt(1, ronde);
+        st.setInt(2, idEquipeA);
+        st.setInt(3, idEquipeB);
+        st.setInt(4, super.getId());
+
+        st.executeUpdate();
+    }
     
     private static List<Matchs> fromResultSetToList(ResultSet list) throws SQLException {
         List<Matchs> res = new ArrayList<>();

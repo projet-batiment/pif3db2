@@ -101,15 +101,6 @@ public class Tournois extends ClasseMiroir {
         return st;
     }
 
-    public int updateOrNew(Connection con) throws SQLException {
-        try {
-            this.update(con);
-            return -3;
-        } catch (EntiteNonSauvegardee e) {
-            return this.saveInDB(con);
-        }
-    }
-
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
         if (super.getId() == -1) {
             throw new EntiteNonSauvegardee();

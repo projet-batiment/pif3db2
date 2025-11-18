@@ -99,6 +99,17 @@ public abstract class ClasseMiroir {
         }
     }
 
+
+    public abstract void update(Connection con) throws SQLException, EntiteNonSauvegardee;
+    public int updateOrNew(Connection con) throws SQLException {
+        try {
+            this.update(con);
+            return -3;
+        } catch (EntiteNonSauvegardee e) {
+            return this.saveInDB(con);
+        }
+    }
+
     /**
      * chaque classe miroir spécifique doit fournir cette méthode qui sauvegarde
      * tous les attributs dans la base de donnée sauf l'identificateur. Elle
@@ -173,7 +184,7 @@ public abstract class ClasseMiroir {
             throw new EntiteNonSauvegardee();
         }
         ClasseMiroir other = (ClasseMiroir) obj;
-        if (other.id != -1) {
+        if (other.id == -1) {
             throw new EntiteNonSauvegardee();
         } else {
             return this.id == other.id;

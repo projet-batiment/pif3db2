@@ -59,6 +59,18 @@ public class Equipe extends ClasseMiroir {
 
         return st;
     }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update equipe set nom = ? where id = ?");
+        st.setString(1, nom);
+        st.setInt(2, super.getId());
+
+        st.executeUpdate();
+    }
     
     private static List<Equipe> fromResultSetToList(ResultSet list) throws SQLException {
         List<Equipe> res = new ArrayList<>();
