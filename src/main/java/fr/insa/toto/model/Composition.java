@@ -20,8 +20,13 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -52,6 +57,14 @@ public class Composition extends ClasseMiroir {
         this.idJoueur = idJoueur;
     }
 
+    public Composition(int id, int idEquipe, int idJoueur) {
+        super(id);
+        this.idEquipe = idEquipe;
+        this.idJoueur = idJoueur;
+    }
+    
+    
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into composition (idEquipe, idJoueur) values (?, ?)");
@@ -72,5 +85,38 @@ public class Composition extends ClasseMiroir {
         st.setInt(3, super.getId());
 
         st.executeUpdate();
+    }
+    
+    private static List<Composition> fromResultSetToList(ResultSet list) throws SQLException {
+        List<Composition> res = new ArrayList<>();
+        while (list.next()) {
+            res.add(new Composition(list.getInt("id"), list.getInt("idEquipe"), list.getInt("idJoueur")));
+        }
+        return res; 
+    }
+    
+    public static List<Composition> toutesLesCompositions(Connection con) throws SQLException {
+        List<Composition> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,nom from composition")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+    
+    public static Optional<Composition> findById(Connection con, int id) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where id=?")) {
+            pst.setInt(1, id);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                int idEquipe = res.getInt(2);
+                int idJoueur = res.getInt(3);
+                return Optional.of(new Composition(id, idEquipe, idJoueur));
+            } else {
+                return Optional.empty();
+            }
+            
+        }
     }
 }
