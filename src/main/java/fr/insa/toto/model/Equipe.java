@@ -54,9 +54,11 @@ public class Equipe extends ClasseMiroir {
     
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into equipe (nom) values (?)");
+        var st = con.prepareStatement("insert into equipe (nom) values (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
 
+        st.executeUpdate();
         return st;
     }
 

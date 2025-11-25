@@ -67,10 +67,12 @@ public class Composition extends ClasseMiroir {
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into composition (idEquipe, idJoueur) values (?, ?)");
+        var st = con.prepareStatement("insert into composition (idEquipe, idJoueur) values (?, ?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setInt(1, idEquipe);
         st.setInt(2, idJoueur);
 
+        st.executeUpdate();
         return st;
     }
 
@@ -96,8 +98,7 @@ public class Composition extends ClasseMiroir {
     }
     
     public static List<Composition> toutesLesCompositions(Connection con) throws SQLException {
-        List<Composition> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select id,nom from composition")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -119,4 +120,33 @@ public class Composition extends ClasseMiroir {
             
         }
     }
+    
+    public static Optional<Composition> findByIdEquipe(Connection con, int idEquipe) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idEquipe=?")) {
+            pst.setInt(1, idEquipe);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                int id = res.getInt(1);
+                int idJoueur = res.getInt(3);
+                                if (res.next()){
+                    throw new SQLException("Plus d'une composition trouvée pour idEquipe ="+idEquipe);
+                }
+                return Optional.of(new Composition(id, idEquipe, idJoueur));
+            } else {
+                return Optional.empty();
+            }          
+        }
+    }
+    
+    public static List<Composition> findByIdJoueur(Connection con, int idJoueur) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idJoueur=?")) {
+            pst.setInt(1, idJoueur);
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);            
+            }
+        }
+    }
+    
 }
+    
