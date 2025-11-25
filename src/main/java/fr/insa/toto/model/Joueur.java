@@ -77,11 +77,13 @@ public class Joueur extends ClasseMiroir {
     
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm) values (?, ?, ?)");
+        var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm) values (?, ?, ?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, surnom);
         st.setString(2, categorie);
         st.setInt(3, taillecm);
 
+        st.executeUpdate();
         return st;
     }
 

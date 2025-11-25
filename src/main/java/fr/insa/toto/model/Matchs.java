@@ -205,9 +205,11 @@ public class Matchs extends ClasseMiroir {
     
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into matchs (ronde) values (?)");
+        var st = con.prepareStatement("insert into matchs (ronde) values (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setInt(1, ronde);
-
+        
+        st.executeUpdate();
         return st;
     }
 
