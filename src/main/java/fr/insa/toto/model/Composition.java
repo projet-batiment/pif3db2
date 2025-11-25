@@ -121,21 +121,14 @@ public class Composition extends ClasseMiroir {
         }
     }
     
-    public static Optional<Composition> findByIdEquipe(Connection con, int idEquipe) throws SQLException {
+    public static List<Composition> findByIdEquipe(Connection con, int idEquipe) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idEquipe=?")) {
             pst.setInt(1, idEquipe);
             ResultSet res = pst.executeQuery();
 
-            if (res.next()) {
-                int id = res.getInt(1);
-                int idJoueur = res.getInt(3);
-                                if (res.next()){
-                    throw new SQLException("Plus d'une composition trouvée pour idEquipe ="+idEquipe);
-                }
-                return Optional.of(new Composition(id, idEquipe, idJoueur));
-            } else {
-                return Optional.empty();
-            }          
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);            
+            }
         }
     }
     

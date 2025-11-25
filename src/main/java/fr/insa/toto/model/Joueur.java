@@ -37,10 +37,32 @@ public class Joueur extends ClasseMiroir {
     private String categorie;
     private int taillecm;
 
+    private ModifiedState state;
+
+    public Joueur() {
+        this.surnom = "";
+        this.categorie = "";
+        this.taillecm = 170;
+
+        this.state = ModifiedState.CREATED;
+    }
+
     public Joueur(String surnom, String categorie, int taillecm) {
         this.surnom = surnom;
         this.categorie = categorie;
         this.taillecm = taillecm;
+
+        this.state = ModifiedState.CREATED;
+    }
+
+    public Joueur(int id, String surnom, String categorie, int taillecm) {
+        super(id);
+
+        this.surnom = surnom;
+        this.categorie = categorie;
+        this.taillecm = taillecm;
+
+        this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
     
     public String getSurnom() {
@@ -67,14 +89,6 @@ public class Joueur extends ClasseMiroir {
         this.taillecm = taillecm;
     }
 
-    public Joueur(int id, String surnom, String categorie, int taillecm) {
-        super(id);
-        this.surnom = surnom;
-        this.categorie = categorie;
-        this.taillecm = taillecm;
-    }
-
-    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm) values (?, ?, ?)",

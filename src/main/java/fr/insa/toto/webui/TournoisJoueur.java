@@ -30,6 +30,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
 import java.sql.Connection;
@@ -40,10 +41,10 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "tournois/:tournoisId([0-9]*)/equipe", layout = TournoisLayout.class)
-public class TournoisEquipe extends VerticalLayout implements BeforeEnterObserver {
+@Route(value = "tournois/:tournoisId([0-9]*)/joueur", layout = TournoisLayout.class)
+public class TournoisJoueur extends VerticalLayout implements BeforeEnterObserver {
     private Tournois tournois;
-    private Grid<Equipe> grid;
+    private Grid<Joueur> grid;
 
     private H2 title;
     private Button bNew;
@@ -54,7 +55,7 @@ public class TournoisEquipe extends VerticalLayout implements BeforeEnterObserve
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.tournois = Tournois.findById(con, id).get();
-            title.setText("Équipes du tournois " + tournois.getNom());
+            title.setText("Joueurs du tournois " + tournois.getNom());
 
             this.updateGridList();
         } catch (SQLException ex) {
@@ -67,12 +68,13 @@ public class TournoisEquipe extends VerticalLayout implements BeforeEnterObserve
 
     private void updateGridList() {
         try (Connection con = ConnectionPool.getConnection()) {
-            var list = Equipe.toutesLesEquipes(con);
+            var list = Joueur.tousLesJoueurs(con);
             for (var each: list) {
                 try {
-                    each.populate(con);
+                    //each.populate(con);
+                    Notification.show("TODO: populate joueurs ?");
                 } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments de l'équipe " + each.getId() + "n'a pas bien été sauvegardé");
+                    NotificationError.error("L'un des éléments du joueur " + each.getId() + "n'a pas bien été sauvegardé");
                 }
             }
             grid.setItems(list);
@@ -81,30 +83,29 @@ public class TournoisEquipe extends VerticalLayout implements BeforeEnterObserve
         }
     }
 
-    public TournoisEquipe() {
+    public TournoisJoueur() {
         bNew = new Button("Nouveau...");
 
-        var equipeEditor = new EquipeEditor();
-        equipeEditor.addSavedCallback(() -> updateGridList());
-        bNew.addClickListener(t -> equipeEditor.open(null));
+        var joueurEditor = new JoueurEditor();
+        joueurEditor.addSavedCallback(() -> updateGridList());
+        bNew.addClickListener(t -> joueurEditor.open(null));
 
         this.grid = new Grid<>();
-        grid.addColumn(Equipe::getNom).setHeader("Nom");
-        grid.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs");
-        grid.addColumn(t -> "TODO").setHeader("Classement");
+        grid.addColumn(Joueur::getSurnom).setHeader("Surnom");
+        grid.addColumn(t -> "TODO").setHeader("Autres ... ...");
         grid.addColumn(new ComponentRenderer<>(t -> {
             Button bEdit = new Button("Afficher");
             bEdit.addClickListener(e -> {
-                equipeEditor.open(t);
+                joueurEditor.open(t);
             });
 
             Button bDelete = new Button("Supprimer");
             bDelete.addClickListener(e -> {
-                new DialogDelete("l'équipe", () -> {
+                new DialogDelete("le joueur", () -> {
                     try (Connection con2 = ConnectionPool.getConnection()) {
                         t.deleteFromDB(con2);
                         this.updateGridList();
-                        Notification.show("L'équipe a bien été supprimée");
+                        Notification.show("Le joueur a bien été supprimé");
                     } catch (SQLException ex) {
                         NotificationError.show(ex.getMessage());
                     }
