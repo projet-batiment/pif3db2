@@ -22,11 +22,15 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
+import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Tournois;
+import java.sql.SQLException;
 
 /**
  *
@@ -40,17 +44,47 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
     private final SideNavItem joueurs;
     private final SideNavItem main;
 
+    private Select<Tournois> select;
+
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         this.tournoisId = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
 
+
         this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
+        this.equipes.setPath(TournoisEquipe.class, new RouteParameters("tournoisId", "" + tournoisId));
+        this.joueurs.setPath(TournoisJoueur.class, new RouteParameters("tournoisId", "" + tournoisId));
+
+        try {
+            var con = ConnectionPool.getConnection();
+
+            var list = Tournois.tousLesTournois(con);
+            select.setItems(list);
+
+            var tournois = Tournois.findById(con, tournoisId);
+            if (tournois.isPresent()) {
+                select.setValue(tournois.get());
+            } else {
+
+                NotificationError.error("Le tournois " + tournoisId + " n'existe pas !");
+            }
+        } catch (SQLException ex) {
+            NotificationError.error(ex.getLocalizedMessage());
+        }
     }
 
     public TournoisLayout() {
+        select = new Select<>();
+        select.setItemLabelGenerator(Tournois::getNom);
+        select.setPlaceholder("Choisir un tournois...");
+        select.addValueChangeListener(t -> {
+            if (t.getValue() != null) {
+                this.tournoisId = t.getValue().getId();
+                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + this.tournoisId));
+            }
+        });
+        select.setLabel("Tournois");
+
         SideNav sideNav = new SideNav();
 
         this.todo = new SideNavItem("TODO: classes et nav");
@@ -73,6 +107,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
 
         super.addToDrawer(new VerticalLayout(
                 new H2("Tournois"),
+                select,
                 sideNav
         ));
     }

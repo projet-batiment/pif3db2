@@ -101,10 +101,16 @@ public class Matchs extends ClasseMiroir {
         var scores = Score.findByMatch(con, super.getId());
         int length = scores.size();
 
-        if (length == 2) {
-            return scores;
-        } else {
-            throw new IndexOutOfBoundsException("1 match should have only 2 scores, retrieved " + length);
+        switch (length) {
+            case 2 -> {
+                return scores;
+            }
+            case 0 -> {
+                scores.add(new Score());
+                scores.add(new Score());
+                return scores;
+            }
+            default -> throw new IndexOutOfBoundsException("1 match should have only 2 scores, retrieved " + length);
         }
     }
 
@@ -199,9 +205,11 @@ public class Matchs extends ClasseMiroir {
     
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into matchs (ronde) values (?)");
+        var st = con.prepareStatement("insert into matchs (ronde) values (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setInt(1, ronde);
-
+        
+        st.executeUpdate();
         return st;
     }
 

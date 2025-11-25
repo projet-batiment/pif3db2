@@ -104,6 +104,12 @@ public class MatchsEditor extends Editor {
             select.setItems(list);
             select.setValue(matchs == null ? this.nouveau : matchs);
 
+            var equipes = Equipe.toutesLesEquipes(con);
+            equipeA.setItems(equipes);
+            equipeA.setValue(Equipe.findById(con, this.matchs.getIdEquipeA()).orElse(null));
+            equipeB.setItems(equipes);
+            equipeB.setValue(Equipe.findById(con, this.matchs.getIdEquipeB()).orElse(null));
+
             super.open();
         } catch (SQLException ex) {
             NotificationError.error(ex.getMessage());
@@ -135,8 +141,8 @@ public class MatchsEditor extends Editor {
         this.matchs.setIdEquipeB(this.equipeB.getValue().getId());
 
         this.matchs.setRonde(Integer.parseInt(ronde.getValue()));
-        this.matchs.setScoreA(Integer.parseInt(scoreA.getValue()));
-        this.matchs.setScoreB(Integer.parseInt(scoreB.getValue()));
+        this.matchs.setScoreA(Integer.valueOf(scoreA.getValue()));
+        this.matchs.setScoreB(Integer.valueOf(scoreB.getValue()));
 
         return (ClasseMiroir)this.matchs;
     }
@@ -175,13 +181,13 @@ public class MatchsEditor extends Editor {
         equipeA = new Select<>();
         equipeA.setItemLabelGenerator(Equipe::getNom);
         equipeA.setPlaceholder("Choisir une équipe...");
-        equipeA.addValueChangeListener(t -> Notification.show("Equipe A " + t.getValue().getNom()));
+        equipeA.addValueChangeListener(t -> this.matchs.setIdEquipeA(t.getValue().getId()));
         equipeA.setLabel("Équipe A");
 
         equipeB = new Select<>();
         equipeB.setItemLabelGenerator(Equipe::getNom);
         equipeB.setPlaceholder("Choisir une équipe...");
-        equipeB.addValueChangeListener(t -> Notification.show("Equipe B " + t.getValue().getNom()));
+        equipeB.addValueChangeListener(t -> this.matchs.setIdEquipeB(t.getValue().getId()));
         equipeB.setLabel("Équipe B");
 
         scoreA = new TextField();

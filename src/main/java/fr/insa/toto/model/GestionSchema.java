@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.google.common.annotations.Beta;
 import fr.insa.beuvron.utils.database.ConnectionSimpleSGBD;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -339,7 +340,7 @@ public class GestionSchema {
         var compositionIdEquipe = new Beton.ColumnSkeleton(
                 "idEquipe",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setUnique();
 
         var compositionIdJoueur = new Beton.ColumnSkeleton(
                 "idJoueur",

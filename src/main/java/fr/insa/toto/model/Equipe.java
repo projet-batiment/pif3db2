@@ -18,7 +18,9 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.beuvron.utils.database.ConnectionPool;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,29 +36,72 @@ import java.util.Optional;
  */
 public class Equipe extends ClasseMiroir {
     private String nom;
+    private ModifiedState state;
+
+    private Integer nbJoueurs = null;
+
+    public Equipe() {
+        this.nom = "";
+
+        this.state = ModifiedState.CREATED;
+    }
+
+    public Equipe(int id) {
+        super(id);
+        this.nom = "";
+
+        this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
+    }
 
     public Equipe(String nom) {
         this.nom = nom;
-    }
 
-    public String getNom() {
-        return nom;
-    }
-    
-    public void setNom(String nom) {
-        this.nom = nom;
+        this.state = ModifiedState.CREATED;
     }
 
     public Equipe(int id, String nom) {
         super(id);
         this.nom = nom;
+
+        this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
+    }
+
+    public ModifiedState getState() {
+        return state;
     }
     
+    public String getNom() {
+        return nom;
+    }
+    
+    public void setNom(String nom) {
+        this.state = ModifiedState.EDITED;
+        this.nom = nom;
+    }
+
+    public Integer getNbJoueurs() {
+        return this.nbJoueurs;
+    }
+
+    public void populate() throws SQLException {
+        this.populate(ConnectionPool.getConnection());
+    }
+
+    public void populate(Connection con) throws SQLException {
+        if (this.state != ModifiedState.POPULATED) {
+            this.nbJoueurs = Composition.findByIdEquipe(con, super.getId()).size();
+
+            this.state = ModifiedState.POPULATED;
+        }
+    }
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into equipe (nom) values (?)");
+        var st = con.prepareStatement("insert into equipe (nom) values (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
 
+        st.executeUpdate();
         return st;
     }
 

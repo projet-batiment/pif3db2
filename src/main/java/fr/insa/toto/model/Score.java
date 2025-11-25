@@ -100,11 +100,13 @@ public class Score extends ClasseMiroir {
     
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into score (score, idEquipe, idMatch) values (?, ?, ?)");
+        var st = con.prepareStatement("insert into score (score, idEquipe, idMatch) values (?, ?, ?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setInt(1, score);
         st.setInt(2, idEquipe);
         st.setInt(3, idMatch);
-
+        
+        st.executeUpdate();
         return st;
     }
 
