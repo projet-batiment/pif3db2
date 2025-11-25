@@ -23,6 +23,7 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
@@ -38,7 +39,7 @@ import java.sql.SQLException;
 
 @Route("scores")
 public class ScoreList extends VerticalLayout {
-    Grid<Score> grid;
+    private Grid<Score> grid;
 
     private static void notifyTodo() {
         Notification.show("Still to be done...");
@@ -54,46 +55,42 @@ public class ScoreList extends VerticalLayout {
 
     public ScoreList() {
         this.add(new H2("Liste des scores"));
+        
+        var bNew = new Button("Nouveau");
+        
+        var scoresEditor = new ScoreEditor();
+        scoresEditor.addSavedCallback(() -> updateGridList());
+        bNew.addClickListener(t -> scoresEditor.open(null));
 
         this.grid = new Grid<>();
         grid.addColumn(Score::getScore).setHeader("Score");
-        grid.addColumn(Score::getIdMatch).setHeader("id du match");
-        grid.addColumn(Score::getIdEquipe).setHeader("id de l'équipe");
+        grid.addColumn(Score::getIdEquipe).setHeader("Id de l'équipe");
+        grid.addColumn(Score::getIdMatch).setHeader("Id du match");
         grid.addColumn(new ComponentRenderer<>(t -> {
-            Button bt = new Button("Afficher");
-            bt.addClickListener(event -> {
-                bt.getUI().ifPresent(ui -> ui.navigate(ScoreSpecific.class, t.getId()));
+            Button bEdit = new Button("Afficher");
+            bEdit.addClickListener(event -> {
+                scoresEditor.open(t);
             });
-            return bt;
-        }));
-        grid.addColumn(new ComponentRenderer<>(t -> {
-            Button bt = new Button("Supprimer");
-            bt.addClickListener(event -> {
-                var d = new ConfirmDialog();
 
-                d.setHeader("Suppression");
-                d.setText("Supprimer le score " + t.getScore() + " ?");
-
-                d.setCancelable(true);
-                d.setRejectable(false);
-
-                d.setConfirmText("Supprimer");
-                d.addConfirmListener(e -> {
+            Button bDelete = new Button("Supprimer");
+            bDelete.addClickListener(event -> {
+                new DialogDelete("le score " + t.getScore(), () -> {
                     try (Connection con = ConnectionPool.getConnection()) {
                         t.deleteFromDB(con);
                         this.updateGridList();
+                        Notification.show("Le score " + t.getScore()+ " a bien été supprimé");
                     } catch (SQLException ex) {
-                        Notification.show("Erreur : " + ex.getMessage());
+                        NotificationError.show(ex.getMessage());
                     }
-                });
-
-                d.open();
+                }).open();
             });
-            return bt;
-        }));
+
+            return new HorizontalLayout(bEdit, bDelete);
+        })).setHeader(bNew);
 
         this.updateGridList();
 
-        this.add(new PageList(grid, t -> notifyTodo(), t -> notifyTodo()));
+        this.add(grid);
+        
     }
 }

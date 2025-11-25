@@ -91,8 +91,10 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
         } else {
             this.score.setValue("" + this.scores.getScore());
             this.score.setEnabled(true);
-//            this.nombreRondes.setValue("" + this.tournois.getNombreRondes());
-//            this.nombreRondes.setEnabled(true);
+            this.idEquipe.setValue("" + this.scores.getIdEquipe());
+            this.idEquipe.setEnabled(true);
+            this.idMatch.setValue("" + this.scores.getIdMatch());
+            this.idMatch.setEnabled(true);
         }
     }
 
@@ -120,7 +122,7 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
                 this.select.setValue(new Score(id));
             }
 
-            Notification.show("Tournois " + scores.getScore() + " sauvegardé");
+            Notification.show("Score " + scores.getScore() + " sauvegardé");
         } catch (SQLException ex) {
             Notification.show("Erreur: '" + ex.getMessage() + "'");
         }
@@ -133,10 +135,10 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
 
 //        try {
 //            select = new Select<>();
-//            select.setItemLabelGenerator(Tournois::getNom);
-//            select.setPlaceholder("Choisir un tournois...");
-//            select.setValue(tournois);
-//            select.addValueChangeListener(t -> this.setTournois(t.getValue()));
+//            select.setItemLabelGenerator(Score::getScore);
+//            select.setPlaceholder("Choisir un score...");
+//            select.setValue(scores);
+//            select.addValueChangeListener(t -> this.setScores(t.getValue()));
 //            select.setLabel("Tournois");
 //
 //            updateSelectList();
