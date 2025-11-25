@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,15 +36,16 @@ import java.util.Optional;
 public class Equipe extends ClasseMiroir {
     private String nom;
 
-    public Equipe(String nom) {
-        this.nom = nom;
+    public Equipe() {
+        this.nom = "";
     }
 
-    public String getNom() {
-        return nom;
+    public Equipe(int id) {
+        super(id);
+        this.nom = "";
     }
-    
-    public void setNom(String nom) {
+
+    public Equipe(String nom) {
         this.nom = nom;
     }
 
@@ -52,11 +54,21 @@ public class Equipe extends ClasseMiroir {
         this.nom = nom;
     }
     
+    public String getNom() {
+        return nom;
+    }
+    
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into equipe (nom) values (?)");
+        var st = con.prepareStatement("insert into equipe (nom) values (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
 
+        st.executeUpdate();
         return st;
     }
 

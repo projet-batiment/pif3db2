@@ -45,9 +45,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
         this.tournoisId = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
 
         this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
-        this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
+        this.equipes.setPath(TournoisEquipe.class, new RouteParameters("tournoisId", "" + tournoisId));
     }
 
     public TournoisLayout() {
