@@ -18,31 +18,14 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui;
 
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.notification.Notification;
 
 /**
  *
  * @author elio
  */
-public class PageList<T> extends VerticalLayout {
-    private Grid<T> grid;
-
-    public PageList(Grid<T> grid, ComponentEventListener<ClickEvent<Button>> editListener, ComponentEventListener<ClickEvent<Button>> addListener) {
-        this.grid = grid;
-
-        this.add(grid);
-    }
-
-    public Grid<T> getGrid() {
-        return grid;
-    }
-
-    public void setGrid(Grid<T> grid) {
-        this.grid = grid;
+public class NotificationError extends Notification {
+    public static final void error(String message) {
+        Notification.show("Erreur : '" + message + "'");
     }
 }

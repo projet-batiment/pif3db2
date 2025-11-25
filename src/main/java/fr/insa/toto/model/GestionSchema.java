@@ -388,14 +388,6 @@ public class GestionSchema {
                     new Beton.ColumnSkeleton(
                             "ronde",
                             Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),
-                    new Beton.ColumnSkeleton(
-                            "idEquipeA",
-                            Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),
-                    new Beton.ColumnSkeleton(
-                            "idEquipeB",
-                            Beton.ColumnSkeleton.SQLType.INTEGER
                     ),}
         );
 

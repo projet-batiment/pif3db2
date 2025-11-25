@@ -49,7 +49,55 @@ public class Score extends ClasseMiroir {
         this.idEquipe = idEquipe;
         this.idMatch = idMatch;
     }
+    
+    public Score(){
+        this.score = 0;
+        this.idEquipe = 0;
+        this.idMatch = 0;
+    }
 
+    public Score(int id) {
+        super(id);
+        this.score = 0;
+        this.idMatch = 0;
+        this.idEquipe = 0;
+    }
+    
+    public int getScore() {
+        return score;
+    }
+
+    public int getIdEquipe() {
+        return idEquipe;
+    }
+
+    public void setIdEquipe(int idEquipe) {
+        this.idEquipe = idEquipe;
+    }
+
+    public int getIdMatch() {
+        return idMatch;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    public void setIdMatch(int idMatch) {
+        this.idMatch = idMatch;
+    }
+    
+    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        } else {
+            var st = con.prepareStatement("delete from score where id = ?");
+            st.setInt(1, super.getId());
+
+            st.executeUpdate();
+        }
+    }
+    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into score (score, idEquipe, idMatch) values (?, ?, ?)");
@@ -59,8 +107,31 @@ public class Score extends ClasseMiroir {
 
         return st;
     }
+
+    public int updateOrNew(Connection con) throws SQLException {
+        try {
+            this.update(con);
+            return -3;
+        } catch (EntiteNonSauvegardee e) {
+            return this.saveInDB(con);
+        }
+    }
     
-        private static List<Score> fromResultSetToList(ResultSet list) throws SQLException {
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update score set score = ?, idMatch = ?, idEquipe=?, where id = ?");
+        st.setInt(1, score);
+        st.setInt(2, idMatch);
+        st.setInt(3, idEquipe);
+        st.setInt(4, super.getId());
+
+        st.executeUpdate();
+    }
+
+    private static List<Score> fromResultSetToList(ResultSet list) throws SQLException {
         List<Score> res = new ArrayList<>();
         while (list.next()) {
             res.add(new Score(list.getInt("score"), list.getInt("idEquipe"), list.getInt("idMatch")));
@@ -68,7 +139,7 @@ public class Score extends ClasseMiroir {
         return res; 
     }
         
-        public static List<Score> tousLesScores(Connection con) throws SQLException {
+    public static List<Score> tousLesScores(Connection con) throws SQLException {
         List<Score> res = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score")) {
             try (ResultSet allU = pst.executeQuery()) {
@@ -77,7 +148,7 @@ public class Score extends ClasseMiroir {
         }
     }
         
-        public static Optional<Score> findById(Connection con, int id) throws SQLException {
+    public static Optional<Score> findById(Connection con, int id) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
@@ -93,4 +164,14 @@ public class Score extends ClasseMiroir {
         }
     }
         
+    public static List<Score> findByMatch(Connection con, int idMatch) throws SQLException {
+        List<Score> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score where idMatch=?")) {
+            pst.setInt(1, idMatch);
+
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
 }
