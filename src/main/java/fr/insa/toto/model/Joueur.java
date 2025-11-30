@@ -37,6 +37,11 @@ public class Joueur extends ClasseMiroir {
     private String categorie;
     private int taillecm;
 
+    private static final String nomTable = "joueur";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
+
     private ModifiedState state;
 
     public Joueur() {
@@ -106,7 +111,7 @@ public class Joueur extends ClasseMiroir {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm where id = ?");
+        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm = ? where id = ?");
         st.setString(1, surnom);
         st.setString(2, categorie);
         st.setInt(3, taillecm);

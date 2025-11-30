@@ -20,6 +20,7 @@ package fr.insa.beuvron.utils.database;
 
 import com.vaadin.flow.component.notification.Notification;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -64,6 +65,11 @@ import java.sql.Statement;
  * @author francois
  */
 public abstract class ClasseMiroir {
+    public static final int ID_UNSAVED = -1;
+    public static final int ID_PORCELENE = -2;
+    public static final int ID_ALREADY_SAVED = -3;
+
+    protected abstract String nomTable();
 
     private int id;
 
@@ -82,7 +88,7 @@ public abstract class ClasseMiroir {
      * mémoire avant de la sauvegarder dans la base de donnée.
      */
     public ClasseMiroir() {
-        this(-1);
+        this(ID_UNSAVED);
     }
 
     public static class EntiteDejaSauvegardee extends SQLException {
@@ -99,27 +105,16 @@ public abstract class ClasseMiroir {
         }
     }
 
-    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
-        var id = this.getId();
-
-        if (id == -1) {
+    public final void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
+        if (this.id < 0) {
             throw new EntiteNonSauvegardee();
-        } else {
-            var st = con.prepareStatement("delete from tournois where id = ?");
-            st.setInt(1, id);
-
-            st.executeUpdate();
         }
-    }
 
-    public abstract void update(Connection con) throws SQLException, EntiteNonSauvegardee;
-    public int updateOrNew(Connection con) throws SQLException {
-        try {
-            this.update(con);
-            return -3;
-        } catch (EntiteNonSauvegardee e) {
-            return this.saveInDB(con);
-        }
+        var st = con.prepareStatement("delete from " + this.nomTable() + " where id = ?");
+        st.setInt(1, id);
+        st.executeUpdate();
+
+        this.entiteSupprimee();
     }
 
     /**
@@ -152,7 +147,7 @@ public abstract class ClasseMiroir {
      * @throws SQLException si autre problème avec la BdD
      */
     public final int saveInDB(Connection con) throws SQLException {
-        if (this.id != -1) {
+        if (this.id >= 0) {
             throw new EntiteDejaSauvegardee();
         }
         Statement saveAllButId = this.saveSansId(con);
@@ -163,12 +158,22 @@ public abstract class ClasseMiroir {
         }
     }
 
+    public abstract void update(Connection con) throws SQLException, EntiteNonSauvegardee;
+    public int updateOrNew(Connection con) throws SQLException {
+        try {
+            this.update(con);
+            return ID_ALREADY_SAVED;
+        } catch (EntiteNonSauvegardee e) {
+            return this.saveInDB(con);
+        }
+    }
+
     /**
      * cette méthode doit être utilisée avec précaution pour signaler par
      * exemple que l'on a supprimé l'entité de la base de donnée.
      */
     protected void entiteSupprimee() {
-        this.id = -1;
+        this.id = ID_UNSAVED;
     }
 
     public int getId() {
@@ -177,7 +182,7 @@ public abstract class ClasseMiroir {
 
     @Override
     public int hashCode() {
-        if (this.id != -1) {
+        if (this.id != ID_UNSAVED) {
             return this.id;
         } else {
             throw new EntiteNonSauvegardee();
@@ -192,11 +197,11 @@ public abstract class ClasseMiroir {
             return false;
         } else if (getClass() != obj.getClass()) {
             return false;
-        } else if (this.id == -1) {
+        } else if (this.id == ID_UNSAVED) {
             throw new EntiteNonSauvegardee();
         }
         ClasseMiroir other = (ClasseMiroir) obj;
-        if (other.id == -1) {
+        if (other.id == ID_UNSAVED) {
             throw new EntiteNonSauvegardee();
         } else {
             return this.id == other.id;

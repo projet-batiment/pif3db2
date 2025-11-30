@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.tournois;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -33,6 +33,10 @@ import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.DialogDelete;
+import fr.insa.toto.webui.JoueurEditor;
+import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.joueur.ParentJoueur;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -42,12 +46,8 @@ import java.util.NoSuchElementException;
  * @author elio
  */
 @Route(value = "tournois/:tournoisId([0-9]*)/joueur", layout = TournoisLayout.class)
-public class TournoisJoueur extends VerticalLayout implements BeforeEnterObserver {
+public class TournoisJoueur extends ParentJoueur implements BeforeEnterObserver {
     private Tournois tournois;
-    private Grid<Joueur> grid;
-
-    private H2 title;
-    private Button bNew;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -55,67 +55,18 @@ public class TournoisJoueur extends VerticalLayout implements BeforeEnterObserve
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.tournois = Tournois.findById(con, id).get();
-            title.setText("Joueurs du tournois " + tournois.getNom());
 
-            this.updateGridList();
         } catch (SQLException ex) {
             NotificationError.sql(ex);
         } catch (NoSuchElementException ex) {
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
-        }
-    }
 
-
-    private void updateGridList() {
-        try (Connection con = ConnectionPool.getConnection()) {
-            var list = Joueur.tousLesJoueurs(con);
-            for (var each: list) {
-                try {
-                    //each.populate(con);
-                    Notification.show("TODO: populate joueurs ?");
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du joueur " + each.getId() + "n'a pas bien été sauvegardé");
-                }
-            }
-            grid.setItems(list);
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
+        } finally {
+            super.initialize(this.tournois);
         }
     }
 
     public TournoisJoueur() {
-        bNew = new Button("Nouveau...");
-
-        var joueurEditor = new JoueurEditor();
-        joueurEditor.addSavedCallback(() -> updateGridList());
-        bNew.addClickListener(t -> joueurEditor.open(null));
-
-        this.grid = new Grid<>();
-        grid.addColumn(Joueur::getSurnom).setHeader("Surnom");
-        grid.addColumn(t -> "TODO").setHeader("Autres ... ...");
-        grid.addColumn(new ComponentRenderer<>(t -> {
-            Button bEdit = new Button("Afficher");
-            bEdit.addClickListener(e -> {
-                joueurEditor.open(t);
-            });
-
-            Button bDelete = new Button("Supprimer");
-            bDelete.addClickListener(e -> {
-                new DialogDelete("le joueur", () -> {
-                    try (Connection con = ConnectionPool.getConnection()) {
-                        t.deleteFromDB(con);
-                        this.updateGridList();
-                        Notification.show("Le joueur a bien été supprimé");
-                    } catch (SQLException ex) {
-                        NotificationError.sql(ex);
-                    }
-                }).open();
-            });
-
-            return new HorizontalLayout(bEdit, bDelete);
-        })).setHeader(bNew);
-
-        title = new H2();
-        this.add(title, grid);
+        super("tournois", "le", "du ");
     }
 }

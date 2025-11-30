@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +36,11 @@ import java.util.Optional;
 public class Composition extends ClasseMiroir {
     private int idEquipe;
     private int idJoueur;
+
+    private static final String nomTable = "composition";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
 
     public Composition(int idEquipe, int idJoueur) {
         this.idEquipe = idEquipe;
@@ -117,14 +123,12 @@ public class Composition extends ClasseMiroir {
             } else {
                 return Optional.empty();
             }
-            
         }
     }
     
     public static List<Composition> findByIdEquipe(Connection con, int idEquipe) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idEquipe=?")) {
             pst.setInt(1, idEquipe);
-            ResultSet res = pst.executeQuery();
 
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);            
@@ -135,11 +139,27 @@ public class Composition extends ClasseMiroir {
     public static List<Composition> findByIdJoueur(Connection con, int idJoueur) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idJoueur=?")) {
             pst.setInt(1, idJoueur);
+
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);            
             }
         }
     }
     
+    public static Optional<Composition> findByIdEquipeIdJoueur(Connection con, int idEquipe, int idJoueur) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idEquipe,idJoueur from composition where idEquipe=? and idJoueur=?")) {
+            pst.setInt(1, idEquipe);
+            pst.setInt(2, idJoueur);
+
+            try (ResultSet res = pst.executeQuery()) {
+                if (res.next()) {
+                    int id = res.getInt(1);
+                    return Optional.of(new Composition(id, idEquipe, idJoueur));
+                } else {
+                    return Optional.empty();
+                }
+            }
+        }
+    }
 }
     

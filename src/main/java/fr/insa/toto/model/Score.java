@@ -37,6 +37,11 @@ public class Score extends ClasseMiroir {
     private int idEquipe;
     private int idMatch;
 
+    private static final String nomTable = "score";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
+
     public Score(int score, int idEquipe, int idMatch) {
         this.score = score;
         this.idEquipe = idEquipe;
@@ -87,17 +92,6 @@ public class Score extends ClasseMiroir {
         this.idMatch = idMatch;
     }
     
-    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
-        if (super.getId() == -1) {
-            throw new EntiteNonSauvegardee();
-        } else {
-            var st = con.prepareStatement("delete from score where id = ?");
-            st.setInt(1, super.getId());
-
-            st.executeUpdate();
-        }
-    }
-    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into score (score, idEquipe, idMatch) values (?, ?, ?)",
@@ -124,7 +118,7 @@ public class Score extends ClasseMiroir {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update score set score = ?, idMatch = ?, idEquipe=?, where id = ?");
+        var st = con.prepareStatement("update score set score = ?, idMatch = ?, idEquipe=? where id = ?");
         st.setInt(1, score);
         st.setInt(2, idMatch);
         st.setInt(3, idEquipe);

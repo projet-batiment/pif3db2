@@ -34,12 +34,12 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-public class MatchsEditor extends Editor {
+public class MatchsEditor extends EditorOld {
     private Select<Matchs> select;
     private Matchs matchs;
 
     // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Matchs nouveau = new Matchs(-2, 0);
+    private final static Matchs nouveau = new Matchs(ClasseMiroir.ID_PORCELENE, 0);
 
     private TextField ronde;
     private Select<Equipe> equipeA;
@@ -152,7 +152,7 @@ public class MatchsEditor extends Editor {
             this.select.setValue(this.matchs);
             Notification.show("Le match " + this.matchs.getNom() + " a bien été sauvegardé");
         });
-        super.setOpenBoard(() -> {
+        super.setOpenBoardCallback(() -> {
             if (this.matchs != null) {
                 this.getUI().ifPresent(ui -> ui.navigate("match/" + matchs.getId()));
                 this.close();

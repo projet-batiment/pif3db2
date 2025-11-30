@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.equipe;
 
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -25,18 +25,20 @@ import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.webui.EditorOld;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.SQLException;
 
 /**
  *
  * @author elio
  */
-public class EquipeEditor extends Editor {
+public class EquipeEditor extends EditorOld {
     private Select<Equipe> select;
     private Equipe equipe;
 
     // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Equipe nouveau = new Equipe(-2, "Nouveau...");
+    private final static Equipe nouveau = new Equipe(ClasseMiroir.ID_PORCELENE, "Nouveau...");
 
     private TextField nom;
 
@@ -91,7 +93,7 @@ public class EquipeEditor extends Editor {
             this.select.setValue(this.equipe);
             Notification.show("L'équipe " + this.equipe.getNom() + " a bien été sauvegardé");
         });
-        super.setOpenBoard(() -> {
+        super.setOpenBoardCallback(() -> {
             if (this.equipe != null) {
                 this.getUI().ifPresent(ui -> ui.navigate("equipe/" + equipe.getId()));
                 this.close();

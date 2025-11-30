@@ -33,11 +33,11 @@ import java.sql.SQLException;
  *
  * @author pmarchal01
  */
-public class ScoreEditor extends Editor {
+public class ScoreEditor extends EditorOld {
     private Select<Score> select;
     private Score scores;
     
-    private final static Score nouveau = new Score(-2, 0, -2, -2);
+    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELENE, 0, ClasseMiroir.ID_PORCELENE, ClasseMiroir.ID_PORCELENE);
     
     private TextField score;
     private TextField idEquipe;
@@ -111,7 +111,7 @@ public class ScoreEditor extends Editor {
             this.select.setValue(this.scores);
             Notification.show("Le score " + this.scores.getScore()+ " a bien été sauvegardé");
         });
-        super.setOpenBoard(() -> {
+        super.setOpenBoardCallback(() -> {
             if (this.scores != null) {
                 this.getUI().ifPresent(ui -> ui.navigate("scores/" + scores.getId()));
                 this.close();

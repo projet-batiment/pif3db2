@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.tournois;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -32,6 +32,9 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.DialogDelete;
+import fr.insa.toto.webui.equipe.EquipeEditor;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;

@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.tournois;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H2;
@@ -30,6 +30,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.SQLException;
 
 /**
@@ -42,7 +43,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
     private final SideNavItem matchs;
     private final SideNavItem equipes;
     private final SideNavItem joueurs;
-    private final SideNavItem main;
+    private final SideNavItem board;
 
     private Select<Tournois> select;
 
@@ -51,6 +52,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
         this.tournoisId = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
 
 
+        this.board.setPath(TournoisBoard.class, new RouteParameters("tournoisId", "" + tournoisId));
         this.matchs.setPath(TournoisMatchs.class, new RouteParameters("tournoisId", "" + tournoisId));
         this.equipes.setPath(TournoisEquipe.class, new RouteParameters("tournoisId", "" + tournoisId));
         this.joueurs.setPath(TournoisJoueur.class, new RouteParameters("tournoisId", "" + tournoisId));
@@ -87,8 +89,8 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
 
         this.todo = new SideNavItem("TODO: classes et nav");
         sideNav.addItem(this.todo);
-        this.main = new SideNavItem("Tableau de bord");
-        sideNav.addItem(this.main);
+        this.board = new SideNavItem("Tableau de bord");
+        sideNav.addItem(this.board);
         this.matchs = new SideNavItem("Matchs");
         sideNav.addItem(this.matchs);
         this.equipes = new SideNavItem("Équipes");

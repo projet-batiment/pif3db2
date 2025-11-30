@@ -30,14 +30,21 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author elio
  */
-public class Equipe extends ClasseMiroir {
+public class Equipe extends ClasseMiroir implements JoueurParent {
     private String nom;
     private ModifiedState state;
+
+    private static final String nomTable = "equipe";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
 
     private Integer nbJoueurs = null;
 
@@ -82,6 +89,66 @@ public class Equipe extends ClasseMiroir {
 
     public Integer getNbJoueurs() {
         return this.nbJoueurs;
+    }
+
+    @Override
+    public String parentName() {
+        return this.getNom();
+    }
+
+    @Override
+    public int addJoueur(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+        int idJoueur = joueur.getId();
+        var composition = Composition.findByIdEquipeIdJoueur(con, super.getId(), idJoueur);
+
+        if (composition.isPresent()) {
+            throw new EntiteDejaSauvegardee();
+        } else {
+            int compositionId = new Composition(super.getId(), idJoueur).updateOrNew(con);
+            this.state = ModifiedState.DEPTH_EDITED;
+            this.populate(con);
+
+            Notification.show("TODO: ajouter le nouveau joueur au tournois ?");
+
+            return compositionId;
+        }
+    }
+
+    @Override
+    public void deleteJoueur(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+        int idJoueur = joueur.getId();
+        var composition = Composition.findByIdEquipeIdJoueur(con, super.getId(), idJoueur);
+
+        if (composition.isPresent()) {
+            composition.get().deleteFromDB(con);
+            this.state = ModifiedState.DEPTH_EDITED;
+            this.populate(con);
+        } else {
+            throw new EntiteNonSauvegardee();
+        }
+    }
+
+    @Override
+    public List<Joueur> getJoueurs(Connection con) throws SQLException {
+        return Composition
+                .findByIdEquipe(con, super.getId())
+                .stream()
+                .collect(Collector.of(
+                        ArrayList::new, 
+                        (out, each) -> {
+                            try {
+                                Joueur.findById(con, each.getIdJoueur())
+                                    .ifPresent(e -> out.add(e));
+                            } catch (SQLException ex) {
+                                NotificationError.sql(ex);
+                            }
+                        },
+                        (out, next) -> {
+                            out.addAll(next);
+                            return out;
+                        },
+                        Collector.Characteristics.UNORDERED)
+                );
     }
 
     public void populate() throws SQLException {

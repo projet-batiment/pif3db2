@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.tournois;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -31,8 +31,12 @@ import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.Editor;
+import fr.insa.toto.webui.EditorOld;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 import org.aspectj.weaver.ast.Not;
 
 /**
@@ -42,9 +46,18 @@ import org.aspectj.weaver.ast.Not;
 public class TournoisEditor extends Editor {
     private Select<Tournois> select;
     private Tournois tournois;
+    private Consumer<Tournois> onSavedCallback;
+
+    public void setOnSavedCallback(Consumer<Tournois> onSavedCallback) {
+        this.onSavedCallback = onSavedCallback;
+    }
+
+    public void setOnDeletedCallback(Consumer<Tournois> onDeletedCallback) {
+        super.setDeleteCallback(() -> onDeletedCallback.accept(tournois));
+    }
 
     // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Tournois nouveau = new Tournois(-2, "Nouveau...", 0);
+    private final static Tournois nouveau = new Tournois(ClasseMiroir.ID_PORCELENE, "Nouveau...", 0);
 
     private TextField nom;
     private TextField nombreRondes;
@@ -53,10 +66,12 @@ public class TournoisEditor extends Editor {
     private void setTournois(Tournois tournois) {
         if (tournois == this.nouveau) {
             this.tournois = new Tournois();
-            super.setEnabled(false);
+            super.setDeleteEnabled(false);
+            super.setBoardEnabled(false);
         } else {
             this.tournois = tournois;
-            super.setEnabled(true);
+            super.setDeleteEnabled(true);
+            super.setBoardEnabled(true);
         }
 
         if (tournois == null) {
@@ -104,13 +119,24 @@ public class TournoisEditor extends Editor {
     public TournoisEditor() {
         super.setHeaderTitle("Apperçu du tournois");
 
-        super.addSavedCallback(() -> {
-            this.select.setValue(this.tournois);
-            Notification.show("Le tournois " + this.tournois.getNom() + " a bien été sauvegardé");
+        super.setSaveCallback(() -> {
+            if (this.compile() instanceof Tournois obj) {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    int id = obj.updateOrNew(con);
+                    this.select.setValue(this.tournois);
+
+                    if (this.onSavedCallback != null) this.onSavedCallback.accept(obj);
+
+                    Notification.show("Le tournois " + this.tournois.getNom() + " a bien été sauvegardé");
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            }
         });
-        super.setOpenBoard(() -> {
+
+        super.setOpenBoardCallback(() -> {
             if (this.tournois != null) {
-                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + tournois.getId() + "/match"));
+                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + tournois.getId()));
                 this.close();
             }
         });

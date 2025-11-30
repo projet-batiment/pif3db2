@@ -34,6 +34,7 @@ import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 import org.aspectj.weaver.ast.Not;
 
 /**
@@ -43,9 +44,18 @@ import org.aspectj.weaver.ast.Not;
 public class JoueurEditor extends Editor {
     private Select<Joueur> select;
     private Joueur joueur;
+    private Consumer<Joueur> onSavedCallback;
+
+    public void setOnSavedCallback(Consumer<Joueur> onSavedCallback) {
+        this.onSavedCallback = onSavedCallback;
+    }
+
+    public void setOnDeletedCallback(Consumer<Joueur> onDeletedCallback) {
+        super.setDeleteCallback(() -> onDeletedCallback.accept(joueur));
+    }
 
     // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Joueur nouveau = new Joueur(-2, "Nouveau...", "", 0);
+    private final static Joueur nouveau = new Joueur(ClasseMiroir.ID_PORCELENE, "Nouveau...", "", 0);
 
     private TextField surnom;
     private TextField taillecm;
@@ -55,10 +65,12 @@ public class JoueurEditor extends Editor {
     private void setJoueur(Joueur joueur) {
         if (joueur == this.nouveau) {
             this.joueur = new Joueur();
-            super.setEnabled(false);
+            super.setDeleteEnabled(false);
+            super.setBoardEnabled(false);
         } else {
             this.joueur = joueur;
-            super.setEnabled(true);
+            super.setDeleteEnabled(true);
+            super.setBoardEnabled(true);
         }
 
         if (joueur == null) {
@@ -92,7 +104,7 @@ public class JoueurEditor extends Editor {
         }
     }
 
-    public ClasseMiroir compile() {
+    public Joueur compile() {
         if (this.surnom.getValue().isBlank()) {
             Notification.show("Il manque le surnom du joueur");
             return null;
@@ -110,19 +122,30 @@ public class JoueurEditor extends Editor {
         this.joueur.setTaillecm(Integer.parseInt(taillecm.getValue()));
         this.joueur.setCategorie(categorie.getValue());
 
-        return (ClasseMiroir)this.joueur;
+        return this.joueur;
     }
 
     public JoueurEditor() {
         super.setHeaderTitle("Apperçu du joueur");
 
-        super.addSavedCallback(() -> {
-            this.select.setValue(this.joueur);
-            Notification.show("Le joueur " + this.joueur.getSurnom()+ " a bien été sauvegardé");
+        super.setSaveCallback(() -> {
+            if (this.compile() instanceof Joueur obj) {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    int id = obj.updateOrNew(con);
+                    this.select.setValue(this.joueur);
+
+                    if (this.onSavedCallback != null) this.onSavedCallback.accept(obj);
+
+                    Notification.show("Le joueur " + this.joueur.getSurnom()+ " a bien été sauvegardé");
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            }
         });
-        super.setOpenBoard(() -> {
+
+        super.setOpenBoardCallback(() -> {
             if (this.joueur != null) {
-                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + joueur.getId() + "/joueur"));
+                this.getUI().ifPresent(ui -> ui.navigate("joueur/" + joueur.getId()));
                 this.close();
             }
         });

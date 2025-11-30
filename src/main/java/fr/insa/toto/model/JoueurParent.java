@@ -16,23 +16,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.model;
 
-import com.vaadin.flow.component.notification.Notification;
+import fr.insa.beuvron.utils.database.ClasseMiroir;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  *
  * @author elio
  */
-public class NotificationError extends Notification {
-    public static final void error(String message) {
-        Notification.show("Erreur : '" + message + "'");
-    }
-
-    public static void sql(SQLException ex) {
-        var s = "Erreur SQLException: " + ex.getLocalizedMessage();
-        Notification.show(s);
-        System.out.println(s);
-    }
+public interface JoueurParent {
+    public abstract String parentName();
+    public abstract int addJoueur(Joueur joueur, Connection con) throws SQLException, ClasseMiroir.EntiteDejaSauvegardee;
+    public abstract void deleteJoueur(Joueur joueur, Connection con) throws SQLException, ClasseMiroir.EntiteNonSauvegardee;
+    public abstract List<Joueur> getJoueurs(Connection con) throws SQLException;
 }

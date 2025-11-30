@@ -33,9 +33,14 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class Tournois extends ClasseMiroir {
+public class Tournois extends ClasseMiroir implements JoueurParent {
     private String nom;
     private int nombreRondes;
+
+    private static final String nomTable = "tournois";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
 
     public String getNom() {
         return nom;
@@ -77,6 +82,29 @@ public class Tournois extends ClasseMiroir {
 
     public Tournois clone() {
         return new Tournois(getId(), nom, nombreRondes);
+    }
+
+    @Override
+    public String parentName() {
+        return this.getNom();
+    }
+
+    @Override
+    public int addJoueur(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+        // pour l'instant, les joueurs ne sont pas assignés aux tournois
+        return joueur.getId();
+    }
+
+    @Override
+    public void deleteJoueur(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+        // pour l'instant, les joueurs ne sont pas assignés aux tournois
+        joueur.deleteFromDB(con);
+    }
+
+    @Override
+    public List<Joueur> getJoueurs(Connection con) throws SQLException {
+        // pour l'instant, les joueurs ne sont pas assignés aux tournois
+        return Joueur.tousLesJoueurs(con);
     }
 
     @Override

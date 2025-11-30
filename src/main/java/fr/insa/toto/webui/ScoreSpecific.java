@@ -30,6 +30,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
+import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Score;
 import java.sql.SQLException;
@@ -48,7 +49,7 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
     private TextField idEquipe;
     private TextField idMatch;
 
-    private final static Score nouveau = new Score(-2, 5, -2, -2);
+    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELENE, 5, -2, -2);
 
     @Override
     public void setParameter(BeforeEvent be, @OptionalParameter Integer id) {

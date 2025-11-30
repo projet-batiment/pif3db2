@@ -38,6 +38,11 @@ import java.util.Optional;
 public class Matchs extends ClasseMiroir {
     private int ronde;
 
+    private static final String nomTable = "matchs";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
+
     private ModifiedState state;
 
     private int idEquipeA;
@@ -197,17 +202,6 @@ public class Matchs extends ClasseMiroir {
         this.ronde = taillecm;
     }
 
-    public void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
-        if (super.getId() == -1) {
-            throw new EntiteNonSauvegardee();
-        } else {
-            var st = con.prepareStatement("delete from matchs where id = ?");
-            st.setInt(1, super.getId());
-
-            st.executeUpdate();
-        }
-    }
-    
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into matchs (ronde) values (?)",
