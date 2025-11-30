@@ -48,7 +48,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
             title.setText("Tableau de bord : tournois" + tournois.getNom());
 
         } catch (SQLException ex) {
-            NotificationError.error(ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         } catch (NoSuchElementException ex) {
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
         }

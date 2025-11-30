@@ -19,6 +19,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.webui;
 
 import com.vaadin.flow.component.notification.Notification;
+import java.sql.SQLException;
 
 /**
  *
@@ -27,5 +28,9 @@ import com.vaadin.flow.component.notification.Notification;
 public class NotificationError extends Notification {
     public static final void error(String message) {
         Notification.show("Erreur : '" + message + "'");
+    }
+
+    public static void sql(SQLException ex) {
+        Notification.show("Erreur SQLException: " + ex.getLocalizedMessage());
     }
 }

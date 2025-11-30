@@ -72,9 +72,7 @@ public class TournoisEditor extends Editor {
     }
 
     public void open(Tournois tournois) {
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Tournois.tousLesTournois(con);
             list.add(this.nouveau);
 
@@ -83,7 +81,7 @@ public class TournoisEditor extends Editor {
 
             super.open();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getMessage());
+            NotificationError.sql(ex);
         }
     }
 

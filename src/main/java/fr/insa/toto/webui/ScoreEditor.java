@@ -70,9 +70,7 @@ public class ScoreEditor extends Editor {
     }
     
     public void open(Score scores){
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Score.tousLesScores(con);
             list.add(this.nouveau);
 
@@ -81,7 +79,7 @@ public class ScoreEditor extends Editor {
 
             super.open();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getMessage());
+            NotificationError.sql(ex);
         }
     }
     

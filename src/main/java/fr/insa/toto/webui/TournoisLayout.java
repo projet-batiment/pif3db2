@@ -55,9 +55,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
         this.equipes.setPath(TournoisEquipe.class, new RouteParameters("tournoisId", "" + tournoisId));
         this.joueurs.setPath(TournoisJoueur.class, new RouteParameters("tournoisId", "" + tournoisId));
 
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Tournois.tousLesTournois(con);
             select.setItems(list);
 
@@ -69,7 +67,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
                 NotificationError.error("Le tournois " + tournoisId + " n'existe pas !");
             }
         } catch (SQLException ex) {
-            NotificationError.error(ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         }
     }
 

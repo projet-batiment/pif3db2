@@ -58,13 +58,12 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
     }
 
     private void setScores(int id) {
-        try {
-            var con = ConnectionPool.getConnection();
+        try (var con = ConnectionPool.getConnection()) {
             Score.findById(con, id)
                     .ifPresentOrElse(t -> setScores(t), () -> Notification.show("Erreur: le score id=" + id + "n'existe pas"));
 
         } catch (SQLException ex) {
-            this.add(new Text("Erreur SQL: '" + ex.getMessage() + "'"));
+            NotificationError.sql(ex);
         }
     }
 
@@ -99,17 +98,18 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
     }
 
     private void updateSelectList() throws SQLException {
-        var con = ConnectionPool.getConnection();
+        try (var con = ConnectionPool.getConnection()) {
+            var list = Score.tousLesScores(con);
+            list.add(this.nouveau);
 
-        var list = Score.tousLesScores(con);
-        list.add(this.nouveau);
-
-        select.setItems(list);
+            select.setItems(list);
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
     }
 
     private void save() {
-        try {
-            var con = ConnectionPool.getConnection();
+        try (var con = ConnectionPool.getConnection()) {
 
             this.scores.setScore(Integer.parseInt(score.getValue()));
             this.scores.setIdMatch(Integer.parseInt(idMatch.getValue()));
@@ -124,7 +124,7 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
 
             Notification.show("Score " + scores.getScore() + " sauvegardé");
         } catch (SQLException ex) {
-            Notification.show("Erreur: '" + ex.getMessage() + "'");
+            NotificationError.sql(ex);
         }
     }
 

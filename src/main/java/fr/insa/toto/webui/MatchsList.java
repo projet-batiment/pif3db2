@@ -48,7 +48,7 @@ public class MatchsList extends VerticalLayout {
         try (Connection con = ConnectionPool.getConnection()) {
             grid.setItems(Matchs.tousLesMatchs(con));
         } catch (SQLException ex) {
-            Notification.show("Problème : " + ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         }
     }
 
@@ -84,7 +84,7 @@ public class MatchsList extends VerticalLayout {
                         t.deleteFromDB(con);
                         this.updateGridList();
                     } catch (SQLException ex) {
-                        Notification.show("Erreur : " + ex.getMessage());
+                        NotificationError.sql(ex);
                     }
                 });
 

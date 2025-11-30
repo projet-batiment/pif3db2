@@ -57,7 +57,7 @@ public class TournoisMatchs extends VerticalLayout implements BeforeEnterObserve
 
             this.updateGridList();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         } catch (NoSuchElementException ex) {
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
         }
@@ -76,7 +76,7 @@ public class TournoisMatchs extends VerticalLayout implements BeforeEnterObserve
             }
             grid.setItems(list);
         } catch (SQLException ex) {
-            NotificationError.error(ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         }
     }
 
@@ -101,12 +101,12 @@ public class TournoisMatchs extends VerticalLayout implements BeforeEnterObserve
             Button bDelete = new Button("Supprimer");
             bDelete.addClickListener(e -> {
                 new DialogDelete("le match", () -> {
-                    try (Connection con2 = ConnectionPool.getConnection()) {
-                        t.deleteFromDB(con2);
+                    try (Connection con = ConnectionPool.getConnection()) {
+                        t.deleteFromDB(con);
                         this.updateGridList();
                         Notification.show("Le match a bien été supprimé");
                     } catch (SQLException ex) {
-                        NotificationError.show(ex.getMessage());
+                        NotificationError.sql(ex);
                     }
                 }).open();
             });

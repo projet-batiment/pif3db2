@@ -49,7 +49,7 @@ public class ScoreList extends VerticalLayout {
         try (Connection con = ConnectionPool.getConnection()) {
             grid.setItems(Score.tousLesScores(con));
         } catch (SQLException ex) {
-            Notification.show("Problème : " + ex.getLocalizedMessage());
+            NotificationError.sql(ex);
         }
     }
 
@@ -80,7 +80,7 @@ public class ScoreList extends VerticalLayout {
                         this.updateGridList();
                         Notification.show("Le score " + t.getScore()+ " a bien été supprimé");
                     } catch (SQLException ex) {
-                        NotificationError.show(ex.getMessage());
+                        NotificationError.sql(ex);
                     }
                 }).open();
             });

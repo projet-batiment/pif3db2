@@ -60,9 +60,7 @@ public class EquipeEditor extends Editor {
     }
 
     public void open(Equipe equipe) {
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Equipe.toutesLesEquipes(con);
             list.add(this.nouveau);
 
@@ -71,7 +69,7 @@ public class EquipeEditor extends Editor {
 
             super.open();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getMessage());
+            NotificationError.sql(ex);
         }
     }
 

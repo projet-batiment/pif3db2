@@ -27,6 +27,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -62,12 +63,11 @@ public abstract class Editor extends Dialog {
 
     private void save() {
         if (this.compile() instanceof ClasseMiroir obj) {
-            try {
-                var con = ConnectionPool.getConnection();
+            try (Connection con = ConnectionPool.getConnection()) {
                 obj.updateOrNew(con);
                 callbacks.forEach(each -> each.run());
             } catch (SQLException ex) {
-                NotificationError.show(ex.getMessage());
+                NotificationError.sql(ex);
             }
         }
     }

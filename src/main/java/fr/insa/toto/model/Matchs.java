@@ -20,6 +20,7 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -115,7 +116,11 @@ public class Matchs extends ClasseMiroir {
     }
 
     public void populate() throws SQLException, NoSuchElementException {
-        this.populate(ConnectionPool.getConnection());
+        try (Connection con = ConnectionPool.getConnection()) {
+            this.populate(con);
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
     }
     
     public void populate(Connection con) throws SQLException, NoSuchElementException, IndexOutOfBoundsException {

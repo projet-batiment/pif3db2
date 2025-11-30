@@ -85,17 +85,15 @@ public class MatchsEditor extends Editor {
     }
 
     public void open(Matchs matchs) {
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Matchs.tousLesMatchs(con);
             list.forEach(e -> {
                 try {
                     e.populate(con);
                 } catch (SQLException ex) {
-                    NotificationError.error(ex.getMessage());
+                    NotificationError.sql(ex);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.error(ex.getMessage());
+                    NotificationError.error("L'un des éléments du tournois " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
                 }
             });
 
@@ -112,7 +110,7 @@ public class MatchsEditor extends Editor {
 
             super.open();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getMessage());
+            NotificationError.sql(ex);
         }
     }
 

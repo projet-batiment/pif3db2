@@ -79,9 +79,7 @@ public class JoueurEditor extends Editor {
     }
 
     public void open(Joueur joueur) {
-        try {
-            var con = ConnectionPool.getConnection();
-
+        try (var con = ConnectionPool.getConnection()) {
             var list = Joueur.tousLesJoueurs(con);
             list.add(this.nouveau);
 
@@ -90,7 +88,7 @@ public class JoueurEditor extends Editor {
 
             super.open();
         } catch (SQLException ex) {
-            NotificationError.error(ex.getMessage());
+            NotificationError.sql(ex);
         }
     }
 
