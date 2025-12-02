@@ -23,7 +23,6 @@ import fr.insa.toto.model.utils.ModifiedState;
 import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

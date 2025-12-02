@@ -18,7 +18,6 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
-import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

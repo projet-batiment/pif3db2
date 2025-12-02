@@ -18,8 +18,6 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model.utils;
 
-import fr.insa.beuvron.utils.database.ClasseMiroir;
-
 /**
  *
  * @author elio
