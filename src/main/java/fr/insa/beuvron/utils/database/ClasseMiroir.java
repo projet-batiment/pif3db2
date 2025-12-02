@@ -105,10 +105,13 @@ public abstract class ClasseMiroir {
         }
     }
 
+    public void deleteChildren(Connection con) throws SQLException {}
     public final void deleteFromDB(Connection con) throws EntiteNonSauvegardee, SQLException {
         if (this.id < 0) {
             throw new EntiteNonSauvegardee();
         }
+
+        this.deleteChildren(con);
 
         var st = con.prepareStatement("delete from " + this.nomTable() + " where id = ?");
         st.setInt(1, id);

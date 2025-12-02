@@ -88,7 +88,7 @@ public class TournoisEquipe extends VerticalLayout implements BeforeEnterObserve
         bNew = new Button("Nouveau...");
 
         var equipeEditor = new EquipeEditor();
-        equipeEditor.addSavedCallback(() -> updateGridList());
+        equipeEditor.setOnSavedCallback(o -> updateGridList());
         bNew.addClickListener(t -> equipeEditor.open(null));
 
         this.grid = new Grid<>();

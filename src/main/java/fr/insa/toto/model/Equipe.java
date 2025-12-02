@@ -177,6 +177,13 @@ public class Equipe extends ClasseMiroir implements JoueurParent {
         return st;
     }
 
+    @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        for (Composition each: Composition.findByIdEquipe(con, super.getId())) {
+            each.deleteFromDB(con);
+        }
+    }
+
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
         if (super.getId() == -1) {
             throw new EntiteNonSauvegardee();

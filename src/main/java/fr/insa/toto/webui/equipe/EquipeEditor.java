@@ -22,93 +22,75 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
-import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.webui.EditorOld;
+import fr.insa.toto.webui.Editor;
 import fr.insa.toto.webui.NotificationError;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author elio
  */
-public class EquipeEditor extends EditorOld {
-    private Select<Equipe> select;
-    private Equipe equipe;
-
-    // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Equipe nouveau = new Equipe(ClasseMiroir.ID_PORCELENE, "Nouveau...");
-
+public class EquipeEditor extends Editor<Equipe> {
     private TextField nom;
 
-    // Toujours appeler setEquipe depuis select.setValue !!
-    private void setEquipe(Equipe equipe) {
-        if (equipe == this.nouveau) {
-            this.equipe = new Equipe();
-            super.setEnabled(false);
-        } else {
-            this.equipe = equipe;
-            super.setEnabled(true);
-        }
+    @Override
+    protected Equipe newObject() {
+        return new Equipe();
+    }
 
-        if (equipe == null) {
+    protected void setObject() {
+        if (this.object instanceof Equipe equipe) {
+            this.nom.setValue(equipe.getNom());
+            this.nom.setEnabled(true);
+        } else {
             this.nom.setValue("");
             this.nom.setEnabled(false);
-        } else {
-            this.nom.setValue(this.equipe.getNom());
-            this.nom.setEnabled(true);
         }
     }
 
-    public void open(Equipe equipe) {
-        try (var con = ConnectionPool.getConnection()) {
-            var list = Equipe.toutesLesEquipes(con);
-            list.add(this.nouveau);
-
-            select.setItems(list);
-            select.setValue(equipe == null ? this.nouveau : equipe);
-
-            super.open();
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
+    @Override
+    protected List<Equipe> openObject(Connection con) throws SQLException {
+        return Equipe.toutesLesEquipes(con);
     }
 
-    public ClasseMiroir compile() {
+    public Equipe compile() {
         if (this.nom.getValue().isBlank()) {
             Notification.show("Il manque le nom de l'équipe");
             return null;
         }
 
-        this.equipe.setNom(nom.getValue());
+        object.setNom(nom.getValue());
 
-        return (ClasseMiroir)this.equipe;
+        return this.object;
+    }
+
+    @Override
+    protected void onSaved() {
+        Notification.show("L'équipe " + object.getNom()+ " a bien été sauvegardée");
+    }
+
+    @Override
+    protected String generatedUrl() {
+        return "equipe/" + this.object.getId();
     }
 
     public EquipeEditor() {
+        nouveau = new Equipe(Equipe.ID_PORCELENE, "Nouveau...");
+
         super.setHeaderTitle("Apperçu de l'équipe");
 
-        super.addSavedCallback(() -> {
-            this.select.setValue(this.equipe);
-            Notification.show("L'équipe " + this.equipe.getNom() + " a bien été sauvegardé");
-        });
-        super.setOpenBoardCallback(() -> {
-            if (this.equipe != null) {
-                this.getUI().ifPresent(ui -> ui.navigate("equipe/" + equipe.getId()));
-                this.close();
-            }
-        });
-
-        select = new Select<>();
-        select.setItemLabelGenerator(Equipe::getNom);
-        select.setPlaceholder("Choisir une équipe...");
-        select.addValueChangeListener(t -> this.setEquipe(t.getValue()));
-        select.setLabel("Équipe");
+        super.setSelectItemLabelGenerator(Equipe::getNom);
+        super.setSelectLabel("Équipe");
 
         nom = new TextField();
         nom.setLabel("Nom de l'équipe");
 
-        super.add(new VerticalLayout(select, nom));
+        super.addChildren(nom);
     }
 }

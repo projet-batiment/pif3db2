@@ -18,80 +18,123 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  *
  * @author elio
  */
-public abstract class Editor extends Dialog {
-    private final Button close = new Button("Fermer");
-    private final Button apply = new Button("Enregistrer");
-    private final Button delete = new Button("Supprimer");
-    private final Button board = new Button("Voir les détails");
-    private Runnable doSaveCallback;
-    private Runnable doOpenBoardCallback;
-    private Runnable doDeleteCallback;
+public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
+    private final Select<T> select;
+    protected T object;
 
-    private void exec(Runnable r) {
-        if (r != null) r.run();
+    private Consumer<T> onSavedCallback;
+
+    public void setOnSavedCallback(Consumer<T> onSavedCallback) {
+        this.onSavedCallback = onSavedCallback;
+    }
+
+    public void setOnDeletedCallback(Consumer<T> onDeletedCallback) {
+        super.setDeleteCallback(() -> onDeletedCallback.accept(object));
+    }
+
+    // parceque (id=0).equals throws EntiteNonSauvegardee
+    protected T nouveau;
+    protected abstract T newObject();
+
+    private VerticalLayout view;
+
+    protected abstract void setObject();
+    protected abstract List<T> openObject(Connection con) throws SQLException;
+
+    protected abstract T compile();
+    protected void onSaved(){};
+    protected abstract String generatedUrl();
+
+    // toujours appeler DEPUIS select.setValue !!! jamais depuis ailleurs
+    private final void set(T object) {
+        if (object == this.nouveau) {
+            this.object = newObject();
+
+            super.setBoardEnabled(false);
+            super.setDeleteEnabled(false);
+        } else {
+            this.object = object;
+
+            super.setBoardEnabled(true);
+            super.setDeleteEnabled(true);
+        }
+
+        this.setObject();
+    }
+
+    private void updateSelect(T object) {
+        try (var con = ConnectionPool.getConnection()) {
+            var list = this.openObject(con);
+            list.add(this.nouveau);
+
+            select.setItems(list);
+            select.setValue(object == null ? this.nouveau : object);
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
+    }
+
+    public final void open(T object) {
+        this.updateSelect(object);
+
+        super.open();
     }
 
     public Editor() {
-        this.close.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        this.close.addClickListener(e -> super.close());
-        this.close.getStyle().set("margin-right", "auto");
-        this.delete.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
-        this.delete.addClickListener(e -> this.exec(doDeleteCallback));
-        this.apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        this.apply.addClickListener(e -> this.exec(doSaveCallback));
+        select = new Select<>();
+        select.addValueChangeListener(t -> this.set(t.getValue()));
+        select.setPlaceholder("Choisir...");
+        this.view = new VerticalLayout(select);
+        this.add(view);
 
-        var buttons = new HorizontalLayout(close, delete, apply);
-        buttons.setWidth("100%");
+        super.setSaveCallback(() -> {
+            if (this.compile() instanceof T obj) {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    int id = obj.updateOrNew(con);
+                    this.updateSelect(object);
 
-        this.board.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
-        this.board.setWidth("100%");
-        this.board.addClickListener(e -> this.exec(doOpenBoardCallback));
+                    if (this.onSavedCallback != null)
+                        this.onSavedCallback.accept(this.object);
 
-        var view = new VerticalLayout(board, buttons);
-        view.setAlignItems(FlexComponent.Alignment.CENTER);
+                    this.onSaved();
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            }
+        });
 
-        super.getFooter().add(view);
+        super.setBoardCallback(() -> {
+            if (this.object != null) {
+                this.getUI().ifPresent(ui -> ui.navigate(this.generatedUrl()));
+                this.close();
+            }
+        });
     }
 
-    public void setSaveCallback(Runnable c) {
-        this.doSaveCallback = c;
+    protected void addChildren(Component... components) {
+        this.view.add(components);
     }
 
-    public void setOpenBoardCallback(Runnable c) {
-        this.doOpenBoardCallback = c;
+    protected void setSelectLabel(String label) {
+        this.select.setLabel(label);
     }
 
-    public void setDeleteCallback(Runnable c) {
-        this.doDeleteCallback = c;
-    }
-
-    public void setBoardEnabled(boolean value) {
-        this.board.setEnabled(value);
-    }
-
-    public void setDeleteEnabled(boolean value) {
-        this.delete.setEnabled(value);
-    }
-
-    public void setSaveEnabled(boolean value) {
-        this.apply.setEnabled(value);
+    protected void setSelectItemLabelGenerator(ItemLabelGenerator<T> label) {
+        this.select.setItemLabelGenerator(label);
     }
 }
