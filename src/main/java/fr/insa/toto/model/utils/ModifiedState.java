@@ -16,20 +16,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.model;
-
-import fr.insa.beuvron.utils.database.ClasseMiroir;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
+package fr.insa.toto.model.utils;
 
 /**
  *
  * @author elio
  */
-public interface JoueurParent {
-    public abstract String parentName();
-    public abstract int addJoueur(Joueur joueur, Connection con) throws SQLException, ClasseMiroir.EntiteDejaSauvegardee;
-    public abstract void deleteJoueur(Joueur joueur, Connection con) throws SQLException, ClasseMiroir.EntiteNonSauvegardee;
-    public abstract List<Joueur> getJoueurs(Connection con) throws SQLException;
+public enum ModifiedState {
+    CREATED,        // l'objet n'a pas encore été sauvegardé
+    NORMAL,         // l'objet vient d'être téléchargé depuis la base de données, n'est pas modifié
+    EDITED,         // les attributs directs de l'objet ont été modifiés
+    POPULATED,      // l'objet contient des informations sur ses attributs externes, rien n'est modifié
+    DEPTH_EDITED,   // les attributs externes de l'objet ont été modifiés
+    PORCELAINE,     // l'objet est utilisé temporairement et n'a pas vocation à être sauvegardé
 }

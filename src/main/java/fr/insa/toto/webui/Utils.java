@@ -16,17 +16,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.model;
+package fr.insa.toto.webui;
 
 /**
  *
  * @author elio
  */
-public enum ModifiedState {
-    CREATED,        // l'objet n'a pas encore été sauvegardé
-    NORMAL,         // l'objet vient d'être téléchargé depuis la base de données, n'est pas modifié
-    EDITED,         // les attributs directs de l'objet ont été modifiés
-    POPULATED,      // l'objet contient des informations sur ses attributs externes, rien n'est modifié
-    DEPTH_EDITED,   // les attributs externes de l'objet ont été modifiés
-    PORCELAINE,     // l'objet est utilisé temporairement et n'a pas vocation à être sauvegardé
+public class Utils {
+    public static final String capitalizeFirst(String s) {
+        switch (s.length()) {
+            case 0 -> {
+                return "";
+            }
+            case 1 -> {
+                return s.toUpperCase();
+            }
+            default -> {
+                return s.substring(0, 1).toUpperCase() + s.substring(1);
+            }
+        }
+    }
 }

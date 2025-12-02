@@ -23,5 +23,5 @@ package fr.insa.toto.model;
  * @author elio
  */
 public interface Named {
-    public abstract String getNom();
+    public abstract String getName();
 }

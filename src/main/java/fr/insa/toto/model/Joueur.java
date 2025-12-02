@@ -18,6 +18,8 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.ModifiedState;
+import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +34,7 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class Joueur extends ClasseMiroir {
+public class Joueur extends ClasseMiroir implements Named {
     private String surnom;
     private String categorie;
     private int taillecm;
@@ -69,9 +71,31 @@ public class Joueur extends ClasseMiroir {
 
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
+
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return nomTable;
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "le ";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "du ";
+        }
+    }
     
     public String getSurnom() {
         return surnom;
+    }
+
+    @Override
+    public String getName() {
+        return this.getSurnom();
     }
 
     public void setSurnom(String surnom) {

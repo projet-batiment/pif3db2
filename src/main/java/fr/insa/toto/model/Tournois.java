@@ -18,8 +18,10 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.ParentFace;
 import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.toto.model.utils.ChildFace;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,9 +35,54 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class Tournois extends ClasseMiroir implements JoueurParent {
+public class Tournois extends ClasseMiroir {
     private String nom;
     private int nombreRondes;
+
+    public final JoueurParent joueurs = new JoueurParent();
+    private class JoueurParent extends ParentFace<Joueur> {
+        @Override
+        public String parentObjectName() {
+            return getNom();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return nomTable();
+        }
+
+        @Override
+        public String le() {
+            return "le ";
+        }
+
+        @Override
+        public String du() {
+            return "du ";
+        }
+
+        @Override
+        public int add(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            // pour l'instant, les joueurs ne sont pas assignés aux tournois
+            return joueur.getId();
+        }
+
+        @Override
+        public void remove(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+            // pour l'instant, les joueurs ne sont pas assignés aux tournois
+            joueur.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Joueur> get(Connection con) throws SQLException {
+            // pour l'instant, les joueurs ne sont pas assignés aux tournois
+            return Joueur.tousLesJoueurs(con);
+        }
+
+        public JoueurParent() {
+            super(new Joueur.AsChild());
+        }
+    }
 
     private static final String nomTable = "tournois";
     protected final String nomTable() {
@@ -82,29 +129,6 @@ public class Tournois extends ClasseMiroir implements JoueurParent {
 
     public Tournois clone() {
         return new Tournois(getId(), nom, nombreRondes);
-    }
-
-    @Override
-    public String parentName() {
-        return this.getNom();
-    }
-
-    @Override
-    public int addJoueur(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
-        // pour l'instant, les joueurs ne sont pas assignés aux tournois
-        return joueur.getId();
-    }
-
-    @Override
-    public void deleteJoueur(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
-        // pour l'instant, les joueurs ne sont pas assignés aux tournois
-        joueur.deleteFromDB(con);
-    }
-
-    @Override
-    public List<Joueur> getJoueurs(Connection con) throws SQLException {
-        // pour l'instant, les joueurs ne sont pas assignés aux tournois
-        return Joueur.tousLesJoueurs(con);
     }
 
     @Override

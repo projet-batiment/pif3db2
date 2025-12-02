@@ -18,24 +18,15 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.DialogDelete;
-import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.joueur.ParentChild;
 import fr.insa.toto.webui.joueur.ParentJoueur;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -62,11 +53,7 @@ public class TournoisJoueur extends ParentJoueur implements BeforeEnterObserver 
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
 
         } finally {
-            super.initialize(this.tournois);
+            super.initialize(this.tournois.joueurs);
         }
-    }
-
-    public TournoisJoueur() {
-        super("tournois", "le", "du ");
     }
 }

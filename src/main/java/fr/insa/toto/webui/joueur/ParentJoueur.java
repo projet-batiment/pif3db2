@@ -34,7 +34,7 @@ import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.JoueurParent;
+import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
@@ -47,99 +47,38 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author elio
  */
-public abstract class ParentJoueur extends VerticalLayout {
-    private String parentTypeName;
-    private String parentPrefixLe;
-    private String parentPrefixDu;
-
-    private String duParentObject() {
-        return this.parentPrefixDu + this.parentTypeName + " " + this.parent.parentName();
-    }
-
-    private JoueurParent parent;
-    private Grid<Joueur> grid;
-
-    private H2 title;
-    private Button bNew;
-
-    public void initialize(JoueurParent parent) {
-        if (parent == null) {
-            title.setText("(Erreur)");
-        } else {
-            this.parent = parent;
-            title.setText("Joueurs " + this.duParentObject());
-
-            this.updateGridList();
-        }
-    }
-
-    private void updateGridList() {
-        try (Connection con = ConnectionPool.getConnection()) {
-            var list = parent.getJoueurs(con);
-            for (var each: list) {
-                try {
-                    //each.populate(con);
-                    Notification.show("TODO: populate joueurs ?");
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du joueur " + each.getId() + "n'a pas bien été sauvegardé");
-                }
-            }
-            grid.setItems(list);
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
-    }
-
-    private void deleteDialog(Joueur joueur) {
-        new DialogDelete("le joueur " + joueur.getSurnom() + " " + this.duParentObject(), () -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                this.parent.deleteJoueur(joueur, con);
-                this.updateGridList();
-                Notification.show("Le joueur a bien été supprimé " + this.duParentObject());
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        }).open();
-    }
-
-    public ParentJoueur(String parentTypeName, String parentPrefixLe, String parentPrefixDu) {
-        this.parentTypeName = parentTypeName;
-        this.parentPrefixLe = parentPrefixLe;
-        this.parentPrefixDu = parentPrefixDu;
-
-        bNew = new Button("Ajouter...");
-
+public abstract class ParentJoueur extends ParentChild<Joueur> {
+    public ParentJoueur() {
         var joueurEditor = new JoueurEditor();
         joueurEditor.setOnSavedCallback(j -> {
             try (Connection con = ConnectionPool.getConnection()) {
-                this.parent.addJoueur(j, con);
-                updateGridList();
+                super.getParentFace().add(j, con);
+                super.updateGridList();
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             }
         });
-        joueurEditor.setOnDeletedCallback(j -> deleteDialog(j));
-        bNew.addClickListener(t -> joueurEditor.open(null));
 
-          this.grid = new Grid<>();
-          grid.addColumn(Joueur::getSurnom).setHeader("Surnom");
-          grid.addColumn(t -> "TODO").setHeader("Autres ... ...");
-          grid.addColumn(new ComponentRenderer<>(joueur -> {
-              Button bEdit = new Button("Afficher");
-              bEdit.addClickListener(e -> {
-                  joueurEditor.open(joueur);
-              });
-  
-              Button bDelete = new Button("Supprimer");
-              bDelete.addThemeVariants(ButtonVariant.LUMO_ERROR);
-              bDelete.addClickListener(e -> 
-                      deleteDialog(joueur)
-              );
-  
-              return new HorizontalLayout(bEdit, bDelete);
-          })).setHeader(bNew);
+        var bNew = new Button("Ajouter...");
+        bNew.addClickListener(t -> {
+            joueurEditor.open(null);
+        });
 
-        title = new H2();
-        this.add(title, grid);
+        super.addColumn(Joueur::getSurnom).setHeader("Surnom");
+        super.addColumn(t -> "TODO").setHeader("Autres ... ...");
+        super.addColumn(new ComponentRenderer<>(joueur -> {
+            Button bEdit = new Button("Afficher");
+            bEdit.addClickListener(e -> {
+                joueurEditor.open(joueur);
+            });
+
+            Button bDelete = new Button("Supprimer");
+            bDelete.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            bDelete.addClickListener(e -> 
+                super.deleteDialog(joueur)
+            );
+
+            return new HorizontalLayout(bEdit, bDelete);
+        })).setHeader(bNew);
     }
 }

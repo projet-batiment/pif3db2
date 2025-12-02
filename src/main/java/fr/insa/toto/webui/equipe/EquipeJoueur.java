@@ -38,6 +38,7 @@ import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
 import fr.insa.toto.webui.joueur.ParentJoueur;
+import fr.insa.toto.webui.joueur.ParentJoueurOld;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -63,11 +64,7 @@ public class EquipeJoueur extends ParentJoueur implements BeforeEnterObserver {
             NotificationError.error("L'équipe " + id + " n'a pas été trouvée dans la base de données : " + ex.getMessage());
 
         } finally {
-            super.initialize(this.equipe);
+            super.initialize(this.equipe.joueurs);
         }
-    }
-
-    public EquipeJoueur() {
-        super("équipe", "l'", "de l'");
     }
 }

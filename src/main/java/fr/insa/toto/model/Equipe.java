@@ -18,9 +18,12 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.ParentFace;
+import fr.insa.toto.model.utils.ModifiedState;
 import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,15 +34,96 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  *
  * @author elio
  */
-public class Equipe extends ClasseMiroir implements JoueurParent {
+public class Equipe extends ClasseMiroir {
     private String nom;
     private ModifiedState state;
+
+    public final JoueurParent joueurs = new JoueurParent();
+    private class JoueurParent extends ParentFace<Joueur> {
+        @Override
+        public String parentObjectName() {
+            return getNom();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "équipe";
+        }
+
+        @Override
+        public String le() {
+            return "l'";
+        }
+
+        @Override
+        public String du() {
+            return "de l'";
+        }
+
+        @Override
+        public int add(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            int idJoueur = joueur.getId();
+            var composition = Composition.findByIdEquipeIdJoueur(con, getId(), idJoueur);
+
+            if (composition.isPresent()) {
+                throw new EntiteDejaSauvegardee();
+            } else {
+                int compositionId = new Composition(getId(), idJoueur).updateOrNew(con);
+                state = ModifiedState.DEPTH_EDITED;
+                populate(con);
+
+                Notification.show("TODO: ajouter le nouveau joueur au tournois ?");
+
+                return compositionId;
+            }
+        }
+
+        @Override
+        public void remove(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+            int idJoueur = joueur.getId();
+            var composition = Composition.findByIdEquipeIdJoueur(con, getId(), idJoueur);
+
+            if (composition.isPresent()) {
+                composition.get().deleteFromDB(con);
+                state = ModifiedState.DEPTH_EDITED;
+                populate(con);
+            } else {
+                throw new EntiteNonSauvegardee();
+            }
+        }
+
+        @Override
+        public List<Joueur> get(Connection con) throws SQLException {
+            return Composition
+                    .findByIdEquipe(con, getId())
+                    .stream()
+                    .collect(Collector.of(
+                            ArrayList::new, 
+                            (out, each) -> {
+                                try {
+                                    Joueur.findById(con, each.getIdJoueur())
+                                        .ifPresent(e -> out.add(e));
+                                } catch (SQLException ex) {
+                                    NotificationError.sql(ex);
+                                }
+                            },
+                            (out, next) -> {
+                                out.addAll(next);
+                                return out;
+                            },
+                            Collector.Characteristics.UNORDERED)
+                    );
+        }
+
+        public JoueurParent() {
+            super(new Joueur.AsChild());
+        }
+    }
 
     private static final String nomTable = "equipe";
     protected final String nomTable() {
@@ -89,66 +173,6 @@ public class Equipe extends ClasseMiroir implements JoueurParent {
 
     public Integer getNbJoueurs() {
         return this.nbJoueurs;
-    }
-
-    @Override
-    public String parentName() {
-        return this.getNom();
-    }
-
-    @Override
-    public int addJoueur(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
-        int idJoueur = joueur.getId();
-        var composition = Composition.findByIdEquipeIdJoueur(con, super.getId(), idJoueur);
-
-        if (composition.isPresent()) {
-            throw new EntiteDejaSauvegardee();
-        } else {
-            int compositionId = new Composition(super.getId(), idJoueur).updateOrNew(con);
-            this.state = ModifiedState.DEPTH_EDITED;
-            this.populate(con);
-
-            Notification.show("TODO: ajouter le nouveau joueur au tournois ?");
-
-            return compositionId;
-        }
-    }
-
-    @Override
-    public void deleteJoueur(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
-        int idJoueur = joueur.getId();
-        var composition = Composition.findByIdEquipeIdJoueur(con, super.getId(), idJoueur);
-
-        if (composition.isPresent()) {
-            composition.get().deleteFromDB(con);
-            this.state = ModifiedState.DEPTH_EDITED;
-            this.populate(con);
-        } else {
-            throw new EntiteNonSauvegardee();
-        }
-    }
-
-    @Override
-    public List<Joueur> getJoueurs(Connection con) throws SQLException {
-        return Composition
-                .findByIdEquipe(con, super.getId())
-                .stream()
-                .collect(Collector.of(
-                        ArrayList::new, 
-                        (out, each) -> {
-                            try {
-                                Joueur.findById(con, each.getIdJoueur())
-                                    .ifPresent(e -> out.add(e));
-                            } catch (SQLException ex) {
-                                NotificationError.sql(ex);
-                            }
-                        },
-                        (out, next) -> {
-                            out.addAll(next);
-                            return out;
-                        },
-                        Collector.Characteristics.UNORDERED)
-                );
     }
 
     public void populate() throws SQLException {

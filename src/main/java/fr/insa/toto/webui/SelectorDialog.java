@@ -25,6 +25,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.toto.model.Named;
 import java.util.function.Consumer;
+import fr.insa.toto.model.utils.ChildFace;
 
 /**
  *
@@ -48,7 +49,7 @@ public abstract class SelectorDialog<T extends Named> extends Dialog {
         });
 
         select = new Select<>();
-        select.setItemLabelGenerator(Named::getNom);
+        select.setItemLabelGenerator(Named::getName);
         select.setPlaceholder("Choisir " + prefixUn + " " + typeObjets + "...");
 
         super.setHeaderTitle("Choisir " + prefixUn + " " + typeObjets + "...");
