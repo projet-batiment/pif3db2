@@ -97,7 +97,7 @@ public class TournoisEditor extends Editor<Tournois> {
     }
 
     public TournoisEditor() {
-        nouveau = new Tournois(Tournois.ID_PORCELENE, "Nouveau...", 0);
+        nouveau = new Tournois(Tournois.ID_PORCELAINE, "Nouveau...", 0);
 
         super.setHeaderTitle("Apperçu du tournois");
 

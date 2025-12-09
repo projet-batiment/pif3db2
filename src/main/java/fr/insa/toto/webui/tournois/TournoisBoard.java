@@ -45,7 +45,6 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.tournois = Tournois.findById(con, id).get();
-            title.setText("Équipes du tournois " + tournois.getNom());
             title.setText("Tableau de bord : tournois " + tournois.getNom());
 
         } catch (SQLException ex) {

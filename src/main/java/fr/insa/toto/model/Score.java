@@ -18,7 +18,9 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -99,6 +101,8 @@ public class Score extends ClasseMiroir {
         st.setInt(1, score);
         st.setInt(2, idEquipe);
         st.setInt(3, idMatch);
+
+        NotificationError.show("score idEquipe idMatch " + score + " " + idEquipe + " " + idMatch);
         
         st.executeUpdate();
         return st;
@@ -130,14 +134,14 @@ public class Score extends ClasseMiroir {
     private static List<Score> fromResultSetToList(ResultSet list) throws SQLException {
         List<Score> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Score(list.getInt("score"), list.getInt("idEquipe"), list.getInt("idMatch")));
+            res.add(new Score(list.getInt("id"), list.getInt("score"), list.getInt("idEquipe"), list.getInt("idMatch")));
         }
         return res; 
     }
         
     public static List<Score> tousLesScores(Connection con) throws SQLException {
         List<Score> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,score,idEquipe,idMatch from score")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -162,7 +166,7 @@ public class Score extends ClasseMiroir {
         
     public static List<Score> findByMatch(Connection con, int idMatch) throws SQLException {
         List<Score> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score where idMatch=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,score,idEquipe,idMatch from score where idMatch=?")) {
             pst.setInt(1, idMatch);
 
             try (ResultSet allU = pst.executeQuery()) {

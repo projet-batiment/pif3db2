@@ -66,7 +66,7 @@ import java.sql.Statement;
  */
 public abstract class ClasseMiroir {
     public static final int ID_UNSAVED = -1;
-    public static final int ID_PORCELENE = -2;
+    public static final int ID_PORCELAINE = -2;
     public static final int ID_ALREADY_SAVED = -3;
 
     protected abstract String nomTable();
@@ -130,6 +130,7 @@ public abstract class ClasseMiroir {
      * @return
      */
     protected abstract Statement saveSansId(Connection con) throws SQLException;
+    protected void afterSavedInDB(Connection con) throws SQLException {}
 
     /**
      * Sauvegarde une nouvelle entité et retourne la clé affecté automatiquement
@@ -153,10 +154,12 @@ public abstract class ClasseMiroir {
         if (this.id >= 0) {
             throw new EntiteDejaSauvegardee();
         }
+
         Statement saveAllButId = this.saveSansId(con);
         try (ResultSet rid = saveAllButId.getGeneratedKeys()) {
             rid.next();
             this.id = rid.getInt(1);
+            this.afterSavedInDB(con);
             return this.id;
         }
     }

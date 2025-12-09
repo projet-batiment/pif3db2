@@ -27,6 +27,7 @@ import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.model.utils.ModifiedState;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
@@ -38,9 +39,6 @@ public class MatchsEditor extends EditorOld {
     private Select<Matchs> select;
     private Matchs matchs;
 
-    // parceque (id=0).equals throws EntiteNonSauvegardee
-    private final static Matchs nouveau = new Matchs(ClasseMiroir.ID_PORCELENE, 0);
-
     private TextField ronde;
     private Select<Equipe> equipeA;
     private Select<Equipe> equipeB;
@@ -49,13 +47,13 @@ public class MatchsEditor extends EditorOld {
 
     // Toujours appeler setMatchs depuis select.setValue !!
     private void setMatchs(Matchs matchs) {
-        if (matchs == this.nouveau) {
+        if (matchs == Matchs.PORCELAINE) {
             this.matchs = new Matchs();
         } else {
             this.matchs = matchs;
         }
 
-        if (matchs == null || matchs == this.nouveau) {
+        if (matchs == null || matchs == Matchs.PORCELAINE) {
             super.setEnabled(false);
 
             this.equipeA.setValue(null);
@@ -69,8 +67,8 @@ public class MatchsEditor extends EditorOld {
             this.equipeA.setValue(null);
             this.equipeB.setValue(null);
             this.ronde.setValue("" + this.matchs.getRonde());
-            this.scoreA.setValue("" + this.matchs.getScoreA());
-            this.scoreB.setValue("" + this.matchs.getScoreA());
+            this.scoreA.setValue("" + this.matchs.getScoreEquipeA().score.getScore());
+            this.scoreB.setValue("" + this.matchs.getScoreEquipeB().score.getScore());
         }
 
         if (matchs == null) {
@@ -97,16 +95,31 @@ public class MatchsEditor extends EditorOld {
                 }
             });
 
-            list.add(this.nouveau);
+            Notification.show("TODO: ajouter un updateListMatchs ici pour après save");
+
+            list.add(Matchs.PORCELAINE);
 
             select.setItems(list);
-            select.setValue(matchs == null ? this.nouveau : matchs);
+            select.setValue(matchs == null ? Matchs.PORCELAINE : matchs);
 
             var equipes = Equipe.toutesLesEquipes(con);
             equipeA.setItems(equipes);
-            equipeA.setValue(Equipe.findById(con, this.matchs.getIdEquipeA()).orElse(null));
             equipeB.setItems(equipes);
-            equipeB.setValue(Equipe.findById(con, this.matchs.getIdEquipeB()).orElse(null));
+
+            if (matchs == null) {
+                select.setValue(Matchs.PORCELAINE);
+            } else {
+                try {
+                    matchs.populate(con);
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.error("L'un des éléments du tournois à éditer (" + matchs.getId() + ") n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                }
+                select.setValue(this.matchs);
+                equipeA.setValue(this.matchs.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? null : this.matchs.getScoreEquipeA().equipe);
+                equipeB.setValue(this.matchs.getScoreEquipeB().equipe.getState() == ModifiedState.CREATED ? null : this.matchs.getScoreEquipeB().equipe);
+            }
 
             super.open();
         } catch (SQLException ex) {
@@ -135,12 +148,12 @@ public class MatchsEditor extends EditorOld {
             return null;
         }
 
-        this.matchs.setIdEquipeA(this.equipeA.getValue().getId());
-        this.matchs.setIdEquipeB(this.equipeB.getValue().getId());
+        this.matchs.getScoreEquipeA().equipe = this.equipeA.getValue();
+        this.matchs.getScoreEquipeB().equipe = this.equipeB.getValue();
+        this.matchs.getScoreEquipeA().score.setScore(Integer.parseInt(this.scoreA.getValue()));
+        this.matchs.getScoreEquipeB().score.setScore(Integer.parseInt(this.scoreB.getValue()));
 
         this.matchs.setRonde(Integer.parseInt(ronde.getValue()));
-        this.matchs.setScoreA(Integer.valueOf(scoreA.getValue()));
-        this.matchs.setScoreB(Integer.valueOf(scoreB.getValue()));
 
         return (ClasseMiroir)this.matchs;
     }
@@ -161,7 +174,7 @@ public class MatchsEditor extends EditorOld {
 
         select = new Select<>();
         select.setItemLabelGenerator(t -> {
-            if (t == this.nouveau) {
+            if (t == Matchs.PORCELAINE) {
                 return "Nouveau match...";
             } else {
                 return t.getNom();
@@ -179,13 +192,19 @@ public class MatchsEditor extends EditorOld {
         equipeA = new Select<>();
         equipeA.setItemLabelGenerator(Equipe::getNom);
         equipeA.setPlaceholder("Choisir une équipe...");
-        equipeA.addValueChangeListener(t -> this.matchs.setIdEquipeA(t.getValue().getId()));
+        equipeA.addValueChangeListener(t -> {
+            if (this.matchs != null)
+                this.matchs.getScoreEquipeA().equipe = t.getValue();
+        });
         equipeA.setLabel("Équipe A");
 
         equipeB = new Select<>();
         equipeB.setItemLabelGenerator(Equipe::getNom);
         equipeB.setPlaceholder("Choisir une équipe...");
-        equipeB.addValueChangeListener(t -> this.matchs.setIdEquipeB(t.getValue().getId()));
+        equipeB.addValueChangeListener(t -> {
+            if (this.matchs != null)
+                this.matchs.getScoreEquipeB().equipe = t.getValue();
+        });
         equipeB.setLabel("Équipe B");
 
         scoreA = new TextField();

@@ -53,10 +53,10 @@ public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
         this.equipeId = Integer.parseInt(event.getRouteParameters().get("equipeId").get());
 
 
-//        this.board.setPath(EquipeBoard.class, new RouteParameters("equipeId", "" + equipeId));
+        this.board.setPath(EquipeBoard.class, new RouteParameters("equipeId", "" + equipeId));
 //        this.matchs.setPath(EquipeMatchs.class, new RouteParameters("equipeId", "" + equipeId));
 //        this.equipes.setPath(EquipeEquipe.class, new RouteParameters("equipeId", "" + equipeId));
-//        this.joueurs.setPath(EquipeJoueur.class, new RouteParameters("equipeId", "" + equipeId));
+        this.joueurs.setPath(EquipeJoueur.class, new RouteParameters("equipeId", "" + equipeId));
 
         try (var con = ConnectionPool.getConnection()) {
             var list = Equipe.toutesLesEquipes(con);

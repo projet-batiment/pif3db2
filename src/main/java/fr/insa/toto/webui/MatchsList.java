@@ -57,8 +57,8 @@ public class MatchsList extends VerticalLayout {
 
         this.grid = new Grid<>();
         grid.addColumn(Matchs::getRonde).setHeader("Ronde");
-        grid.addColumn(Matchs::getIdEquipeA).setHeader("id de l'équipe A");
-        grid.addColumn(Matchs::getIdEquipeB).setHeader("id de l'équipe B");
+        grid.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("id de l'équipe A");
+        grid.addColumn(m -> m.getScoreEquipeB().equipe.getNom()).setHeader("id de l'équipe B");
         grid.addColumn(new ComponentRenderer<>(t -> {
             Button bt = new Button("Afficher");
             bt.addClickListener(event -> {

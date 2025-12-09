@@ -74,7 +74,7 @@ public class TournoisMatchs extends VerticalLayout implements BeforeEnterObserve
                 try {
                     each.populate(con);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du match " + each.getId() + "n'a pas bien été sauvegardé");
+                    NotificationError.error("L'un des éléments du match " + each.getId() + " n'a pas bien été sauvegardé");
                 }
             }
             grid.setItems(list);
@@ -91,10 +91,10 @@ public class TournoisMatchs extends VerticalLayout implements BeforeEnterObserve
         bNew.addClickListener(t -> matchsEditor.open(null));
 
         this.grid = new Grid<>();
-        grid.addColumn(Matchs::getNomA).setHeader("Equipe A");
-        grid.addColumn(Matchs::getScoreA);
-        grid.addColumn(Matchs::getScoreB);
-        grid.addColumn(Matchs::getNomB).setHeader("Equipe B");
+        grid.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("Equipe A");
+        grid.addColumn(m -> m.getScoreEquipeA().score.getScore());
+        grid.addColumn(m -> m.getScoreEquipeB().score.getScore());
+        grid.addColumn(m -> m.getScoreEquipeB().equipe.getNom()).setHeader("Equipe B");
         grid.addColumn(new ComponentRenderer<>(t -> {
             Button bEdit = new Button("Afficher");
             bEdit.addClickListener(e -> {

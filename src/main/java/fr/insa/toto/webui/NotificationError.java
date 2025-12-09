@@ -27,12 +27,15 @@ import java.sql.SQLException;
  */
 public class NotificationError extends Notification {
     public static final void error(String message) {
-        Notification.show("Erreur : '" + message + "'");
+        String s = "Erreur : '" + message + "'";
+        Notification.show(s);
+        System.out.println(s);
     }
 
     public static void sql(SQLException ex) {
         var s = "Erreur SQLException: " + ex.getLocalizedMessage();
         Notification.show(s);
         System.out.println(s);
+        ex.printStackTrace();
     }
 }

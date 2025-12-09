@@ -37,7 +37,7 @@ public class ScoreEditor extends EditorOld {
     private Select<Score> select;
     private Score scores;
     
-    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELENE, 0, ClasseMiroir.ID_PORCELENE, ClasseMiroir.ID_PORCELENE);
+    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELAINE, 0, ClasseMiroir.ID_PORCELAINE, ClasseMiroir.ID_PORCELAINE);
     
     private TextField score;
     private TextField idEquipe;

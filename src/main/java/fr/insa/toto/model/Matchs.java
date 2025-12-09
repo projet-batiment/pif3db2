@@ -39,6 +39,8 @@ import java.util.Optional;
 public class Matchs extends ClasseMiroir {
     private int ronde;
 
+    public final static Matchs PORCELAINE = new Matchs(ClasseMiroir.ID_PORCELAINE, 0);
+
     private static final String nomTable = "matchs";
     protected final String nomTable() {
         return this.nomTable;
@@ -46,12 +48,8 @@ public class Matchs extends ClasseMiroir {
 
     private ModifiedState state;
 
-    private int idEquipeA;
-    private int idEquipeB;
-    private String nomA;
-    private String nomB;
-    private int scoreA;
-    private int scoreB;
+    private ScoreEquipe seA = new ScoreEquipe();
+    private ScoreEquipe seB = new ScoreEquipe();;
 
     public Matchs() {
         this.ronde = -1;
@@ -72,17 +70,23 @@ public class Matchs extends ClasseMiroir {
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
 
-    private class ScoreEquipe {
+    public class ScoreEquipe {
         public final Score score;
-        public final Equipe equipe;
+        public Equipe equipe;
 
         public ScoreEquipe(Score score, Equipe equipe) {
             this.score = score;
             this.equipe = equipe;
         }
+
+        public ScoreEquipe() {
+            this.equipe = new Equipe();
+            this.score = new Score();
+            score.setIdMatch(getId());
+        }
     }
 
-    private List<ScoreEquipe> retreiveScoreEquipe(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee {
+    private List<ScoreEquipe> retreiveScoreEquipe(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee, NoSuchElementException {
         var scores = retreiveScore(con);
 
         List<ScoreEquipe> list = new ArrayList<>();
@@ -93,7 +97,7 @@ public class Matchs extends ClasseMiroir {
             if (e.isPresent()) {
                 list.add(new ScoreEquipe(each, e.get()));
             } else {
-                throw new EntiteNonSauvegardee();
+                throw new NoSuchElementException("Equipe " + each.getIdEquipe() + " for Score " + each.getId() + " not found for Matchs " + this.getId());
             }
         }
 
@@ -102,7 +106,9 @@ public class Matchs extends ClasseMiroir {
 
     private List<Score> retreiveScore(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee {
         switch (state) {
-            case CREATED, PORCELAINE -> throw new EntiteNonSauvegardee();
+            case CREATED, PORCELAINE -> {
+                throw new EntiteNonSauvegardee();
+            }
         }
 
         var scores = Score.findByMatch(con, super.getId());
@@ -117,7 +123,7 @@ public class Matchs extends ClasseMiroir {
                 scores.add(new Score());
                 return scores;
             }
-            default -> throw new IndexOutOfBoundsException("1 match should have only 2 scores, retrieved " + length);
+            default -> throw new IndexOutOfBoundsException("1 match should have exactly either 2 or 0 scores, retrieved " + length);
         }
     }
 
@@ -130,15 +136,16 @@ public class Matchs extends ClasseMiroir {
     }
     
     public void populate(Connection con) throws SQLException, NoSuchElementException, IndexOutOfBoundsException {
-        if (this.state != ModifiedState.POPULATED) {
-            var list = retreiveScoreEquipe(con);
+        switch (this.state) {
+            case POPULATED, PORCELAINE -> {}
+            default -> {
+                var list = retreiveScoreEquipe(con);
 
-            this.scoreA = list.getFirst().score.getScore();
-            this.scoreB = list.getLast().score.getScore();
-            this.nomA = list.getFirst().equipe.getNom();
-            this.nomB = list.getLast().equipe.getNom();
+                this.seA = list.get(0);
+                this.seB = list.get(1);
 
-            this.state = ModifiedState.POPULATED;
+                this.state = ModifiedState.POPULATED;
+            }
         }
     }
 
@@ -147,51 +154,15 @@ public class Matchs extends ClasseMiroir {
     }
 
     public String getNom() {
-        return nomA + " vs " + nomB;
+        return this.seA.equipe.getNom() + " vs " + this.seB.equipe.getNom();
     }
 
-    public String getNomA() {
-        return nomA;
+    public ScoreEquipe getScoreEquipeA() {
+        return seA;
     }
 
-    public String getNomB() {
-        return nomB;
-    }
-
-    public Integer getScoreA() {
-        return scoreA;
-    }
-
-    public Integer getScoreB() {
-        return scoreB;
-    }
-
-    public void setScoreA(Integer scoreA) {
-        this.state = ModifiedState.DEPTH_EDITED;
-        this.scoreA = scoreA;
-    }
-
-    public void setScoreB(Integer scoreB) {
-        this.state = ModifiedState.DEPTH_EDITED;
-        this.scoreB = scoreB;
-    }
-
-    public int getIdEquipeA() {
-        return idEquipeA;
-    }
-
-    public void setIdEquipeA(int idEquipeA) {
-        this.state = ModifiedState.DEPTH_EDITED;
-        this.idEquipeA = idEquipeA;
-    }
-
-    public int getIdEquipeB() {
-        return idEquipeB;
-    }
-
-    public void setIdEquipeB(int idEquipeB) {
-        this.state = ModifiedState.DEPTH_EDITED;
-        this.idEquipeB = idEquipeB;
+    public ScoreEquipe getScoreEquipeB() {
+        return seB;
     }
 
     public int getRonde() {
@@ -213,44 +184,51 @@ public class Matchs extends ClasseMiroir {
         return st;
     }
 
+    @Override
+    protected void afterSavedInDB(Connection con) throws SQLException {
+        this.state = ModifiedState.DEPTH_EDITED;
+        this.seA.score.setIdMatch(this.getId());
+        this.seB.score.setIdMatch(this.getId());
+        NotificationError.show("Set seA/B idMatch " + this.getId());
+        this.update(con);
+    }
+
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee, IndexOutOfBoundsException {
+        if (this.getId() == ClasseMiroir.ID_UNSAVED)
+            throw new EntiteNonSauvegardee();
+
         switch (this.state) {
             case CREATED, PORCELAINE -> throw new EntiteNonSauvegardee();
-            case NORMAL, POPULATED -> {}
-            case EDITED -> {
+
+            case EDITED, NORMAL, POPULATED, DEPTH_EDITED -> {
                 var st = con.prepareStatement("update matchs set ronde = ? where id = ?");
                 st.setInt(1, ronde);
                 st.setInt(2, super.getId());
-            }
-            case DEPTH_EDITED -> {
-                var list = retreiveScore(con);
 
-                var sa = list.getFirst();
-                sa.setScore(this.scoreA);
-                sa.setIdEquipe(this.idEquipeA);
+                this.seA.score.setIdEquipe(this.seA.equipe.getId());
+                this.seB.score.setIdEquipe(this.seB.equipe.getId());
 
-                var sb = list.getLast();
-                sb.setScore(this.scoreA);
-                sb.setIdEquipe(this.idEquipeA);
+                this.seA.equipe.updateOrNew(con);
+                this.seB.equipe.updateOrNew(con);
 
-                for (var each: list) {
-                    each.update(con);
-                }
+                this.seA.score.updateOrNew(con);
+                this.seB.score.updateOrNew(con);
             }
         }
+
+        this.state = ModifiedState.NORMAL;
     }
     
     private static List<Matchs> fromResultSetToList(ResultSet list) throws SQLException {
         List<Matchs> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Matchs(list.getInt("ronde")));
+            res.add(new Matchs(list.getInt("id"), list.getInt("ronde")));
         }
         return res; 
     }
     
     public static List<Matchs> tousLesMatchs(Connection con) throws SQLException {
-        List<Matchs> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select ronde from matchs")) {
+        try (PreparedStatement pst = con.prepareStatement("select id, ronde from matchs")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -258,15 +236,13 @@ public class Matchs extends ClasseMiroir {
     }
     
     public static Optional<Matchs> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select ronde from score where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select ronde from matchs where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
             if (res.next()) {
-                int score = res.getInt(2);
-                int idEquipeA = res.getInt(3);
-                int idEquipeB = res.getInt(4);
-                return Optional.of(new Matchs(id, score));
+                int ronde = res.getInt(2);
+                return Optional.of(new Matchs(id, ronde));
             } else {
                 return Optional.empty();
             }

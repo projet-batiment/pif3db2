@@ -81,7 +81,7 @@ public class EquipeEditor extends Editor<Equipe> {
     }
 
     public EquipeEditor() {
-        nouveau = new Equipe(Equipe.ID_PORCELENE, "Nouveau...");
+        nouveau = new Equipe(Equipe.ID_PORCELAINE, "Nouveau...");
 
         super.setHeaderTitle("Apperçu de l'équipe");
 

@@ -49,7 +49,7 @@ public class ScoreSpecific extends VerticalLayout implements HasUrlParameter<Int
     private TextField idEquipe;
     private TextField idMatch;
 
-    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELENE, 5, -2, -2);
+    private final static Score nouveau = new Score(ClasseMiroir.ID_PORCELAINE, 5, -2, -2);
 
     @Override
     public void setParameter(BeforeEvent be, @OptionalParameter Integer id) {

@@ -38,7 +38,6 @@ import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
 import fr.insa.toto.webui.joueur.ParentJoueur;
-import fr.insa.toto.webui.joueur.ParentJoueurOld;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
