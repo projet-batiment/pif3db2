@@ -88,7 +88,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
     @Override
     protected void onSaved() {
-        Notification.show("Le tournois " + object.getNom()+ " a bien été sauvegardé");
+        Notification.show("Le tournoi " + object.getNom()+ " a bien été sauvegardé");
     }
 
     @Override
@@ -99,7 +99,7 @@ public class TournoisEditor extends Editor<Tournois> {
     public TournoisEditor() {
         nouveau = new Tournois(Tournois.ID_PORCELENE, "Nouveau...", 0);
 
-        super.setHeaderTitle("Apperçu du tournois");
+        super.setHeaderTitle("Aperçu du tournois");
 
         super.setSelectItemLabelGenerator(Tournois::getNom);
         super.setSelectLabel("Tournois");
