@@ -37,7 +37,7 @@ import fr.insa.toto.model.Equipe;
 import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
-import fr.insa.toto.webui.joueur.ParentJoueur;
+import fr.insa.toto.webui.parentChild.ParentJoueur;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -53,6 +53,8 @@ public class EquipeJoueur extends ParentJoueur implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         int id = Integer.parseInt(event.getRouteParameters().get("equipeId").get());
+
+        event.getUI().getPage().fetchCurrentURL(u -> NotificationError.show("joueur " + u));
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.equipe = Equipe.findById(con, id).get();

@@ -16,13 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.joueur;
+package fr.insa.toto.webui.parentChild;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.function.ValueProvider;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
@@ -31,6 +32,7 @@ import fr.insa.toto.model.Named;
 import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.Editor;
+import fr.insa.toto.webui.HandyButtons;
 import fr.insa.toto.webui.NotificationError;
 import fr.insa.toto.webui.Utils;
 import java.sql.Connection;
@@ -44,6 +46,7 @@ import java.util.NoSuchElementException;
 public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extends VerticalLayout {
     private ParentFace<ChildType> parent;
     private Grid<ChildType> grid;
+    private Editor<ChildType> editor;
 
     private H2 title;
 
@@ -53,6 +56,19 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         } else {
             this.parent = parent;
             title.setText(Utils.capitalizeFirst(this.parent.lesChildrenDuParentName()));
+
+            var bNew = new Button("Ajouter...");
+            bNew.addClickListener(t -> {
+                editor.open(null);
+            });
+            this.addColumn(new ComponentRenderer<>(each ->
+                new HandyButtons(
+                    this.parent,
+                    each,
+                    editor,
+                    () -> this.updateGridList()
+                )
+            )).setHeader(bNew);
 
             this.updateGridList();
         }
@@ -106,5 +122,9 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
 
     public ParentFace<ChildType> getParentFace() {
         return parent;
+    }
+
+    protected void setEditor(Editor<ChildType> editor) {
+        this.editor = editor;
     }
 }

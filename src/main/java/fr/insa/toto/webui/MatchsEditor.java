@@ -20,40 +20,36 @@ package fr.insa.toto.webui;
 
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
-import fr.insa.beuvron.utils.database.ClasseMiroir;
-import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.utils.ModifiedState;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author elio
  */
-public class MatchsEditor extends EditorOld {
-    private Select<Matchs> select;
-    private Matchs matchs;
-
+public class MatchsEditor extends Editor<Matchs> {
     private TextField ronde;
     private Select<Equipe> equipeA;
     private Select<Equipe> equipeB;
     private TextField scoreA;
     private TextField scoreB;
 
-    // Toujours appeler setMatchs depuis select.setValue !!
-    private void setMatchs(Matchs matchs) {
-        if (matchs == Matchs.PORCELAINE) {
-            this.matchs = new Matchs();
-        } else {
-            this.matchs = matchs;
-        }
+    @Override
+    protected Matchs newObject() {
+        return new Matchs();
+    }
 
-        if (matchs == null || matchs == Matchs.PORCELAINE) {
+    protected void setObject() {
+        if (this.object == null || this.object == Matchs.PORCELAINE) {
             super.setEnabled(false);
 
             this.equipeA.setValue(null);
@@ -64,71 +60,52 @@ public class MatchsEditor extends EditorOld {
         } else {
             super.setEnabled(true);
 
-            this.equipeA.setValue(null);
-            this.equipeB.setValue(null);
-            this.ronde.setValue("" + this.matchs.getRonde());
-            this.scoreA.setValue("" + this.matchs.getScoreEquipeA().score.getScore());
-            this.scoreB.setValue("" + this.matchs.getScoreEquipeB().score.getScore());
+            this.equipeA.setValue(this.object.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? null : this.object.getScoreEquipeA().equipe);
+            this.equipeB.setValue(this.object.getScoreEquipeB().equipe.getState() == ModifiedState.CREATED ? null : this.object.getScoreEquipeB().equipe);
+            this.ronde.setValue("" + this.object.getRonde());
+            this.scoreA.setValue("" + this.object.getScoreEquipeA().score.getScore());
+            this.scoreB.setValue("" + this.object.getScoreEquipeB().score.getScore());
         }
 
-        if (matchs == null) {
+        if (this.object == null) {
             this.ronde.setEnabled(false);
+            this.equipeA.setEnabled(false);
+            this.equipeB.setEnabled(false);
             this.scoreA.setEnabled(false);
             this.scoreB.setEnabled(false);
         } else {
             this.ronde.setEnabled(true);
+            this.equipeA.setEnabled(true);
+            this.equipeB.setEnabled(true);
             this.scoreA.setEnabled(true);
             this.scoreB.setEnabled(true);
         }
     }
 
-    public void open(Matchs matchs) {
-        try (var con = ConnectionPool.getConnection()) {
-            var list = Matchs.tousLesMatchs(con);
-            list.forEach(e -> {
-                try {
-                    e.populate(con);
-                } catch (SQLException ex) {
-                    NotificationError.sql(ex);
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du tournois " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
-                }
-            });
-
-            Notification.show("TODO: ajouter un updateListMatchs ici pour après save");
-
-            list.add(Matchs.PORCELAINE);
-
-            select.setItems(list);
-            select.setValue(matchs == null ? Matchs.PORCELAINE : matchs);
-
-            var equipes = Equipe.toutesLesEquipes(con);
-            equipeA.setItems(equipes);
-            equipeB.setItems(equipes);
-
-            if (matchs == null) {
-                select.setValue(Matchs.PORCELAINE);
-            } else {
-                try {
-                    matchs.populate(con);
-                } catch (SQLException ex) {
-                    NotificationError.sql(ex);
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du tournois à éditer (" + matchs.getId() + ") n'a pas été trouvé dans la base de données : " + ex.getMessage());
-                }
-                select.setValue(this.matchs);
-                equipeA.setValue(this.matchs.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? null : this.matchs.getScoreEquipeA().equipe);
-                equipeB.setValue(this.matchs.getScoreEquipeB().equipe.getState() == ModifiedState.CREATED ? null : this.matchs.getScoreEquipeB().equipe);
+    @Override
+    protected List<Matchs> openObject(Connection con) throws SQLException {
+        var list = Matchs.tousLesMatchs(con);
+        list.forEach(e -> {
+            try {
+                e.populate(con);
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("L'un des éléments du matchs " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
+        });
 
-            super.open();
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
+        Notification.show("TODO: ajouter un updateListMatchs ici pour après save");
+
+        var equipes = Equipe.toutesLesEquipes(con);
+        equipeA.setItems(equipes);
+        equipeB.setItems(equipes);
+
+        return list;
     }
 
-    public ClasseMiroir compile() {
-        if (this.matchs == null) return null;
+    public Matchs compile() {
+        if (this.object == null) return null;
 
         if (this.equipeA.getValue() == null) {
             Notification.show("Il manque l'équipe A");
@@ -148,41 +125,39 @@ public class MatchsEditor extends EditorOld {
             return null;
         }
 
-        this.matchs.getScoreEquipeA().equipe = this.equipeA.getValue();
-        this.matchs.getScoreEquipeB().equipe = this.equipeB.getValue();
-        this.matchs.getScoreEquipeA().score.setScore(Integer.parseInt(this.scoreA.getValue()));
-        this.matchs.getScoreEquipeB().score.setScore(Integer.parseInt(this.scoreB.getValue()));
+        this.object.getScoreEquipeA().equipe = this.equipeA.getValue();
+        this.object.getScoreEquipeB().equipe = this.equipeB.getValue();
+        this.object.getScoreEquipeA().score.setScore(Integer.parseInt(this.scoreA.getValue()));
+        this.object.getScoreEquipeB().score.setScore(Integer.parseInt(this.scoreB.getValue()));
 
-        this.matchs.setRonde(Integer.parseInt(ronde.getValue()));
+        this.object.setRonde(Integer.parseInt(ronde.getValue()));
 
-        return (ClasseMiroir)this.matchs;
+        return this.object;
+    }
+
+    @Override
+    protected void onSaved() {
+        Notification.show("Le match " + object.getName()+ " a bien été sauvegardé");
+    }
+
+    @Override
+    protected String generatedUrl() {
+        return "match/" + this.object.getId();
     }
 
     public MatchsEditor() {
+        nouveau = Matchs.PORCELAINE;
+
         super.setHeaderTitle("Apperçu du match");
 
-        super.addSavedCallback(() -> {
-            this.select.setValue(this.matchs);
-            Notification.show("Le match " + this.matchs.getNom() + " a bien été sauvegardé");
-        });
-        super.setOpenBoardCallback(() -> {
-            if (this.matchs != null) {
-                this.getUI().ifPresent(ui -> ui.navigate("match/" + matchs.getId()));
-                this.close();
-            }
-        });
-
-        select = new Select<>();
-        select.setItemLabelGenerator(t -> {
+        super.setSelectItemLabelGenerator(t -> {
             if (t == Matchs.PORCELAINE) {
                 return "Nouveau match...";
             } else {
-                return t.getNom();
+                return t.getName();
             }
         });
-        select.setPlaceholder("Choisir un match...");
-        select.addValueChangeListener(t -> this.setMatchs(t.getValue()));
-        select.setLabel("Match");
+        super.setSelectLabel("Matchs");
 
         ronde = new TextField();
         ronde.setLabel("Ronde");
@@ -193,8 +168,8 @@ public class MatchsEditor extends EditorOld {
         equipeA.setItemLabelGenerator(Equipe::getNom);
         equipeA.setPlaceholder("Choisir une équipe...");
         equipeA.addValueChangeListener(t -> {
-            if (this.matchs != null)
-                this.matchs.getScoreEquipeA().equipe = t.getValue();
+            if (this.object != null)
+                this.object.getScoreEquipeA().equipe = t.getValue();
         });
         equipeA.setLabel("Équipe A");
 
@@ -202,8 +177,8 @@ public class MatchsEditor extends EditorOld {
         equipeB.setItemLabelGenerator(Equipe::getNom);
         equipeB.setPlaceholder("Choisir une équipe...");
         equipeB.addValueChangeListener(t -> {
-            if (this.matchs != null)
-                this.matchs.getScoreEquipeB().equipe = t.getValue();
+            if (this.object != null)
+                this.object.getScoreEquipeB().equipe = t.getValue();
         });
         equipeB.setLabel("Équipe B");
 
@@ -215,10 +190,10 @@ public class MatchsEditor extends EditorOld {
         scoreB.setLabel("Score de B");
         scoreB.setAllowedCharPattern("[0-9]");
 
-        super.add(new VerticalLayout(
-                new HorizontalLayout(select, ronde),
+        super.addChildren(
+                ronde,
                 new HorizontalLayout(equipeA, scoreA),
                 new HorizontalLayout(equipeB, scoreB)
-        ));
+        );
     }
 }

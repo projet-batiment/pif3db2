@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.joueur;
+package fr.insa.toto.webui.parentChild;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -36,6 +36,8 @@ import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.DialogDelete;
+import fr.insa.toto.webui.DialogDeleteChild;
+import fr.insa.toto.webui.HandyButtons;
 import fr.insa.toto.webui.JoueurEditor;
 import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
@@ -58,27 +60,16 @@ public abstract class ParentJoueur extends ParentChild<Joueur> {
                 NotificationError.sql(ex);
             }
         });
-
-        var bNew = new Button("Ajouter...");
-        bNew.addClickListener(t -> {
-            joueurEditor.open(null);
+        joueurEditor.setOnDeletedCallback(j -> {
+            new DialogDeleteChild<Joueur>(super.getParentFace(), j, () -> {
+                super.updateGridList();
+                NotificationError.show("DELETED DONE");
+            }).open();
         });
+        super.setEditor(joueurEditor);
 
         super.addColumn(Joueur::getSurnom).setHeader("Surnom");
-        super.addColumn(t -> "TODO").setHeader("Autres ... ...");
-        super.addColumn(new ComponentRenderer<>(joueur -> {
-            Button bEdit = new Button("Afficher");
-            bEdit.addClickListener(e -> {
-                joueurEditor.open(joueur);
-            });
-
-            Button bDelete = new Button("Supprimer");
-            bDelete.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            bDelete.addClickListener(e -> 
-                super.deleteDialog(joueur)
-            );
-
-            return new HorizontalLayout(bEdit, bDelete);
-        })).setHeader(bNew);
+        super.addColumn(Joueur::getCategorie).setHeader("Catégorie");
+        super.addColumn(Joueur::getTaillecm).setHeader("Taille (cm)");
     }
 }

@@ -21,6 +21,7 @@ package fr.insa.toto.model;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.toto.webui.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,7 +37,7 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class Matchs extends ClasseMiroir {
+public class Matchs extends ClasseMiroir implements Named {
     private int ronde;
 
     public final static Matchs PORCELAINE = new Matchs(ClasseMiroir.ID_PORCELAINE, 0);
@@ -85,6 +86,24 @@ public class Matchs extends ClasseMiroir {
             score.setIdMatch(getId());
         }
     }
+
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return "match";
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "le ";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "du ";
+        }
+    }
+    
 
     private List<ScoreEquipe> retreiveScoreEquipe(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee, NoSuchElementException {
         var scores = retreiveScore(con);
@@ -153,7 +172,7 @@ public class Matchs extends ClasseMiroir {
         return state;
     }
 
-    public String getNom() {
+    public String getName() {
         return this.seA.equipe.getNom() + " vs " + this.seB.equipe.getNom();
     }
 

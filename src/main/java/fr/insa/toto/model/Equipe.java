@@ -124,6 +124,64 @@ public class Equipe extends ClasseMiroir {
         }
     }
 
+    public final MatchsParent matchss = new MatchsParent();
+    private class MatchsParent extends ParentFace<Matchs> {
+        @Override
+        public String parentObjectName() {
+            return getNom();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "équipe";
+        }
+
+        @Override
+        public String le() {
+            return "l'";
+        }
+
+        @Override
+        public String du() {
+            return "de l'";
+        }
+
+        @Override
+        public int add(Matchs matchs, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            throw new SQLException("equipe/add/matchs: not implemented yet");
+        }
+
+        @Override
+        public void remove(Matchs matchs, Connection con) throws SQLException, EntiteNonSauvegardee {
+            throw new SQLException("equipe/remove/matchs: not implemented yet");
+        }
+
+        @Override
+        public List<Matchs> get(Connection con) throws SQLException {
+            return Matchs
+                    .tousLesMatchs(con)
+                    .stream()
+                    .collect(Collector.of(
+                            ArrayList::new, 
+                            (out, each) -> {
+                                if (each.getScoreEquipeA().equipe.equals(this))
+                                    out.add(each);
+                                else if (each.getScoreEquipeB().equipe.equals(this))
+                                    out.add(each);
+                            },
+                            (out, next) -> {
+                                out.addAll(next);
+                                return out;
+                            },
+                            Collector.Characteristics.UNORDERED)
+                    );
+        }
+
+        public MatchsParent() {
+            super(new Matchs.AsChild());
+        }
+    }
+
     private static final String nomTable = "equipe";
     protected final String nomTable() {
         return this.nomTable;

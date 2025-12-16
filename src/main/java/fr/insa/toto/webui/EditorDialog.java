@@ -54,7 +54,10 @@ public abstract class EditorDialog extends Dialog {
         this.close.addClickListener(e -> super.close());
         this.close.getStyle().set("margin-right", "auto");
         this.delete.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
-        this.delete.addClickListener(e -> this.exec(doDeleteCallback));
+        this.delete.addClickListener(e -> {
+            this.exec(doDeleteCallback);
+            super.close();
+        });
         this.apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         this.apply.addClickListener(e -> this.exec(doSaveCallback));
 

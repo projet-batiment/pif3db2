@@ -1,0 +1,44 @@
+/*
+Copyright 2000- Francois de Bertrand de Beuvron
+
+This file is part of CoursBeuvron.
+
+CoursBeuvron is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+CoursBeuvron is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package fr.insa.toto.webui;
+
+import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Named;
+import fr.insa.toto.model.utils.ParentFace;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+/**
+ *
+ * @author elio
+ */
+public class DialogDeleteChild<ChildType extends ClasseMiroir & Named> extends DialogDelete {
+    public DialogDeleteChild(ParentFace parent, ChildType child, Runnable onRemoved) {
+        super(parent.leChildDuParentName(), () -> {
+            try (Connection con = ConnectionPool.getConnection()) {
+                parent.remove(child, con);
+                NotificationError.show(parent.child.leChild() + " a bien été supprimé(e) " + parent.duParentName());
+                onRemoved.run();
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            }
+        });
+    }
+}
