@@ -77,7 +77,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
     public TournoisLayout() {
         select = new Select<>();
         select.setItemLabelGenerator(Tournois::getNom);
-        select.setPlaceholder("Choisir un tournois...");
+        select.setPlaceholder("Choisir un tournoi...");
         select.addValueChangeListener(t -> {
             if (t.getValue() != null) {
                 this.tournoisId = t.getValue().getId();

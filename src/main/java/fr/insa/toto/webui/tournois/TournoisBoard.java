@@ -18,8 +18,12 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
+import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
@@ -38,25 +42,37 @@ import java.util.NoSuchElementException;
 public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver {
     private Tournois tournois;
     private H2 title;
-
+    private VerticalLayout NomTournoi;
+    private VerticalLayout NombreRondes;
+    private Text nom;
+    private Text nombreRondes;
+    
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         int id = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
-
         try (Connection con = ConnectionPool.getConnection()) {
             this.tournois = Tournois.findById(con, id).get();
-            title.setText("Tableau de bord : tournois " + tournois.getNom());
 
+            this.nom.setText(tournois.getNom());
+            this.nombreRondes.setText(String.valueOf(tournois.getNombreRondes()));
+            this.NomTournoi.add(nom);
+            this.NombreRondes.add(nombreRondes);
+            
         } catch (SQLException ex) {
             NotificationError.sql(ex);
         } catch (NoSuchElementException ex) {
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
         }
     }
-
+    
     public TournoisBoard() {
         this.title = new H2("Tableau de bord : tournois");
-
+        nom = new Text("temp");
+        nombreRondes = new Text("temp");
+        this.NomTournoi = new VerticalLayout(new H2("Nom du tournoi"));
+        this.NombreRondes = new VerticalLayout(new H2("Nombre de rondes"));
         this.add(title);
+        this.add(NomTournoi);
+        this.add(NombreRondes);
     }
 }
