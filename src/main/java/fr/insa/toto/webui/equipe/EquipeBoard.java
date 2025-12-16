@@ -42,7 +42,7 @@ import java.util.NoSuchElementException;
  *
  * @author qleveque01
  */
-@Route(value = "equipe/:equipeId([0-9]*)", layout = TournoisLayout.class)
+@Route(value = "equipe/:equipeId([0-9]*)", layout = EquipeLayout.class)
 public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
     private Equipe equipe;
     private H2 title;
