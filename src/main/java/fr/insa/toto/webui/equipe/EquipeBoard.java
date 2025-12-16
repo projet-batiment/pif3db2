@@ -20,7 +20,9 @@ package fr.insa.toto.webui.equipe;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -29,11 +31,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.DialogDelete;
 import fr.insa.toto.webui.NotificationError;
-import fr.insa.toto.webui.tournois.TournoisEditor;
-import fr.insa.toto.webui.tournois.TournoisLayout;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -46,6 +45,7 @@ import java.util.NoSuchElementException;
 public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
     private Equipe equipe;
     private H2 title;
+    private Grid<EquipeStats> grid;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -53,8 +53,10 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.equipe = Equipe.findById(con, id).get();
+            grid.setItems(EquipeStats.findStatsForGrid(this.equipe.getId()));
             title.setText("Équipes " + equipe.getNom());
             title.setText("Tableau de bord : équipe " + equipe.getNom());
+            
 
         } catch (SQLException ex) {
             NotificationError.sql(ex);
@@ -75,7 +77,7 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
     }
 
     public EquipeBoard() {
-        this.title = new H2("Tableau de bord : équipe");
+        this.title = new H2("Tableau de bord : Equipe");
         var equipeEditor = new EquipeEditor();
 
         this.add(title);
@@ -89,6 +91,18 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
                 equipeEditor.open(this.equipe);
             }); 
         this.add(new HorizontalLayout(bEdit, bDelete));
+        this.add(new H3("Statistiques détaillées"));
+        this.grid = new Grid<>();
+        grid.addColumn(EquipeStats::getNombreDeMatchs).setHeader("Nombre de matchs");
+        grid.addColumn(EquipeStats::getVictoires).setHeader("Victoires");
+        grid.addColumn(EquipeStats::getDefaites).setHeader("Défaites");
+        grid.addColumn(EquipeStats::getNuls).setHeader("Nuls");
+        grid.addColumn(EquipeStats::getButsInscrits).setHeader("Score +");
+        grid.addColumn(EquipeStats::getButsEncaisses).setHeader("Score -");
+        grid.addColumn(EquipeStats::getDifferenceDeButs).setHeader("Différence");
+        
+        grid.setWidthFull();
+        add(grid);
     }
 }
 
