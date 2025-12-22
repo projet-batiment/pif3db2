@@ -1,0 +1,166 @@
+/*
+Copyright 2000- Francois de Bertrand de Beuvron
+
+This file is part of CoursBeuvron.
+
+CoursBeuvron is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+CoursBeuvron is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package fr.insa.toto.model;
+
+import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.model.utils.Named;
+import fr.insa.toto.webui.utils.NotificationError;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ *
+ * @author elio
+ */
+public class Ronde extends ClasseMiroir implements Named {
+    private int idTournois;
+    private int numero;
+    private boolean enCours;
+
+    private static final String nomTable = "ronde";
+    protected final String nomTable() {
+        return this.nomTable;
+    }
+
+    @Override
+    public String getName() {
+        return this.nomTable();
+    }
+
+    public Ronde(int id, int idTournois, int numero, boolean enCours) {
+        super(id);
+        this.enCours = enCours;
+        this.idTournois = idTournois;
+        this.numero = numero;
+    }
+
+    public Ronde(int idTournois, int numero, boolean enCours) {
+        this.enCours = enCours;
+        this.idTournois = idTournois;
+        this.numero = numero;
+    }
+
+    public Ronde() {
+        this.enCours = false;
+        this.idTournois = ClasseMiroir.ID_UNSAVED;
+        this.numero = 1;
+    }
+
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return nomTable;
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "la ";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "de la ";
+        }
+    }
+
+    public int getIdTournois() {
+        return idTournois;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public void setNumero(int numero) {
+        this.numero = numero;
+    }
+
+    public boolean isEnCours() {
+        return enCours;
+    }
+
+    public void setEnCours(boolean enCours) {
+        this.enCours = enCours;
+    }
+
+    @Override
+    protected Statement saveSansId(Connection con) throws SQLException {
+        var st = con.prepareStatement("insert into ronde (idTournois, numero, enCours) values (?, ?, ?)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
+        st.setInt(1, idTournois);
+        st.setInt(2, numero);
+        st.setBoolean(3, enCours);
+        
+        st.executeUpdate();
+        return st;
+    }
+
+    public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
+        if (super.getId() == -1) {
+            throw new EntiteNonSauvegardee();
+        }
+
+        var st = con.prepareStatement("update ronde set idTournois = ?, numero = ?, enCours = ? where id = ?");
+        st.setInt(1, idTournois);
+        st.setInt(2, numero);
+        st.setBoolean(3, enCours);
+        st.setInt(4, super.getId());
+
+        st.executeUpdate();
+    }
+
+    private static List<Ronde> fromResultSetToList(ResultSet list) throws SQLException {
+        List<Ronde> res = new ArrayList<>();
+        while (list.next()) {
+            res.add(new Ronde(list.getInt("id"), list.getInt("idTournois"), list.getInt("numero"), list.getBoolean("enCours")));
+        }
+        return res; 
+    }
+        
+    public static List<Ronde> toutesLesRondes(Connection con) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idTournois,numero,enCours from ronde")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+        
+    public static Optional<Ronde> findById(Connection con, int id) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select idTournois,numero,enCours from ronde where id=?")) {
+            pst.setInt(1, id);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                int idTournois = res.getInt("idTournois");
+                int numero = res.getInt("numero");
+                boolean enCours = res.getBoolean("enCours");
+                return Optional.of(new Ronde(id, idTournois, numero, enCours));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+}

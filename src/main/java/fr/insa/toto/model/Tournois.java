@@ -183,6 +183,55 @@ public class Tournois extends ClasseMiroir {
         }
     }
 
+    public final RondeParent rondes = new RondeParent();
+    private class RondeParent extends ParentFace<Ronde> {
+        @Override
+        public String parentObjectName() {
+            return getNom();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return nomTable();
+        }
+
+        @Override
+        public String le() {
+            return "le ";
+        }
+
+        @Override
+        public String du() {
+            return "du ";
+        }
+
+        @Override
+        public int add(Ronde match, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            // TODO
+            // pour l'instant, les ronde ne sont pas assignés aux tournois
+            return match.getId();
+        }
+
+        @Override
+        public void remove(Ronde match, Connection con) throws SQLException, EntiteNonSauvegardee {
+            // TODO
+            // pour l'instant, les ronde ne sont pas assignés aux tournois
+            match.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Ronde> get(Connection con) throws SQLException {
+            // TODO
+            // pour l'instant, les ronde ne sont pas assignés aux tournois
+            var list = Ronde.toutesLesRondes(con);
+            return list;
+        }
+
+        public RondeParent() {
+            super(new Ronde.AsChild());
+        }
+    }
+
     private static final String nomTable = "tournois";
     protected final String nomTable() {
         return this.nomTable;

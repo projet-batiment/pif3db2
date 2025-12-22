@@ -63,7 +63,7 @@ public class ConnectionPool {
         config.setJdbcUrl("jdbc:mysql://92.222.25.165:3306/m3_epoletti01");
         config.setUsername("m3_epoletti01");
         config.setPassword("6f46222e");
-        config.setMaximumPoolSize(2);
+        config.setMaximumPoolSize(10);
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("useServerPrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");

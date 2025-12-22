@@ -67,22 +67,68 @@ public class GestionSchema {
         /**
          * holds the info about an sql constraint
          */
-        static class ConstraintSkeleton implements DeleteSkeleton {
-
+        static abstract class ConstraintSkeleton implements DeleteSkeleton {
             private String name;
-            private TableSkeleton borrower;
+            protected TableSkeleton table;
+
+            public ConstraintSkeleton(TableSkeleton table, String name) {
+                this.table = table;
+                this.name = name;
+            }
+
+            /**
+             * generate the constraint creation string based on the contents
+             *
+             * @return
+             */
+            protected abstract String createStringSpecific();
+            public final String createString() {
+                return String.join(" ", new String[]{
+                        "ALTER TABLE",
+                        this.table.name,
+                        "ADD CONSTRAINT",
+                        this.name,
+                        this.createStringSpecific()
+                    }
+                );
+            }
+
+            @Override
+            public final String deleteString() {
+                return String.join(" ", new String[]{
+                    "ALTER TABLE",
+                    this.table.name,
+                    "DROP CONSTRAINT",
+                    this.name,
+                });
+            }
+
+            public final String getName() {
+                return this.name;
+            }
+        }
+
+        /**
+         * holds the info about an sql borrow constraint
+         */
+        static class BorrowConstraintSkeleton extends ConstraintSkeleton {
+
             private TableSkeleton lender;
             private ColumnSkeleton borrowed;
             private ColumnSkeleton lended;
 
-            public ConstraintSkeleton(TableSkeleton borrower, TableSkeleton lender, ColumnSkeleton borrowed, ColumnSkeleton lended) {
-                this.name = String.join("_", new String[]{
-                    "CONSTRAINT",
-                    borrower.name,
-                    "FROM",
-                    lender.name,}
+            public BorrowConstraintSkeleton(TableSkeleton borrower, TableSkeleton lender, ColumnSkeleton borrowed, ColumnSkeleton lended) {
+                super(
+                    borrower,
+                    String.join("_", new String[]{
+                            "CONSTRAINT",
+                            borrower.name,
+                            "FROM",
+                            lender.name,
+                        }
+                    )
                 );
-                this.borrower = borrower;
+
                 this.lender = lender;
                 this.borrowed = borrowed;
                 this.lended = lended;
@@ -93,32 +139,53 @@ public class GestionSchema {
              *
              * @return
              */
-            public String createString() {
+            public String createStringSpecific() {
                 return String.join(" ", new String[]{
-                    "ALTER TABLE",
-                    this.borrower.name,
-                    "ADD CONSTRAINT",
-                    this.name,
-                    "FOREIGN KEY",
-                    "(" + this.borrowed.name + ")",
-                    "REFERENCES",
-                    this.lender.name,
-                    "(" + this.lended.name + ")",}
+                        "FOREIGN KEY",
+                        "(" + this.borrowed.name + ")",
+                        "REFERENCES",
+                        this.lender.name,
+                        "(" + this.lended.name + ")",
+                    }
                 );
             }
+        }
 
-            @Override
-            public String deleteString() {
-                return String.join(" ", new String[]{
-                    "ALTER TABLE",
-                    this.borrower.name,
-                    "DROP CONSTRAINT",
-                    this.name,
-                });
+        /**
+         * holds the info about an sql unique constraint
+         */
+        static class UniqueConstraintSkeleton extends ConstraintSkeleton {
+
+            private ColumnSkeleton[] columns;
+
+            public UniqueConstraintSkeleton(TableSkeleton table, ColumnSkeleton[] columns) {
+                super(
+                    table,
+                    String.join("_", new String[]{
+                            "CONSTRAINT",
+                            table.name,
+                            "UNIQUE",
+                            String.join("_", Arrays.stream(columns).map(each -> each.name).collect(Collectors.toList())),
+                        }
+                    )
+                );
+
+                this.columns = columns;
             }
 
-            public String getName() {
-                return name;
+            /**
+             * generate the constraint creation string based on the contents
+             *
+             * @return
+             */
+            public String createStringSpecific() {
+                return String.join(" ", new String[]{
+                        "UNIQUE",
+                        "(", 
+                        String.join(", ", Arrays.stream(this.columns).map(each -> each.name).collect(Collectors.toList())),
+                         ")",
+                    }
+                );
             }
         }
 
@@ -129,7 +196,7 @@ public class GestionSchema {
 
             private String name;
             private ColumnSkeleton[] columns;
-            private List<ConstraintSkeleton> constraints;
+            private List<BorrowConstraintSkeleton> constraints;
 
             private static String idString;
 
@@ -192,7 +259,9 @@ public class GestionSchema {
             public enum SQLType {
                 INTEGER("INTEGER"),
                 FLOAT("FLOAT"),
-                VARCHAR("VARCHAR");
+                VARCHAR("VARCHAR"),
+                BOOL("BIT"),
+                ;
 
                 private final String name;
 
@@ -346,6 +415,26 @@ public class GestionSchema {
                 Beton.ColumnSkeleton.SQLType.INTEGER
         );
 
+        var rondesIdTournois = new Beton.ColumnSkeleton(
+                "idTournois",
+                Beton.ColumnSkeleton.SQLType.INTEGER
+        );
+
+        var rondesEnCours = new Beton.ColumnSkeleton(
+                "enCours",
+                Beton.ColumnSkeleton.SQLType.BOOL
+        );
+
+        var rondesNumero = new Beton.ColumnSkeleton(
+                "numero",
+                Beton.ColumnSkeleton.SQLType.INTEGER
+        );
+
+        var matchsIdRonde = new Beton.ColumnSkeleton(
+                "idRonde",
+                Beton.ColumnSkeleton.SQLType.INTEGER
+        );
+
         /// tables and unshared columns
 
         Beton.TableSkeleton tournois = new Beton.TableSkeleton(
@@ -385,10 +474,20 @@ public class GestionSchema {
         Beton.TableSkeleton matchs = new Beton.TableSkeleton(
                 "matchs",
                 new Beton.ColumnSkeleton[]{
+                    matchsIdRonde,
                     new Beton.ColumnSkeleton(
                             "ronde",
                             Beton.ColumnSkeleton.SQLType.INTEGER
                     ),}
+        );
+
+        Beton.TableSkeleton ronde = new Beton.TableSkeleton(
+                "ronde",
+                new Beton.ColumnSkeleton[]{
+                    rondesIdTournois,
+                    rondesNumero,
+                    rondesEnCours,
+                }
         );
 
         Beton.TableSkeleton equipe = new Beton.TableSkeleton(
@@ -424,25 +523,41 @@ public class GestionSchema {
 
         /// constraints
 
-        Beton.ConstraintSkeleton ctrScoreMatch = new Beton.ConstraintSkeleton(
+        Beton.BorrowConstraintSkeleton ctrScoreMatch = new Beton.BorrowConstraintSkeleton(
                 score,
                 matchs,
                 scoreIdMatch,
                 Beton.ColumnSkeleton.id
         );
 
-        Beton.ConstraintSkeleton ctrCompositionEquipe = new Beton.ConstraintSkeleton(
+        Beton.BorrowConstraintSkeleton ctrCompositionEquipe = new Beton.BorrowConstraintSkeleton(
                 composition,
                 equipe,
                 compositionIdEquipe,
                 Beton.ColumnSkeleton.id
         );
 
-        Beton.ConstraintSkeleton ctrCompositionJoueur = new Beton.ConstraintSkeleton(
+        Beton.BorrowConstraintSkeleton ctrCompositionJoueur = new Beton.BorrowConstraintSkeleton(
                 composition,
                 joueur,
                 compositionIdJoueur,
                 Beton.ColumnSkeleton.id
+        );
+
+        Beton.UniqueConstraintSkeleton ctrRondeTournois = new Beton.UniqueConstraintSkeleton(
+                ronde,
+                new Beton.ColumnSkeleton[]{
+                    rondesIdTournois,
+                    rondesNumero,
+                }
+        );
+
+        Beton.UniqueConstraintSkeleton ctrRondeEnCours = new Beton.UniqueConstraintSkeleton(
+                ronde,
+                new Beton.ColumnSkeleton[]{
+                    rondesIdTournois,
+                    rondesEnCours,
+                }
         );
 
         return new SkeletonList(
@@ -453,12 +568,15 @@ public class GestionSchema {
                 matchs,
                 composition,
                 score,
+                ronde,
             },
 
             new Beton.ConstraintSkeleton[] {
                 ctrScoreMatch,
                 ctrCompositionEquipe,
                 ctrCompositionJoueur,
+                ctrRondeTournois,
+                ctrRondeEnCours,
             }
         );
     }
@@ -557,11 +675,5 @@ public class GestionSchema {
         } catch (SQLException ex) {
             throw new Error(ex);
         }
-
-//        try (Connection con = ConnectionSimpleSGBD.defaultCon()) {
-//            razBdd(con);
-//        } catch (SQLException ex) {
-//            throw new Error(ex);
-//        }
     }
 }

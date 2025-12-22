@@ -101,22 +101,11 @@ public class Score extends ClasseMiroir {
         st.setInt(1, score);
         st.setInt(2, idEquipe);
         st.setInt(3, idMatch);
-
-        NotificationError.show("score idEquipe idMatch " + score + " " + idEquipe + " " + idMatch);
         
         st.executeUpdate();
         return st;
     }
 
-    public int updateOrNew(Connection con) throws SQLException {
-        try {
-            this.update(con);
-            return -3;
-        } catch (EntiteNonSauvegardee e) {
-            return this.saveInDB(con);
-        }
-    }
-    
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
         if (super.getId() == -1) {
             throw new EntiteNonSauvegardee();
