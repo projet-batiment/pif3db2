@@ -38,7 +38,7 @@ import java.sql.SQLException;
  * @author pmarchal01
  */
 
-@Route("Matchs")
+@Route("matchs")
 public class MatchsList extends VerticalLayout {
     Grid<Matchs> grid;
 
@@ -55,8 +55,13 @@ public class MatchsList extends VerticalLayout {
     }
 
     public MatchsList() {
-        this.add(new H2("Liste des scores"));
+        this.add(new H2("Liste des matchs"));
 
+        var matchsEditor = new MatchsEditor();
+        /*matchsEditor.setOnSavedCallback(t -> {
+            updateGridList();
+        });*/
+        
         this.grid = new Grid<>();
         grid.addColumn(Matchs::getRonde).setHeader("Ronde");
         grid.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("id de l'équipe A");
@@ -64,7 +69,7 @@ public class MatchsList extends VerticalLayout {
         grid.addColumn(new ComponentRenderer<>(t -> {
             Button bt = new Button("Afficher");
             bt.addClickListener(event -> {
-//                bt.getUI().ifPresent(ui -> ui.navigate(MatchsSpecific.class, t.getId()));
+                //bt.getUI().ifPresent(ui -> ui.navigate(MatchsBoard.class, t.getId()));
                 Notification.show("TODO: editer match");
             });
             return bt;
