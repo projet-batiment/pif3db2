@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.beuvron.utils.database.ClasseMiroir;

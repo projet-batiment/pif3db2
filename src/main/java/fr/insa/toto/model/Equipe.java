@@ -18,12 +18,14 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.model.utils.ModifiedState;
 import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,9 +40,26 @@ import java.util.stream.Collector;
  *
  * @author elio
  */
-public class Equipe extends ClasseMiroir {
+public class Equipe extends ClasseMiroir implements Named {
     private String nom;
     private ModifiedState state;
+
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return nomTable;
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "l'";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "de l'";
+        }
+    }
 
     public final JoueurParent joueurs = new JoueurParent();
     private class JoueurParent extends ParentFace<Joueur> {
@@ -217,6 +236,10 @@ public class Equipe extends ClasseMiroir {
 
     public ModifiedState getState() {
         return state;
+    }
+
+    public String getName() {
+        return this.getNom();
     }
     
     public String getNom() {

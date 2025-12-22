@@ -23,7 +23,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
-import fr.insa.toto.model.Named;
+import fr.insa.toto.model.utils.Named;
 import java.util.function.Consumer;
 import fr.insa.toto.model.utils.ChildFace;
 

@@ -16,24 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.model.utils;
 
 /**
  *
  * @author elio
  */
-public class Utils {
-    public static final String capitalizeFirst(String s) {
-        switch (s.length()) {
-            case 0 -> {
-                return "";
-            }
-            case 1 -> {
-                return s.toUpperCase();
-            }
-            default -> {
-                return s.substring(0, 1).toUpperCase() + s.substring(1);
-            }
-        }
-    }
+public interface Named {
+    public abstract String getName();
 }

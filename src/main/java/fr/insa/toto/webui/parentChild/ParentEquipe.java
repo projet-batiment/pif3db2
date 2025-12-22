@@ -31,13 +31,13 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Matchs;
-import fr.insa.toto.model.Matchs;
+import fr.insa.toto.model.Equipe;
+import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.utils.ParentFace;
+import fr.insa.toto.webui.equipe.EquipeEditor;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.DialogDeleteChild;
-import fr.insa.toto.webui.matchs.MatchsEditor;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -48,9 +48,9 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author elio
  */
-public abstract class ParentMatchs extends ParentChild<Matchs> {
-    public ParentMatchs() {
-        var matchsEditor = new MatchsEditor();
+public abstract class ParentEquipe extends ParentChild<Equipe> {
+    public ParentEquipe() {
+        var matchsEditor = new EquipeEditor();
         matchsEditor.setOnSavedCallback(j -> {
             try (Connection con = ConnectionPool.getConnection()) {
                 super.getParentFace().add(j, con);
@@ -60,15 +60,14 @@ public abstract class ParentMatchs extends ParentChild<Matchs> {
             }
         });
         matchsEditor.setOnDeletedCallback(j -> {
-            new DialogDeleteChild<Matchs>(super.getParentFace(), j, () -> {
+            new DialogDeleteChild<Equipe>(super.getParentFace(), j, () -> {
                 super.updateGridList();
             }).open();
         });
         super.setEditor(matchsEditor);
 
-        super.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("Equipe A");
-        super.addColumn(m -> m.getScoreEquipeA().score.getScore());
-        super.addColumn(m -> m.getScoreEquipeB().score.getScore());
-        super.addColumn(m -> m.getScoreEquipeB().equipe.getNom()).setHeader("Equipe B");
+        super.addColumn(Equipe::getNom).setHeader("Nom");
+        super.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs");
+        super.addColumn(t -> "TODO").setHeader("Classement");
     }
 }

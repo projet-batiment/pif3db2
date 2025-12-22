@@ -16,13 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.utils;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
-import fr.insa.toto.model.Named;
+import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ParentFace;
 
 /**

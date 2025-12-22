@@ -16,11 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.utils;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Named;
+import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ParentFace;
 import java.sql.Connection;
 import java.sql.SQLException;

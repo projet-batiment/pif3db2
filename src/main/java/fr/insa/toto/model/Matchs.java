@@ -18,11 +18,12 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.ChildFace;
-import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -103,7 +104,6 @@ public class Matchs extends ClasseMiroir implements Named {
             return "du ";
         }
     }
-    
 
     private List<ScoreEquipe> retreiveScoreEquipe(Connection con) throws IndexOutOfBoundsException, SQLException, EntiteNonSauvegardee, NoSuchElementException {
         var scores = retreiveScore(con);

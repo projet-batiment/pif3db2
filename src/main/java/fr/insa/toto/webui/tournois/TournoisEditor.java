@@ -21,7 +21,7 @@ package fr.insa.toto.webui.tournois;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.Editor;
+import fr.insa.toto.webui.utils.Editor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;

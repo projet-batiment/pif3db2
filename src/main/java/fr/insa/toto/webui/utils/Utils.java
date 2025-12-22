@@ -16,26 +16,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
-
-import com.vaadin.flow.component.notification.Notification;
-import java.sql.SQLException;
+package fr.insa.toto.webui.utils;
 
 /**
  *
  * @author elio
  */
-public class NotificationError extends Notification {
-    public static final void error(String message) {
-        String s = "Erreur : '" + message + "'";
-        Notification.show(s);
-        System.out.println(s);
-    }
-
-    public static void sql(SQLException ex) {
-        var s = "Erreur SQLException: " + ex.getLocalizedMessage();
-        Notification.show(s);
-        System.out.println(s);
-        ex.printStackTrace();
+public class Utils {
+    public static final String capitalizeFirst(String s) {
+        switch (s.length()) {
+            case 0 -> {
+                return "";
+            }
+            case 1 -> {
+                return s.toUpperCase();
+            }
+            default -> {
+                return s.substring(0, 1).toUpperCase() + s.substring(1);
+            }
+        }
     }
 }

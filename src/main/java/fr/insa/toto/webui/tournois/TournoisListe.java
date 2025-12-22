@@ -31,8 +31,8 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.DialogDelete;
-import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.utils.DialogDelete;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 

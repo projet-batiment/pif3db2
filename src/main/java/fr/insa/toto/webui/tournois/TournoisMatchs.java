@@ -37,9 +37,9 @@ import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.model.utils.ParentFace;
-import fr.insa.toto.webui.DialogDelete;
-import fr.insa.toto.webui.JoueurEditor;
-import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.utils.DialogDelete;
+import fr.insa.toto.webui.joueur.JoueurEditor;
+import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.parentChild.ParentMatchs;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -66,7 +66,6 @@ public class TournoisMatchs extends ParentMatchs implements BeforeEnterObserver 
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
 
         } finally {
-            ParentFace matchsParent = this.tournois.matchs;
             super.initialize(this.tournois.matchs);
         }
     }

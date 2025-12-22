@@ -30,7 +30,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.NotificationError;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
 
 /**
