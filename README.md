@@ -1,35 +1,15 @@
-# Pasapas README
+# A FAIRE
 
-- [ ] TODO Replace or update this README with instructions relevant to your application
-
-To start the application in development mode, import it into your IDE and run the `Application` class. 
-You can also start the application from the command line by running: 
-
-```bash
-./mvnw
-```
-
-To build the application in production mode, run:
-
-```bash
-./mvnw -Pproduction package
-```
-
-To build a Docker image, run:
-
-```bash
-docker build -t my-application:latest .
-```
-
-If you use commercial components, pass the license key as a build secret:
-
-```bash
-docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
-```
-
-## Getting Started
-
-The [Getting Started](https://vaadin.com/docs/latest/getting-started) guide will quickly familiarize you with your new
-Pasapas implementation. You'll learn how to set up your development environment, understand the project 
-structure, and find resources to help you add muscles to your skeleton — transforming it into a fully-featured 
-application.
+- [ ] nombre de terrains
+- [ ] nombre de joueurs par équipe fixe (dans la consigne mais on l'applique ou pas ?)
+- [ ] implémenter le temps d'un match
+  - [ ] faire commencer une nouvelle ronde
+- [ ] calculer le score d'une equipe
+  - [ ] classer les equipes par score
+- [ ] calculer le score d'une jouoeur
+  - [ ] classer les jouoeurs par score
+- [ ] profil utilisateur et admin
+  - [ ] utliisateurs et mots de passe
+  - [ ] connexion des utilisateurs
+  - [ ] profil admin vs utilisateur
+- [ ] match : en cours / clot
