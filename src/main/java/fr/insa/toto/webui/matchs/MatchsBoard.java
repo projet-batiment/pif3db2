@@ -2,8 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.matchs;
 
+import fr.insa.toto.webui.matchs.MatchsLayout;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;

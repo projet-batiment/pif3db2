@@ -32,6 +32,7 @@ import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.utils.DialogDelete;
+import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -40,7 +41,7 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-@Route("tournois")
+@Route(value = "tournois", layout = Layout.Default.class)
 public class TournoisListe extends VerticalLayout {
     private Grid<Tournois> grid;
 

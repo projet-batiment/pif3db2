@@ -30,6 +30,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
 
@@ -37,7 +38,7 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
+public class TournoisLayout extends Layout implements BeforeEnterObserver {
     private int tournoisId;
     private final SideNavItem matchs;
     private final SideNavItem equipes;
@@ -50,7 +51,6 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         this.tournoisId = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
-
 
         final String pfx = "tournois/" + tournoisId + "/";
         this.board.setPath(pfx);
@@ -85,9 +85,8 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
                 this.getUI().ifPresent(ui -> ui.navigate("tournois/" + this.tournoisId));
             }
         });
-        select.setLabel("Tournois");
 
-        SideNav sideNav = new SideNav();
+        SideNav sideNav = new SideNav("Ce tournois");
 
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
@@ -100,12 +99,9 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
         this.matchs = new SideNavItem("Matchs");
         sideNav.addItem(this.matchs);
 
-        sideNav.getItems().forEach(each -> each.getStyle().set("margin-bottom", "0.5em"));
-
         sideNav.setWidthFull();
         sideNav.getStyle().set("display", "flex");
         sideNav.getStyle().set("flexDirection", "column");
-        sideNav.getStyle().set("gap", "1rem"); // spacing between items
 
         super.addToDrawer(new VerticalLayout(
                 new H2("Tournois"),

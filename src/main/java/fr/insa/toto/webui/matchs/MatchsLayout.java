@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.matchs;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H2;
@@ -14,6 +14,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
 
@@ -22,7 +23,7 @@ import java.sql.SQLException;
  *
  * @author pmarchal01
  */
-public class MatchsLayout extends AppLayout implements BeforeEnterObserver {
+public class MatchsLayout extends Layout implements BeforeEnterObserver {
     private int matchId;
     private final SideNavItem todo;
     private final SideNavItem ronde;
@@ -76,12 +77,9 @@ public class MatchsLayout extends AppLayout implements BeforeEnterObserver {
         this.ronde = new SideNavItem("Matchs");
         sideNav.addItem(this.ronde);
 
-        sideNav.getItems().forEach(each -> each.getStyle().set("margin-bottom", "0.5em"));
-
         sideNav.setWidthFull();
         sideNav.getStyle().set("display", "flex");
         sideNav.getStyle().set("flexDirection", "column");
-        sideNav.getStyle().set("gap", "1rem"); // spacing between items
 
         super.addToDrawer(new VerticalLayout(
                 new H2("Matchs"),

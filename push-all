@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for i in elio quentin paul master
+do
+    echo === $i
+    git switch $i
+    git merge --ff-only $1
+    git push
+done

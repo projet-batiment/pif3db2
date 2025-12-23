@@ -31,6 +31,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
 
@@ -38,11 +39,11 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
+public class EquipeLayout extends Layout implements BeforeEnterObserver {
     private int equipeId;
+    private final SideNavItem board;
     private final SideNavItem matchs;
     private final SideNavItem joueurs;
-    private final SideNavItem board;
 
     private Select<Equipe> select;
 
@@ -52,8 +53,6 @@ public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
 
         this.board.setPath(EquipeBoard.class, new RouteParameters("equipeId", "" + equipeId));
         this.matchs.setPath(EquipeMatchs.class, new RouteParameters("equipeId", "" + equipeId));
-//        this.equipes.setPath(EquipeEquipe.class, new RouteParameters("equipeId", "" + equipeId));
-//        this.joueurs.setPath(EquipeJoueur.class, new RouteParameters("equipeId", "" + equipeId));
         this.joueurs.setPath("equipe/" + equipeId + "/joueur");
 
         try (var con = ConnectionPool.getConnection()) {
@@ -93,12 +92,9 @@ public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
         this.joueurs = new SideNavItem("Joueurs");
         sideNav.addItem(this.joueurs);
 
-        sideNav.getItems().forEach(each -> each.getStyle().set("margin-bottom", "0.5em"));
-
         sideNav.setWidthFull();
         sideNav.getStyle().set("display", "flex");
         sideNav.getStyle().set("flexDirection", "column");
-        sideNav.getStyle().set("gap", "1rem"); // spacing between items
 
         super.addToDrawer(new VerticalLayout(
                 new H2("Équipe"),
