@@ -62,6 +62,7 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
             bNew.addClickListener(t -> {
                 editor.open(null);
             });
+            Utils.visibleAdmin(bNew);
             this.addColumn(new ComponentRenderer<>(each ->
                 new HandyButtons(
                     this.parent,

@@ -42,6 +42,7 @@ public class HandyButtons<ChildType extends ClasseMiroir & Named> extends Horizo
         bDelete.addClickListener(e -> 
             dialogDelete.open()
         );
+        Utils.visibleAdmin(bDelete);
 
         super.add(bEdit, bDelete);
     }

@@ -32,6 +32,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
 
@@ -45,8 +46,11 @@ public abstract class Layout extends AppLayout {
     private SideNavItem equipes;
     private SideNavItem ronde;
     private SideNavItem matchs;
+    private SideNavItem connect;
+    private SideNavItem disconnect;
 
     private SideNav primaryNav;
+    private SideNav userNav;
 
     public static class Default extends Layout {
         public Default() {
@@ -71,12 +75,34 @@ public abstract class Layout extends AppLayout {
         this.matchs = new SideNavItem("Matchs", "/match");
         this.primaryNav.addItem(this.matchs);
 
+        String userHeader;
+        String userLabel;
+        String userLink;
+        if (Session.isConnected()) {
+            userHeader = "Bienvenue " + Session.getUser().getUsername() + " !";
+            userLabel = "Mon compte";
+            userLink = "user";
+        } else {
+            userHeader = "Compte";
+            userLabel = "Se connecter";
+            userLink = "login";
+        }
+        this.userNav = new SideNav(userHeader);
+        this.connect = new SideNavItem(userLabel, userLink);
+        this.disconnect = new SideNavItem("Déconnexion", "logout");
+        Utils.visibleConnected(this.disconnect);
+        this.userNav.addItem(this.connect, this.disconnect);
+
         this.primaryNav.setWidthFull();
         this.primaryNav.getStyle().set("display", "flex");
         this.primaryNav.getStyle().set("flexDirection", "column");
+        this.userNav.setWidthFull();
+        this.userNav.getStyle().set("display", "flex");
+        this.userNav.getStyle().set("flexDirection", "column");
 
         super.addToDrawer(new VerticalLayout(
-                primaryNav
+            primaryNav,
+            userNav
         ));
     }
 }

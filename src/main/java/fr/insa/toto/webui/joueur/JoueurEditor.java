@@ -97,7 +97,7 @@ public class JoueurEditor extends Editor<Joueur> {
     }
 
     public JoueurEditor() {
-        nouveau = new Joueur(Joueur.ID_PORCELAINE, "Nouveau...", "", 0);
+        nouveau = Joueur.PORCELAINE;
 
         super.setHeaderTitle("Apperçu du joueur");
 

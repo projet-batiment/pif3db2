@@ -18,6 +18,11 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.utils;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasEnabled;
+import fr.insa.toto.model.User;
+import fr.insa.toto.webui.session.Session;
+
 /**
  *
  * @author elio
@@ -35,5 +40,33 @@ public class Utils {
                 return s.substring(0, 1).toUpperCase() + s.substring(1);
             }
         }
+    }
+
+    public static final void enableAdmin(HasEnabled component) {
+        if (Session.isAdmin())
+            component.setEnabled(true);
+        else
+            component.setEnabled(false);
+    }
+
+    public static final void visibleAdmin(Component component) {
+        if (Session.isAdmin())
+            component.setVisible(true);
+        else
+            component.setVisible(false);
+    }
+
+    public static final void enableConnected(HasEnabled component) {
+        if (Session.isConnected())
+            component.setEnabled(true);
+        else
+            component.setEnabled(false);
+    }
+
+    public static final void visibleConnected(Component component) {
+        if (Session.isConnected())
+            component.setVisible(true);
+        else
+            component.setVisible(false);
     }
 }

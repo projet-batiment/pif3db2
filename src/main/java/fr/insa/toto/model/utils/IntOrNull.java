@@ -16,32 +16,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.utils;
+package fr.insa.toto.model.utils;
 
-import com.vaadin.flow.component.notification.Notification;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
  *
  * @author elio
  */
-public class NotificationError extends Notification {
-    public static final void error(String message) {
-        String s = "Erreur : '" + message + "'";
-        Notification.show(s);
-        System.out.println(s);
+public class IntOrNull {
+    public static final void setIntOrNull(PreparedStatement statement, int which, Integer value) throws SQLException {
+        if (value == null)
+            statement.setNull(which, java.sql.Types.INTEGER);
+        else
+            statement.setInt(which, value);
     }
 
-    public static final void log(String message) {
-        String s = "Info : '" + message + "'";
-        Notification.show(s);
-        System.out.println(s);
-    }
-
-    public static void sql(SQLException ex) {
-        var s = "Erreur SQLException: " + ex.getLocalizedMessage();
-        Notification.show(s);
-        System.out.println(s);
-        ex.printStackTrace();
+    public static final Integer getIntOrNull(ResultSet rs, String which) throws SQLException {
+        var tmp = rs.getInt(which);
+        return rs.wasNull() ? null : tmp;
     }
 }

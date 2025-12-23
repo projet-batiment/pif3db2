@@ -405,6 +405,11 @@ public class GestionSchema {
                 Beton.ColumnSkeleton.SQLType.INTEGER
         );
 
+        var joueurIdUser = new Beton.ColumnSkeleton(
+                "idUser",
+                Beton.ColumnSkeleton.SQLType.INTEGER
+        );
+
         var compositionIdEquipe = new Beton.ColumnSkeleton(
                 "idEquipe",
                 Beton.ColumnSkeleton.SQLType.INTEGER
@@ -468,7 +473,29 @@ public class GestionSchema {
                     new Beton.ColumnSkeleton(
                             "taillecm",
                             Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),}
+                    ),
+                    joueurIdUser,
+                }
+        );
+
+        Beton.TableSkeleton user = new Beton.TableSkeleton(
+                "user",
+                new Beton.ColumnSkeleton[]{
+                    new Beton.ColumnSkeleton(
+                            "username",
+                            Beton.ColumnSkeleton.SQLType.VARCHAR,
+                            24
+                    ).setUnique().setNotNull(),
+                    new Beton.ColumnSkeleton(
+                            "password",
+                            Beton.ColumnSkeleton.SQLType.VARCHAR,
+                            24
+                    ).setNotNull(),
+                    new Beton.ColumnSkeleton(
+                            "admin",
+                            Beton.ColumnSkeleton.SQLType.BOOL
+                    ).setNotNull(),
+                }
         );
 
         Beton.TableSkeleton matchs = new Beton.TableSkeleton(
@@ -541,6 +568,13 @@ public class GestionSchema {
                 Beton.ColumnSkeleton.id
         );
 
+        Beton.BorrowConstraintSkeleton ctrJoueurUser = new Beton.BorrowConstraintSkeleton(
+                joueur,
+                user,
+                joueurIdUser,
+                Beton.ColumnSkeleton.id
+        );
+
         Beton.UniqueConstraintSkeleton ctrRondeTournois = new Beton.UniqueConstraintSkeleton(
                 ronde,
                 new Beton.ColumnSkeleton[]{
@@ -553,6 +587,7 @@ public class GestionSchema {
             new Beton.TableSkeleton[] {
                 tournois,
                 joueur,
+                user,
                 equipe,
                 matchs,
                 composition,
@@ -564,6 +599,7 @@ public class GestionSchema {
                 ctrScoreMatch,
                 ctrCompositionEquipe,
                 ctrCompositionJoueur,
+                ctrJoueurUser,
                 ctrRondeTournois,
             }
         );
@@ -586,6 +622,7 @@ public class GestionSchema {
                     try {
                         st.executeUpdate(each.createString());
                     } catch (SQLException ex) {
+                        System.err.println(each.createString());
                         throw new SQLException("exception encountered when parsing sql command for creating skeleton " + each.getName() + ": " + ex.getMessage());
                     }
                 }

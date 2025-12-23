@@ -22,6 +22,7 @@ import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.toto.model.utils.IntOrNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,9 +37,12 @@ import java.util.Optional;
  * @author elio
  */
 public class Joueur extends ClasseMiroir implements Named {
+    public final static Joueur PORCELAINE = new Joueur(ClasseMiroir.ID_PORCELAINE, "Nouveau...", "", 0, ClasseMiroir.ID_UNSAVED);
+
     private String surnom;
     private String categorie;
     private int taillecm;
+    private Integer idUser;
 
     private static final String nomTable = "joueur";
     protected final String nomTable() {
@@ -51,6 +55,7 @@ public class Joueur extends ClasseMiroir implements Named {
         this.surnom = "";
         this.categorie = "";
         this.taillecm = 170;
+        this.idUser = null;
 
         this.state = ModifiedState.CREATED;
     }
@@ -59,16 +64,18 @@ public class Joueur extends ClasseMiroir implements Named {
         this.surnom = surnom;
         this.categorie = categorie;
         this.taillecm = taillecm;
+        this.idUser = null;
 
         this.state = ModifiedState.CREATED;
     }
 
-    public Joueur(int id, String surnom, String categorie, int taillecm) {
+    public Joueur(int id, String surnom, String categorie, int taillecm, Integer userId) {
         super(id);
 
         this.surnom = surnom;
         this.categorie = categorie;
         this.taillecm = taillecm;
+        this.idUser = userId;
 
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
@@ -119,13 +126,22 @@ public class Joueur extends ClasseMiroir implements Named {
         this.taillecm = taillecm;
     }
 
+    public Integer getIdUser() {
+        return idUser;
+    }
+
+    public void setIdUser(Integer idUser) {
+        this.idUser = idUser;
+    }
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm) values (?, ?, ?)",
+        var st = con.prepareStatement("insert into joueur (surnom, categorie, taillecm, idUser) values (?, ?, ?, ?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, surnom);
         st.setString(2, categorie);
         st.setInt(3, taillecm);
+        IntOrNull.setIntOrNull(st, 4, idUser);
 
         st.executeUpdate();
         return st;
@@ -136,26 +152,27 @@ public class Joueur extends ClasseMiroir implements Named {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm = ? where id = ?");
+        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm = ?, idUserr = ? where id = ?");
         st.setString(1, surnom);
         st.setString(2, categorie);
         st.setInt(3, taillecm);
-        st.setInt(4, super.getId());
+        IntOrNull.setIntOrNull(st, 4, idUser);
+        st.setInt(5, super.getId());
 
         st.executeUpdate();
     }
-    
+
     private static List<Joueur> fromResultSetToList(ResultSet list) throws SQLException {
         List<Joueur> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Joueur(list.getInt("id"), list.getString("surnom"), list.getString("categorie"), list.getInt("taillecm")));
+            res.add(new Joueur(list.getInt("id"), list.getString("surnom"), list.getString("categorie"), list.getInt("taillecm"), IntOrNull.getIntOrNull(list, "idUser")));
         }
         return res;
     }
     
     public static List<Joueur> tousLesJoueurs(Connection con) throws SQLException {
         List<Joueur> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm from joueur")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm,idUser from joueur")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -163,7 +180,7 @@ public class Joueur extends ClasseMiroir implements Named {
     }
     
     public static Optional<Joueur> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm from joueur where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm,idUser from joueur where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
@@ -171,11 +188,11 @@ public class Joueur extends ClasseMiroir implements Named {
                 String surnom = res.getString(2);
                 String categorie = res.getString(3);
                 int taillecm = res.getInt(4);
-                return Optional.of(new Joueur(id, surnom, categorie, taillecm));
+                Integer idUser = IntOrNull.getIntOrNull(res, "idUser");
+                return Optional.of(new Joueur(id, surnom, categorie, taillecm, idUser));
             } else {
                 return Optional.empty();
             }
-            
         }
     }
 }
