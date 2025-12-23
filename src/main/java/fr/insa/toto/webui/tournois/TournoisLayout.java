@@ -39,11 +39,11 @@ import java.sql.SQLException;
  */
 public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
     private int tournoisId;
-    private final SideNavItem todo;
     private final SideNavItem matchs;
     private final SideNavItem equipes;
     private final SideNavItem joueurs;
     private final SideNavItem board;
+    private final SideNavItem ronde;
 
     private Select<Tournois> select;
 
@@ -54,6 +54,7 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
 
         final String pfx = "tournois/" + tournoisId + "/";
         this.board.setPath(pfx);
+        this.ronde.setPath(pfx + "ronde");
         this.matchs.setPath(pfx + "match");
         this.equipes.setPath(pfx + "equipe");
         this.joueurs.setPath(pfx + "joueur");
@@ -88,16 +89,16 @@ public class TournoisLayout extends AppLayout implements BeforeEnterObserver {
 
         SideNav sideNav = new SideNav();
 
-        this.todo = new SideNavItem("TODO: classes et nav");
-        sideNav.addItem(this.todo);
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
-        this.matchs = new SideNavItem("Matchs");
-        sideNav.addItem(this.matchs);
-        this.equipes = new SideNavItem("Équipes");
-        sideNav.addItem(this.equipes);
         this.joueurs = new SideNavItem("Joueurs");
         sideNav.addItem(this.joueurs);
+        this.equipes = new SideNavItem("Équipes");
+        sideNav.addItem(this.equipes);
+        this.ronde = new SideNavItem("Rondes");
+        sideNav.addItem(this.ronde);
+        this.matchs = new SideNavItem("Matchs");
+        sideNav.addItem(this.matchs);
 
         sideNav.getItems().forEach(each -> each.getStyle().set("margin-bottom", "0.5em"));
 

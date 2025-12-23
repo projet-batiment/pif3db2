@@ -52,21 +52,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class ParentRonde extends ParentChild<Ronde> {
     public ParentRonde() {
-        var editor = new RondeEditor();
-        editor.setOnSavedCallback(j -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                super.getParentFace().add(j, con);
-                super.updateGridList();
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        });
-        editor.setOnDeletedCallback(j -> {
-            new DialogDeleteChild<Ronde>(super.getParentFace(), j, () -> {
-                super.updateGridList();
-            }).open();
-        });
-        super.setEditor(editor);
+        super(new RondeEditor());
 
         super.addColumn(m -> m.getNumero()).setHeader("Ronde n°");
         super.addColumn(m -> "TODO").setHeader("Nombre de matchs");

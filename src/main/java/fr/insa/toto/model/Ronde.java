@@ -47,7 +47,7 @@ public class Ronde extends ClasseMiroir implements Named {
 
     @Override
     public String getName() {
-        return this.nomTable();
+        return Integer.toString(this.getNumero());
     }
 
     public Ronde(int id, int idTournois, int numero, boolean enCours) {
@@ -157,6 +157,37 @@ public class Ronde extends ClasseMiroir implements Named {
                 int idTournois = res.getInt("idTournois");
                 int numero = res.getInt("numero");
                 boolean enCours = res.getBoolean("enCours");
+                return Optional.of(new Ronde(id, idTournois, numero, enCours));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public static Optional<Ronde> findByTournoisNumero(Connection con, int idTournois, int numero) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,enCours from ronde where idTournois=?")) {
+            pst.setInt(1, idTournois);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                boolean enCours = res.getBoolean("enCours");
+                int id = res.getInt("id");
+                return Optional.of(new Ronde(id, idTournois, numero, enCours));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public static Optional<Ronde> findByTournoisEnCours(Connection con, int idTournois) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,numero,enCours from ronde where idTournois=?")) {
+            pst.setInt(1, idTournois);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                boolean enCours = res.getBoolean("enCours");
+                int numero = res.getInt("numero");
+                int id = res.getInt("id");
                 return Optional.of(new Ronde(id, idTournois, numero, enCours));
             } else {
                 return Optional.empty();

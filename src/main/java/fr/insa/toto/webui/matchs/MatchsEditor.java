@@ -23,8 +23,10 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.model.Ronde;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
@@ -39,11 +41,16 @@ import java.util.stream.Collectors;
  * @author elio
  */
 public class MatchsEditor extends Editor<Matchs> {
-    private TextField ronde;
+    private Select<Ronde> ronde;
     private Select<Equipe> equipeA;
     private Select<Equipe> equipeB;
     private TextField scoreA;
     private TextField scoreB;
+
+    private Equipe currentEquipe = null;
+    public void setCurrentEquipe(Equipe currentEquipe) {
+        this.currentEquipe = currentEquipe;
+    }
 
     @Override
     protected Matchs newObject() {
@@ -54,17 +61,17 @@ public class MatchsEditor extends Editor<Matchs> {
         if (this.object == null || this.object == Matchs.PORCELAINE) {
             super.setEnabled(false);
 
-            this.equipeA.setValue(null);
+            this.equipeA.setValue(currentEquipe);
             this.equipeB.setValue(null);
-            this.ronde.setValue("");
+            this.ronde.setValue(null);
             this.scoreA.setValue("");
             this.scoreB.setValue("");
         } else {
             super.setEnabled(true);
 
-            this.equipeA.setValue(this.object.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? null : this.object.getScoreEquipeA().equipe);
+            this.equipeA.setValue(this.object.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? currentEquipe : this.object.getScoreEquipeA().equipe);
             this.equipeB.setValue(this.object.getScoreEquipeB().equipe.getState() == ModifiedState.CREATED ? null : this.object.getScoreEquipeB().equipe);
-            this.ronde.setValue("" + this.object.getRonde());
+            this.ronde.setValue(this.object.getRonde());
             this.scoreA.setValue("" + this.object.getScoreEquipeA().score.getScore());
             this.scoreB.setValue("" + this.object.getScoreEquipeB().score.getScore());
         }
@@ -97,11 +104,11 @@ public class MatchsEditor extends Editor<Matchs> {
             }
         });
 
-        Notification.show("TODO: ajouter un updateListMatchs ici pour après save");
-
         var equipes = Equipe.toutesLesEquipes(con);
         equipeA.setItems(equipes);
         equipeB.setItems(equipes);
+
+        ronde.setItems(Ronde.toutesLesRondes(con));
 
         return list;
     }
@@ -115,6 +122,11 @@ public class MatchsEditor extends Editor<Matchs> {
         }
         if (this.equipeB.getValue() == null) {
             Notification.show("Il manque l'équipe B");
+            return null;
+        }
+
+        if (this.ronde.getValue() == null) {
+            Notification.show("Il manque la ronde");
             return null;
         }
 
@@ -132,7 +144,8 @@ public class MatchsEditor extends Editor<Matchs> {
         this.object.getScoreEquipeA().score.setScore(Integer.parseInt(this.scoreA.getValue()));
         this.object.getScoreEquipeB().score.setScore(Integer.parseInt(this.scoreB.getValue()));
 
-        this.object.setRonde(Integer.parseInt(ronde.getValue()));
+        // inutile car déjà effectué par (Select)ronde.addValueChangeListener
+        // this.object.setIdRonde(this.ronde.getValue().getId());
 
         return this.object;
     }
@@ -161,10 +174,14 @@ public class MatchsEditor extends Editor<Matchs> {
         });
         super.setSelectLabel("Matchs");
 
-        ronde = new TextField();
+        ronde = new Select<>();
+        ronde.setItemLabelGenerator(Ronde::getName);
+        ronde.setPlaceholder("Choisir une ronde...");
+        ronde.addValueChangeListener(t -> {
+            if (this.object != null && ronde.getValue() != null)
+                this.object.setIdRonde(t.getValue().getId());
+        });
         ronde.setLabel("Ronde");
-        ronde.setAllowedCharPattern("[0-9]");
-        ronde.setMaxLength(2);
 
         equipeA = new Select<>();
         equipeA.setItemLabelGenerator(Equipe::getNom);

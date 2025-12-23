@@ -36,6 +36,7 @@ import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.joueur.JoueurEditor;
+import fr.insa.toto.webui.matchs.MatchsEditor;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.parentChild.ParentMatchs;
 import java.sql.Connection;
@@ -56,6 +57,7 @@ public class EquipeMatchs extends ParentMatchs implements BeforeEnterObserver {
 
         try (Connection con = ConnectionPool.getConnection()) {
             this.equipe = Equipe.findById(con, id).get();
+            ((MatchsEditor) super.getEditor()).setCurrentEquipe(equipe);
 
         } catch (SQLException ex) {
             NotificationError.sql(ex);

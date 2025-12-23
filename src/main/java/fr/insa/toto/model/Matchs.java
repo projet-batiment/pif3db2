@@ -39,8 +39,6 @@ import java.util.Optional;
  * @author elio
  */
 public class Matchs extends ClasseMiroir implements Named {
-    private int ronde;
-
     public final static Matchs PORCELAINE = new Matchs(ClasseMiroir.ID_PORCELAINE, 0);
 
     private static final String nomTable = "matchs";
@@ -50,24 +48,27 @@ public class Matchs extends ClasseMiroir implements Named {
 
     private ModifiedState state;
 
+    private Ronde ronde;
+    private int idRonde;
+
     private ScoreEquipe seA = new ScoreEquipe();
     private ScoreEquipe seB = new ScoreEquipe();;
 
     public Matchs() {
-        this.ronde = -1;
+        this.idRonde = ClasseMiroir.ID_UNSAVED;
 
         this.state = ModifiedState.CREATED;
     }
 
-    public Matchs(int ronde) {
-        this.ronde = ronde;
+    public Matchs(int idRonde) {
+        this.idRonde = idRonde;
 
         this.state = ModifiedState.CREATED;
     }
 
-    public Matchs(int id, int ronde) {
+    public Matchs(int id, int idRonde) {
         super(id);
-        this.ronde = ronde;
+        this.idRonde = idRonde;
 
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
@@ -146,6 +147,10 @@ public class Matchs extends ClasseMiroir implements Named {
         }
     }
 
+    private Ronde retreiveRonde(Connection con) throws SQLException, NoSuchElementException {
+        return Ronde.findById(con, idRonde).get();
+    }
+
     public void populate() throws SQLException, NoSuchElementException {
         try (Connection con = ConnectionPool.getConnection()) {
             this.populate(con);
@@ -162,6 +167,8 @@ public class Matchs extends ClasseMiroir implements Named {
 
                 this.seA = list.get(0);
                 this.seB = list.get(1);
+
+                this.ronde = this.retreiveRonde(con);
 
                 this.state = ModifiedState.POPULATED;
             }
@@ -184,20 +191,36 @@ public class Matchs extends ClasseMiroir implements Named {
         return seB;
     }
 
-    public int getRonde() {
+    public Ronde getRonde() {
         return ronde;
     }
 
-    public void setRonde(int taillecm) {
+    public Ronde getIdRonde() {
+        return ronde;
+    }
+
+    // does NOT retreive the updated Ronde
+    public void setIdRonde(int idRonde) {
         this.state = ModifiedState.EDITED;
-        this.ronde = taillecm;
+        this.idRonde = idRonde;
+    }
+
+    public boolean ofEquipe(Equipe equipe) {
+        return this.seA.equipe.equals(equipe) || this.seB.equipe.equals(equipe);
+    }
+
+    @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        this.seA.score.deleteFromDB(con);
+        this.seB.score.deleteFromDB(con);
     }
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into matchs (ronde) values (?)",
+        var st = con.prepareStatement("insert into matchs (idRonde) values (?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
-        st.setInt(1, ronde);
+        st.setInt(1, idRonde);
+        
         
         st.executeUpdate();
         return st;
@@ -208,7 +231,7 @@ public class Matchs extends ClasseMiroir implements Named {
         this.state = ModifiedState.DEPTH_EDITED;
         this.seA.score.setIdMatch(this.getId());
         this.seB.score.setIdMatch(this.getId());
-        NotificationError.show("Set seA/B idMatch " + this.getId());
+
         this.update(con);
     }
 
@@ -221,7 +244,7 @@ public class Matchs extends ClasseMiroir implements Named {
 
             case EDITED, NORMAL, POPULATED, DEPTH_EDITED -> {
                 var st = con.prepareStatement("update matchs set ronde = ? where id = ?");
-                st.setInt(1, ronde);
+                st.setInt(1, idRonde);
                 st.setInt(2, super.getId());
 
                 this.seA.score.setIdEquipe(this.seA.equipe.getId());
@@ -241,13 +264,13 @@ public class Matchs extends ClasseMiroir implements Named {
     private static List<Matchs> fromResultSetToList(ResultSet list) throws SQLException {
         List<Matchs> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Matchs(list.getInt("id"), list.getInt("ronde")));
+            res.add(new Matchs(list.getInt("id"), list.getInt("idRonde")));
         }
         return res; 
     }
     
     public static List<Matchs> tousLesMatchs(Connection con) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id, ronde from matchs")) {
+        try (PreparedStatement pst = con.prepareStatement("select id, idRonde from matchs")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -255,13 +278,13 @@ public class Matchs extends ClasseMiroir implements Named {
     }
     
     public static Optional<Matchs> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select ronde from matchs where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select idRonde from matchs where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
             if (res.next()) {
-                int ronde = res.getInt(2);
-                return Optional.of(new Matchs(id, ronde));
+                int idRonde = res.getInt("idRonde");
+                return Optional.of(new Matchs(id, idRonde));
             } else {
                 return Optional.empty();
             }

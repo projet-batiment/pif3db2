@@ -50,21 +50,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class ParentMatchs extends ParentChild<Matchs> {
     public ParentMatchs() {
-        var matchsEditor = new MatchsEditor();
-        matchsEditor.setOnSavedCallback(j -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                super.getParentFace().add(j, con);
-                super.updateGridList();
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        });
-        matchsEditor.setOnDeletedCallback(j -> {
-            new DialogDeleteChild<Matchs>(super.getParentFace(), j, () -> {
-                super.updateGridList();
-            }).open();
-        });
-        super.setEditor(matchsEditor);
+        super(new MatchsEditor());
 
         super.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("Equipe A");
         super.addColumn(m -> m.getScoreEquipeA().score.getScore());

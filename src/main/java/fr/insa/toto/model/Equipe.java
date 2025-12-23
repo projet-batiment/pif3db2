@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collector;
 
@@ -166,13 +167,19 @@ public class Equipe extends ClasseMiroir implements Named {
         }
 
         @Override
-        public int add(Matchs matchs, Connection con) throws SQLException, EntiteDejaSauvegardee {
-            throw new SQLException("equipe/add/matchs: not implemented yet");
+        public int add(Matchs matchs, Connection con) throws SQLException, EntiteDejaSauvegardee, NoSuchElementException {
+            if (matchs.ofEquipe(Equipe.this))
+                return matchs.updateOrNew(con);
+            else
+                throw new NoSuchElementException("Le match n'est pas avec l'équipe " + Equipe.this.getNom());
         }
 
         @Override
-        public void remove(Matchs matchs, Connection con) throws SQLException, EntiteNonSauvegardee {
-            throw new SQLException("equipe/remove/matchs: not implemented yet");
+        public void remove(Matchs matchs, Connection con) throws SQLException, EntiteNonSauvegardee, NoSuchElementException {
+            if (matchs.ofEquipe(Equipe.this))
+                matchs.deleteFromDB(con);
+            else
+                throw new NoSuchElementException("Le match n'est pas avec l'équipe " + Equipe.this.getNom());
         }
 
         @Override
@@ -183,10 +190,14 @@ public class Equipe extends ClasseMiroir implements Named {
                     .collect(Collector.of(
                             ArrayList::new, 
                             (out, each) -> {
-                                if (each.getScoreEquipeA().equipe.equals(this))
-                                    out.add(each);
-                                else if (each.getScoreEquipeB().equipe.equals(this))
-                                    out.add(each);
+                                try {
+                                    each.populate(con);
+
+                                    if (each.ofEquipe(Equipe.this))
+                                        out.add(each);
+                                } catch (SQLException ex) {
+                                    NotificationError.error(ex.getLocalizedMessage());
+                                }
                             },
                             (out, next) -> {
                                 out.addAll(next);

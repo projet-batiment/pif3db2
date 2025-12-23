@@ -40,9 +40,7 @@ import java.sql.SQLException;
  */
 public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
     private int equipeId;
-    private final SideNavItem todo;
     private final SideNavItem matchs;
-    private final SideNavItem tournois;
     private final SideNavItem joueurs;
     private final SideNavItem board;
 
@@ -57,8 +55,6 @@ public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
 //        this.equipes.setPath(EquipeEquipe.class, new RouteParameters("equipeId", "" + equipeId));
 //        this.joueurs.setPath(EquipeJoueur.class, new RouteParameters("equipeId", "" + equipeId));
         this.joueurs.setPath("equipe/" + equipeId + "/joueur");
-
-        event.getUI().getPage().fetchCurrentURL(u -> NotificationError.show("layout " + u));
 
         try (var con = ConnectionPool.getConnection()) {
             var list = Equipe.toutesLesEquipes(con);
@@ -90,14 +86,10 @@ public class EquipeLayout extends AppLayout implements BeforeEnterObserver {
 
         SideNav sideNav = new SideNav();
 
-        this.todo = new SideNavItem("TODO: classes et nav");
-        sideNav.addItem(this.todo);
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
         this.matchs = new SideNavItem("Matchs");
         sideNav.addItem(this.matchs);
-        this.tournois = new SideNavItem("Tournois");
-        sideNav.addItem(this.tournois);
         this.joueurs = new SideNavItem("Joueurs");
         sideNav.addItem(this.joueurs);
 

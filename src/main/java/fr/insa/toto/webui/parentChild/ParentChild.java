@@ -31,6 +31,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.utils.DialogDelete;
+import fr.insa.toto.webui.utils.DialogDeleteChild;
 import fr.insa.toto.webui.utils.Editor;
 import fr.insa.toto.webui.utils.HandyButtons;
 import fr.insa.toto.webui.utils.NotificationError;
@@ -105,13 +106,6 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         }).open();
     }
 
-    public ParentChild() {
-        this.grid = new Grid<>();
-
-        title = new H2();
-        this.add(title, grid);
-    }
-
     public Grid.Column<ChildType> addColumn(Renderer<ChildType> r) {
         return this.grid.addColumn(r);
     }
@@ -124,7 +118,30 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         return parent;
     }
 
-    protected void setEditor(Editor<ChildType> editor) {
+    public Editor<ChildType> getEditor() {
+        return editor;
+    }
+
+    protected ParentChild(Editor<ChildType> editor) {
         this.editor = editor;
+        this.grid = new Grid<>();
+
+        title = new H2();
+        this.add(title, grid);
+
+        this.editor.setOnSavedCallback(j -> {
+            try (Connection con = ConnectionPool.getConnection()) {
+                getParentFace().add(j, con);
+                updateGridList();
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            }
+        });
+
+        this.editor.setOnDeletedCallback(j -> {
+            new DialogDeleteChild<ChildType>(getParentFace(), j, () -> {
+                updateGridList();
+            }).open();
+        });
     }
 }

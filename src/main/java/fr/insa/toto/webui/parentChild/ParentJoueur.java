@@ -51,22 +51,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class ParentJoueur extends ParentChild<Joueur> {
     public ParentJoueur() {
-        var joueurEditor = new JoueurEditor();
-        joueurEditor.setOnSavedCallback(j -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                super.getParentFace().add(j, con);
-                super.updateGridList();
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        });
-        joueurEditor.setOnDeletedCallback(j -> {
-            new DialogDeleteChild<Joueur>(super.getParentFace(), j, () -> {
-                super.updateGridList();
-                NotificationError.show("DELETED DONE");
-            }).open();
-        });
-        super.setEditor(joueurEditor);
+        super(new JoueurEditor());
 
         super.addColumn(Joueur::getSurnom).setHeader("Surnom");
         super.addColumn(Joueur::getCategorie).setHeader("Catégorie");

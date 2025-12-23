@@ -27,6 +27,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 /**
@@ -114,6 +115,8 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
                     this.onSaved();
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.error(ex.getLocalizedMessage());
                 }
             }
         });

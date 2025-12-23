@@ -408,7 +408,7 @@ public class GestionSchema {
         var compositionIdEquipe = new Beton.ColumnSkeleton(
                 "idEquipe",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        ).setUnique();
+        );
 
         var compositionIdJoueur = new Beton.ColumnSkeleton(
                 "idJoueur",
@@ -475,10 +475,7 @@ public class GestionSchema {
                 "matchs",
                 new Beton.ColumnSkeleton[]{
                     matchsIdRonde,
-                    new Beton.ColumnSkeleton(
-                            "ronde",
-                            Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),}
+                }
         );
 
         Beton.TableSkeleton ronde = new Beton.TableSkeleton(
@@ -552,14 +549,6 @@ public class GestionSchema {
                 }
         );
 
-        Beton.UniqueConstraintSkeleton ctrRondeEnCours = new Beton.UniqueConstraintSkeleton(
-                ronde,
-                new Beton.ColumnSkeleton[]{
-                    rondesIdTournois,
-                    rondesEnCours,
-                }
-        );
-
         return new SkeletonList(
             new Beton.TableSkeleton[] {
                 tournois,
@@ -576,7 +565,6 @@ public class GestionSchema {
                 ctrCompositionEquipe,
                 ctrCompositionJoueur,
                 ctrRondeTournois,
-                ctrRondeEnCours,
             }
         );
     }

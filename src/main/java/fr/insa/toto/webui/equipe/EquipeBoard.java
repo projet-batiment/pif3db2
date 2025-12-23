@@ -97,8 +97,8 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
         grid.addColumn(EquipeStats::getVictoires).setHeader("Victoires");
         grid.addColumn(EquipeStats::getDefaites).setHeader("Défaites");
         grid.addColumn(EquipeStats::getNuls).setHeader("Nuls");
-        grid.addColumn(EquipeStats::getButsInscrits).setHeader("Score +");
-        grid.addColumn(EquipeStats::getButsEncaisses).setHeader("Score -");
+        grid.addColumn(EquipeStats::getButsInscrits).setHeader("Buts inscrits");
+        grid.addColumn(EquipeStats::getButsEncaisses).setHeader("Buts encaissés");
         grid.addColumn(EquipeStats::getDifferenceDeButs).setHeader("Différence");
         
         grid.setWidthFull();
