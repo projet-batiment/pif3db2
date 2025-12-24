@@ -97,7 +97,7 @@ public class UserEditor extends Editor<User> {
             this.nom.setValue(user.getUsername());
             this.nom.setEnabled(true);
             this.admin.setValue(this.object.isAdmin() ? ADMIN : NORMAL);
-            this.admin.setEnabled(true);
+            this.admin.setEnabled(Session.isAdmin());
 
             if (this.object.getId() == Session.getUser().getId() || this.object.getId() == ClasseMiroir.ID_UNSAVED) {
                 this.resetPwd.setVisible(false);

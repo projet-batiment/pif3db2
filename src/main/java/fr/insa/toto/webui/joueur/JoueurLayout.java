@@ -33,6 +33,10 @@ public class JoueurLayout extends Layout implements BeforeEnterObserver {
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
 
+        sideNav.setWidthFull();
+        sideNav.getStyle().set("display", "flex");
+        sideNav.getStyle().set("flexDirection", "column");
+
         super.addToDrawer(new VerticalLayout(new H2("Joueur"), select, sideNav));
     }
 

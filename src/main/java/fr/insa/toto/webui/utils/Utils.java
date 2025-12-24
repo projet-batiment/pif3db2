@@ -71,7 +71,7 @@ public class Utils {
     }
 
     public static final void visibleLegitimate(Component component, User user) {
-        if (Session.isAdmin() || (user != null && Session.getUser().equals(user)))
+        if (Session.isAdmin() || (user != null && user.equals(Session.getUser())))
             component.setVisible(true);
         else
             component.setVisible(false);
