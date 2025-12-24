@@ -56,7 +56,6 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
             var optJoueur = Joueur.findById(con, id);
             if (optJoueur.isPresent()) {
                 this.joueur = optJoueur.get();
-                // Mise à jour de la grille avec les stats (Détail par équipe + Total cumulé)
                 grid.setItems(JoueurStats.findStatsForGrid(this.joueur.getId()));
                 title.setText("Tableau de bord : " + joueur.getSurnom());
             } else {
