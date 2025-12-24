@@ -21,6 +21,7 @@ package fr.insa.toto.webui.parentChild;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -30,6 +31,7 @@ import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ParentFace;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.DialogDeleteChild;
 import fr.insa.toto.webui.utils.Editor;
@@ -49,6 +51,8 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
     private Grid<ChildType> grid;
     private Editor<ChildType> editor;
 
+    private boolean initialized = false;
+
     private H2 title;
 
     public void initialize(ParentFace<ChildType> parent) {
@@ -58,19 +62,23 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
             this.parent = parent;
             title.setText(Utils.capitalizeFirst(this.parent.lesChildrenDuParentName()));
 
-            var bNew = new Button("Ajouter...");
-            bNew.addClickListener(t -> {
-                editor.open(null);
-            });
-            Utils.visibleAdmin(bNew);
-            this.addColumn(new ComponentRenderer<>(each ->
-                new HandyButtons(
-                    this.parent,
-                    each,
-                    editor,
-                    () -> this.updateGridList()
-                )
-            )).setHeader(bNew);
+            if (! this.initialized) {
+                this.initialized = true;
+
+                var bNew = new Button("Ajouter...");
+                bNew.addClickListener(t -> {
+                    editor.open(null);
+                });
+                Utils.visibleAdmin(bNew);
+                this.addColumn(new ComponentRenderer<>(each ->
+                    new HandyButtons(
+                        this.parent,
+                        each,
+                        editor,
+                        () -> this.updateGridList()
+                    )
+                )).setHeader(bNew);
+            }
 
             this.updateGridList();
         }
@@ -124,8 +132,9 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
     }
 
     protected ParentChild(Editor<ChildType> editor) {
-        this.editor = editor;
         this.grid = new Grid<>();
+
+        this.editor = editor;
 
         title = new H2();
         this.add(title, grid);

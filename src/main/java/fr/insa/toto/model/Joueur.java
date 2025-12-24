@@ -23,6 +23,7 @@ import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.toto.model.utils.IntOrNull;
+import fr.insa.toto.model.utils.ParentFace;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -96,6 +97,48 @@ public class Joueur extends ClasseMiroir implements Named {
             return "du ";
         }
     }
+
+    public static final JoueurParent joueurs = new JoueurParent();
+    private static class JoueurParent extends ParentFace<Joueur> {
+        @Override
+        public String parentObjectName() {
+            return "";
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "";
+        }
+
+        @Override
+        public String le() {
+            return "";
+        }
+
+        @Override
+        public String du() {
+            return "";
+        }
+
+        @Override
+        public int add(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            return joueur.getId();
+        }
+
+        @Override
+        public void remove(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+            joueur.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Joueur> get(Connection con) throws SQLException {
+            return Joueur.tousLesJoueurs(con);
+        }
+
+        public JoueurParent() {
+            super(new Joueur.AsChild());
+        }
+    }
     
     public String getSurnom() {
         return surnom;
@@ -130,8 +173,12 @@ public class Joueur extends ClasseMiroir implements Named {
         return idUser;
     }
 
-    public void setIdUser(Integer idUser) {
-        this.idUser = idUser;
+    public void setIdUser(Integer idUser) throws IllegalStateException {
+        if (this.idUser == null)
+            this.idUser = idUser;
+        else {
+            throw new IllegalStateException("le joueur " + this.getSurnom() + " a déjà un utilisateur associé : " + this.getIdUser());
+        }
     }
 
     @Override
@@ -152,7 +199,7 @@ public class Joueur extends ClasseMiroir implements Named {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm = ?, idUserr = ? where id = ?");
+        var st = con.prepareStatement("update joueur set surnom = ?, categorie = ?, taillecm = ?, idUser = ? where id = ?");
         st.setString(1, surnom);
         st.setString(2, categorie);
         st.setInt(3, taillecm);
@@ -189,6 +236,23 @@ public class Joueur extends ClasseMiroir implements Named {
                 String categorie = res.getString(3);
                 int taillecm = res.getInt(4);
                 Integer idUser = IntOrNull.getIntOrNull(res, "idUser");
+                return Optional.of(new Joueur(id, surnom, categorie, taillecm, idUser));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public static Optional<Joueur> findByIdUser(Connection con, int idUser) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm,idUser from joueur where idUser=?")) {
+            pst.setInt(1, idUser);
+            ResultSet res = pst.executeQuery();
+
+            if (res.next()) {
+                String surnom = res.getString(2);
+                String categorie = res.getString(3);
+                int taillecm = res.getInt(4);
+                int id = res.getInt("id");
                 return Optional.of(new Joueur(id, surnom, categorie, taillecm, idUser));
             } else {
                 return Optional.empty();

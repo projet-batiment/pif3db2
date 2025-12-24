@@ -77,7 +77,7 @@ public class TournoisLayout extends Layout implements BeforeEnterObserver {
 
     public TournoisLayout() {
         select = new Select<>();
-        select.setItemLabelGenerator(Tournois::getNom);
+        select.setItemLabelGenerator(Tournois::getName);
         select.setPlaceholder("Choisir un tournoi...");
         select.addValueChangeListener(t -> {
             if (t.getValue() != null) {

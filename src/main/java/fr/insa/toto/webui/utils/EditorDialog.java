@@ -28,6 +28,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -58,8 +59,11 @@ public abstract class EditorDialog extends Dialog {
             this.exec(doDeleteCallback);
             super.close();
         });
+        Utils.visibleAdmin(delete);
+
         this.apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         this.apply.addClickListener(e -> this.exec(doSaveCallback));
+        Utils.visibleAdmin(apply);
 
         var bottomButtons = new HorizontalLayout(close, delete, apply);
         bottomButtons.setWidth("100%");

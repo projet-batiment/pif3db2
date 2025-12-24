@@ -16,20 +16,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.matchs;
+package fr.insa.toto.webui.joueur;
 
-import fr.insa.toto.webui.equipe.*;
-import fr.insa.toto.webui.joueur.*;
 import fr.insa.toto.webui.tournois.*;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.parentChild.ParentEquipe;
 import fr.insa.toto.webui.parentChild.ParentJoueur;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.parentChild.ParentMatchs;
@@ -43,10 +38,14 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "match/", layout = Layout.Default.class)
-public class MatchsList extends ParentMatchs implements BeforeEnterObserver {
+@Route(value = "joueur/", layout = Layout.Default.class)
+public class JoueurList extends ParentJoueur implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        super.initialize(Matchs.matchs);
+        super.initialize(Joueur.joueurs);
+    }
+
+    public JoueurList() {
+        super(true);
     }
 }

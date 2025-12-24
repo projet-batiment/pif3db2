@@ -16,24 +16,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui;
+package fr.insa.toto.webui.utils;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import fr.insa.toto.webui.utils.Layout;
 
 /**
  *
- * @author francois
+ * @author elio
  */
-@Route(value = "", layout = Layout.Default.class)
-@PageTitle("")
-public class VuePrincipale extends VerticalLayout {
-
-    public VuePrincipale() {
-        this.add(new H2("TODO"));
+@Route(value = "access-denied", layout = Layout.Default.class)
+public class AccessDenied extends VerticalLayout {
+    public AccessDenied() {
+        this.add(new H2("Accès non-autorisé"));
+        this.add(new Span("Veuillez vous connecter avec un compte aux droits suffisants pour accéder à cette page."));
     }
-
 }

@@ -20,6 +20,9 @@ package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.model.utils.Named;
+import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +37,7 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class User extends ClasseMiroir {
+public class User extends ClasseMiroir implements Named {
     private String username;
     private String password;
     private boolean admin;
@@ -43,6 +46,8 @@ public class User extends ClasseMiroir {
     protected final String nomTable() {
         return this.nomTable;
     }
+
+    public static final User PORCELAINE = new User(ClasseMiroir.ID_PORCELAINE, "Nouveau...", "", false);
 
     public User(String uname, String pwd, boolean admin) {
         this.username = uname;
@@ -64,8 +69,72 @@ public class User extends ClasseMiroir {
         this.admin = false;
     }
 
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return "utilisateur";
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "l'";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "de l'";
+        }
+    }
+
+    public static final UserParent users = new UserParent();
+    private static class UserParent extends ParentFace<User> {
+        @Override
+        public String parentObjectName() {
+            return "";
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "";
+        }
+
+        @Override
+        public String le() {
+            return "";
+        }
+
+        @Override
+        public String du() {
+            return "";
+        }
+
+        @Override
+        public int add(User user, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            return user.getId();
+        }
+
+        @Override
+        public void remove(User user, Connection con) throws SQLException, EntiteNonSauvegardee {
+            user.deleteFromDB(con);
+        }
+
+        @Override
+        public List<User> get(Connection con) throws SQLException {
+            return User.tousLesUsers(con);
+        }
+
+        public UserParent() {
+            super(new User.AsChild());
+        }
+    }
+
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public String getName() {
+        return this.getUsername();
     }
 
     public void setUsername(String username) {
@@ -86,6 +155,14 @@ public class User extends ClasseMiroir {
 
     public void setAdmin(boolean admin) {
         this.admin = admin;
+    }
+
+    @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        var joueur = Joueur.findByIdUser(con, this.getId());
+        if (joueur.isPresent()) {
+            joueur.get().setIdUser(null);
+        }
     }
 
     @Override
@@ -165,6 +242,15 @@ public class User extends ClasseMiroir {
         return res;
     }
     
+    public static List<User> tousLesUsers(Connection con) throws SQLException {
+        List<User> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,username,password,admin from user")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+
     public static List<User> tousLesAdmins(Connection con) throws SQLException {
         List<User> res = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement("select id,username,password,admin from user where admin = ?")) {

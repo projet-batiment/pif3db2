@@ -53,7 +53,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
     protected void setObject() {
         if (this.object instanceof Tournois tournois) {
-            this.nom.setValue(tournois.getNom());
+            this.nom.setValue(tournois.getName());
             this.nom.setEnabled(true);
             this.nombreRondes.setValue("" + tournois.getNombreRondes());
             this.nombreRondes.setEnabled(true);
@@ -80,7 +80,7 @@ public class TournoisEditor extends Editor<Tournois> {
             return null;
         }
 
-        object.setNom(nom.getValue());
+        object.setName(nom.getValue());
         object.setNombreRondes(Integer.parseInt(nombreRondes.getValue()));
 
         return this.object;
@@ -88,7 +88,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
     @Override
     protected void onSaved() {
-        Notification.show("Le tournoi " + object.getNom()+ " a bien été sauvegardé");
+        Notification.show("Le tournoi " + object.getName()+ " a bien été sauvegardé");
     }
 
     @Override
@@ -101,7 +101,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
         super.setHeaderTitle("Aperçu du tournois");
 
-        super.setSelectItemLabelGenerator(Tournois::getNom);
+        super.setSelectItemLabelGenerator(Tournois::getName);
         super.setSelectLabel("Tournois");
 
         nom = new TextField();

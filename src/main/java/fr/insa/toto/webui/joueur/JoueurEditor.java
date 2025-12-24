@@ -18,10 +18,17 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.joueur;
 
+import com.vaadin.flow.component.button.Button;
 import fr.insa.toto.webui.utils.Editor;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
+import fr.insa.toto.model.User;
+import fr.insa.toto.webui.user.UserEditor;
+import fr.insa.toto.webui.utils.NotificationError;
+import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -37,6 +44,9 @@ public class JoueurEditor extends Editor<Joueur> {
     private TextField taillecm;
     private TextField categorie;
 
+    private Button addUser; 
+    private Button openUser; 
+
     @Override
     protected Joueur newObject() {
         return new Joueur();
@@ -50,6 +60,21 @@ public class JoueurEditor extends Editor<Joueur> {
             this.taillecm.setEnabled(true);
             this.categorie.setValue(joueur.getCategorie());
             this.categorie.setEnabled(true);
+
+            if (this.object.getIdUser() == null) {
+                Utils.visibleAdmin(this.addUser);
+                this.openUser.setVisible(false);
+            } else {
+                User user = null;
+                try (Connection con = ConnectionPool.getConnection()) {
+                    user = User.findById(con, this.object.getIdUser()).orElse(null);
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+
+                this.addUser.setVisible(false);
+                Utils.visibleLegitimate(this.openUser, user);
+            }
         } else {
             this.surnom.setValue("");
             this.surnom.setEnabled(false);
@@ -57,6 +82,9 @@ public class JoueurEditor extends Editor<Joueur> {
             this.taillecm.setEnabled(false);
             this.categorie.setValue("");
             this.categorie.setEnabled(false);
+
+            this.addUser.setVisible(false);
+            this.openUser.setVisible(false);
         }
     }
 
@@ -114,9 +142,49 @@ public class JoueurEditor extends Editor<Joueur> {
 
         categorie = new TextField();
         categorie.setLabel("Catégorie");
-//        categorie.setAllowedCharPattern("[0-9]");
         categorie.setMaxLength(1);
 
-        super.addChildren(surnom, taillecm, categorie);
+        addUser = new Button("Créer un utilisateur associé");
+        addUser.addClickListener(e -> {
+            this.close();
+
+            if (this.object instanceof Joueur joueur) {
+                var editor = new UserEditor();
+                editor.setJoueur(joueur);
+                editor.open(null);
+            } else {
+                NotificationError.error("Trying to create a user but joueur is null");
+            }
+        });
+        openUser = new Button("Voir l'utilisateur associé");
+        openUser.addClickListener(e -> {
+            this.close();
+
+            if (this.object instanceof Joueur joueur) {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    var user = User.findById(con, joueur.getIdUser());
+                    if (user.isPresent()) {
+                        var editor = new UserEditor();
+                        editor.open(user.get());
+                    } else {
+                        NotificationError.error("L'utilisateur associé est introuvable");
+                    }
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            } else {
+                NotificationError.error("Trying to create a user but joueur is null");
+            }
+        });
+
+        super.addChildren(
+            surnom,
+            new HorizontalLayout(
+                taillecm,
+                categorie
+            ),
+            addUser,
+            openUser
+        );
     }
 }

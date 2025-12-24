@@ -37,7 +37,7 @@ import java.sql.SQLException;
 @Route(value = "login", layout = Layout.Default.class)
 public class Login extends VerticalLayout {
     public Login() {
-        TextField username = new TextField("Utilisateur");
+        TextField username = new TextField("Nom d'utilisateur");
         PasswordField password = new PasswordField("Mot de passe");
 
         Button login = new Button("Connexion");

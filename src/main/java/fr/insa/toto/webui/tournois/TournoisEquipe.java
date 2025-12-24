@@ -67,7 +67,7 @@ public class TournoisEquipe extends ParentEquipe implements BeforeEnterObserver 
             NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
 
         } finally {
-            super.initialize(this.tournois.equipe);
+            super.initialize(this.tournois.equipes);
         }
     }
 }

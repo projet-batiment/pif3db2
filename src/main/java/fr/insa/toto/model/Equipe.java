@@ -48,7 +48,7 @@ public class Equipe extends ClasseMiroir implements Named {
     public static class AsChild extends ChildFace {
         @Override
         public String typeName() {
-            return nomTable;
+            return "équipe";
         }
 
         @Override
@@ -59,6 +59,51 @@ public class Equipe extends ClasseMiroir implements Named {
         @Override
         protected String duChildPrefix() {
             return "de l'";
+        }
+    }
+
+    public static final EquipeParent equipes = new EquipeParent();
+    private static class EquipeParent extends ParentFace<Equipe> {
+        @Override
+        public String parentObjectName() {
+            return "";
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "";
+        }
+
+        @Override
+        public String le() {
+            return "";
+        }
+
+        @Override
+        public String du() {
+            return "";
+        }
+
+        @Override
+        public int add(Equipe match, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            return match.getId();
+        }
+
+        @Override
+        public void remove(Equipe match, Connection con) throws SQLException, EntiteNonSauvegardee {
+            match.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Equipe> get(Connection con) throws SQLException {
+            var list = Equipe.toutesLesEquipes(con);
+            for (var each: list)
+                each.populate(con);
+            return list;
+        }
+
+        public EquipeParent() {
+            super(new Equipe.AsChild());
         }
     }
 

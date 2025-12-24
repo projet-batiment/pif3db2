@@ -16,25 +16,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.matchs;
+package fr.insa.toto.webui.user;
 
-import fr.insa.toto.webui.equipe.*;
-import fr.insa.toto.webui.joueur.*;
-import fr.insa.toto.webui.tournois.*;
+import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.parentChild.ParentEquipe;
-import fr.insa.toto.webui.parentChild.ParentJoueur;
-import fr.insa.toto.webui.utils.NotificationError;
-import fr.insa.toto.webui.parentChild.ParentMatchs;
-import fr.insa.toto.webui.parentChild.ParentTournois;
+import fr.insa.toto.model.User;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -43,10 +39,25 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "match/", layout = Layout.Default.class)
-public class MatchsList extends ParentMatchs implements BeforeEnterObserver {
+@Route(value = "user/current", layout = Layout.Default.class)
+public class UserBoard extends VerticalLayout implements BeforeEnterObserver {
+    private User user;
+    private H2 title;
+    private Button edit;
+    private UserEditor editor;
+    
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        super.initialize(Matchs.matchs);
+        if (! Session.ensureConnected(event)) return;
+
+        this.user = Session.getUser();
+        this.editor = new UserEditor();
+
+        this.title = new H2("Tableau de bord : utilisateur " + this.user.getUsername());
+
+        this.edit = new Button("Éditer");
+        this.edit.addClickListener(e -> editor.open(this.user));
+
+        this.add(title, edit);
     }
 }

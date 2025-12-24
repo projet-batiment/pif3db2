@@ -69,4 +69,11 @@ public class Utils {
         else
             component.setVisible(false);
     }
+
+    public static final void visibleLegitimate(Component component, User user) {
+        if (Session.isAdmin() || (user != null && Session.getUser().equals(user)))
+            component.setVisible(true);
+        else
+            component.setVisible(false);
+    }
 }

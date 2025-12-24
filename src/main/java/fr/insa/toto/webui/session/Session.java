@@ -18,6 +18,8 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.session;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.router.BeforeEnterEvent;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.User;
 import fr.insa.toto.webui.utils.NotificationError;
@@ -30,13 +32,34 @@ import java.sql.SQLException;
  * @author elio
  */
 public class Session implements Serializable {
-    private static User user;
-    private static boolean checkedAdmin = false;
+    private User user;
+    private boolean checkedAdmin = false;
+
+    private class LocalSession {
+        static User user;
+        static boolean checkedAdmin = false;
+    }
+
+    private static Session getSession() {
+        Session session = new Session();
+
+        session.user = LocalSession.user;
+        session.checkedAdmin = LocalSession.checkedAdmin;
+
+        return session;
+    }
+
+    private static void saveSession(Session session) {
+        LocalSession.user = session.user;
+        LocalSession.checkedAdmin = session.checkedAdmin;
+    }
 
     public static void init() {
-        if (checkedAdmin) return;
+        Session session = getSession();
 
-        checkedAdmin = true;
+        if (session.checkedAdmin) return;
+
+        session.checkedAdmin = true;
 
         try (Connection con = ConnectionPool.getConnection()) {
             if (User.tousLesAdmins(con).size() == 0) {
@@ -51,25 +74,45 @@ public class Session implements Serializable {
     }
 
     public static User getUser() {
-        return user;
+        Session session = getSession();
+        return session.user;
     }
 
     public static boolean isConnected() {
-        return user != null;
+        Session session = getSession();
+        return session.user != null;
     }
 
     public static boolean isAdmin() {
+        Session session = getSession();
         if (isConnected())
-            return user.isAdmin();
+            return session.user.isAdmin();
         else
             return false;
     }
 
     public static boolean isNormal() {
+        Session session = getSession();
         if (isConnected())
-            return ! user.isAdmin();
+            return ! session.user.isAdmin();
         else
             return false;
+    }
+
+    public static boolean ensureAdmin(BeforeEnterEvent event) {
+        if (! Session.isAdmin()) {
+            event.forwardTo("access-denied");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean ensureConnected(BeforeEnterEvent event) {
+        if (! Session.isConnected()) {
+            event.forwardTo("access-denied");
+            return false;
+        }
+        return true;
     }
 
     public static boolean tryConnect(String username, String password) throws SQLException {
@@ -79,15 +122,19 @@ public class Session implements Serializable {
     }
 
     public static boolean tryConnect(Connection con, String username, String password) throws SQLException {
-        if (user != null)
+        Session session = getSession();
+        if (session.user != null)
             return true;
 
         var ans = User.findByUsername(con, username);
         if (ans.isPresent()) {
             var unwrapped = ans.get();
             if (unwrapped.getPassword().equals(password)) {
-                Session.user = unwrapped;
-                NotificationError.show("Connexion à " + user.getUsername() + " réussie");
+                session.user = unwrapped;
+                saveSession(session);
+                NotificationError.show("Connexion à " + session.user.getUsername() + " réussie");
+                UI.getCurrent().refreshCurrentRoute(true);
+                UI.getCurrent().navigate("/");
                 return true;
             }
         }
@@ -96,7 +143,13 @@ public class Session implements Serializable {
     }
 
     public static void disconnect() {
-        NotificationError.show("Déconnexion de " + user.getUsername());
-        user = null;
+        Session session = getSession();
+        if (isConnected()) {
+            NotificationError.show("Déconnexion de " + session.user.getUsername());
+            session.user = null;
+            saveSession(session);
+            UI.getCurrent().refreshCurrentRoute(true);
+            UI.getCurrent().navigate("/");
+        }
     }
 }

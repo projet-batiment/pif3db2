@@ -44,7 +44,6 @@ public abstract class Layout extends AppLayout {
     private SideNavItem tournois;
     private SideNavItem joueurs;
     private SideNavItem equipes;
-    private SideNavItem ronde;
     private SideNavItem matchs;
     private SideNavItem connect;
     private SideNavItem disconnect;
@@ -70,10 +69,11 @@ public abstract class Layout extends AppLayout {
         this.primaryNav.addItem(this.joueurs);
         this.equipes = new SideNavItem("Équipes", "/equipe");
         this.primaryNav.addItem(this.equipes);
-        this.ronde = new SideNavItem("Rondes", "/ronde");
-        this.primaryNav.addItem(this.ronde);
         this.matchs = new SideNavItem("Matchs", "/match");
         this.primaryNav.addItem(this.matchs);
+        var users = new SideNavItem("Utilisateurs", "/user");
+        this.primaryNav.addItem(users);
+        Utils.visibleAdmin(users);
 
         String userHeader;
         String userLabel;
@@ -81,7 +81,7 @@ public abstract class Layout extends AppLayout {
         if (Session.isConnected()) {
             userHeader = "Bienvenue " + Session.getUser().getUsername() + " !";
             userLabel = "Mon compte";
-            userLink = "user";
+            userLink = "/user/current";
         } else {
             userHeader = "Compte";
             userLabel = "Se connecter";

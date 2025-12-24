@@ -16,37 +16,40 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.matchs;
+package fr.insa.toto.webui.parentChild;
 
-import fr.insa.toto.webui.equipe.*;
-import fr.insa.toto.webui.joueur.*;
-import fr.insa.toto.webui.tournois.*;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Matchs;
-import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.parentChild.ParentEquipe;
-import fr.insa.toto.webui.parentChild.ParentJoueur;
+import fr.insa.toto.model.User;
+import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.user.UserEditor;
 import fr.insa.toto.webui.utils.NotificationError;
-import fr.insa.toto.webui.parentChild.ParentMatchs;
-import fr.insa.toto.webui.parentChild.ParentTournois;
-import fr.insa.toto.webui.utils.Layout;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
 
 /**
  *
  * @author elio
  */
-@Route(value = "match/", layout = Layout.Default.class)
-public class MatchsList extends ParentMatchs implements BeforeEnterObserver {
-    @Override
-    public void beforeEnter(BeforeEnterEvent event) {
-        super.initialize(Matchs.matchs);
+public abstract class ParentUser extends ParentChild<User> {
+    public ParentUser() {
+        super(new UserEditor());
+
+        super.addColumn(m -> m.getName()).setHeader("Nom d'utilisateur");
+        super.addColumn(m -> {
+            try (Connection con = ConnectionPool.getConnection()) {
+                var joueur = Joueur.findByIdUser(con, m.getId());
+                if (joueur.isPresent()) {
+                    return joueur.get().getName();
+                } else {
+                    return "(Aucun)";
+                }
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            }
+
+            return "";
+        }).setHeader("Joueur associé");
+        super.addColumn(m -> m.isAdmin() ? "Administrateur" : "");
     }
 }

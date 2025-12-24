@@ -23,6 +23,7 @@ import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -103,6 +104,51 @@ public class Matchs extends ClasseMiroir implements Named {
         @Override
         protected String duChildPrefix() {
             return "du ";
+        }
+    }
+
+    public static final MatchsParent matchs = new MatchsParent();
+    private static class MatchsParent extends ParentFace<Matchs> {
+        @Override
+        public String parentObjectName() {
+            return "";
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "";
+        }
+
+        @Override
+        public String le() {
+            return "";
+        }
+
+        @Override
+        public String du() {
+            return "";
+        }
+
+        @Override
+        public int add(Matchs match, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            return match.getId();
+        }
+
+        @Override
+        public void remove(Matchs match, Connection con) throws SQLException, EntiteNonSauvegardee {
+            match.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Matchs> get(Connection con) throws SQLException {
+            var list = Matchs.tousLesMatchs(con);
+            for (var each: list)
+                each.populate(con);
+            return list;
+        }
+
+        public MatchsParent() {
+            super(new Matchs.AsChild());
         }
     }
 

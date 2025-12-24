@@ -34,11 +34,13 @@ import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Matchs;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.model.User;
 import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.DialogDeleteChild;
 import fr.insa.toto.webui.utils.HandyButtons;
 import fr.insa.toto.webui.joueur.JoueurEditor;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -50,11 +52,33 @@ import org.apache.commons.lang3.StringUtils;
  * @author elio
  */
 public abstract class ParentJoueur extends ParentChild<Joueur> {
-    public ParentJoueur() {
+    public ParentJoueur(boolean username) {
         super(new JoueurEditor());
 
         super.addColumn(Joueur::getSurnom).setHeader("Surnom");
         super.addColumn(Joueur::getCategorie).setHeader("Catégorie");
         super.addColumn(Joueur::getTaillecm).setHeader("Taille (cm)");
+
+        if (username && Session.isAdmin())
+            super.addColumn(j -> {
+                if (j.getIdUser() == null)
+                    return "(Aucun)";
+                else {
+                    try (Connection con = ConnectionPool.getConnection()) {
+                        var user = User.findById(con, j.getIdUser());
+                        if (user.isPresent()) {
+                            return user.get().getUsername();
+                        }
+                    } catch (SQLException ex) {
+                        NotificationError.sql(ex);
+                    }
+
+                    return "(Utilisateur introuvable)";
+                }
+            }).setHeader("Utilisateur associé");
+    }
+
+    public ParentJoueur() {
+        this(false);
     }
 }

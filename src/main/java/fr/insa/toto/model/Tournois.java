@@ -22,6 +22,7 @@ import fr.insa.toto.model.utils.ParentFace;
 import com.vaadin.flow.component.notification.Notification;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.model.utils.Named;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,15 +36,79 @@ import java.util.Optional;
  *
  * @author elio
  */
-public class Tournois extends ClasseMiroir {
+public class Tournois extends ClasseMiroir implements Named {
     private String nom;
     private int nombreRondes;
+
+    public static class AsChild extends ChildFace {
+        @Override
+        public String typeName() {
+            return nomTable;
+        }
+
+        @Override
+        protected String leChildPrefix() {
+            return "le ";
+        }
+
+        @Override
+        protected String duChildPrefix() {
+            return "du ";
+        }
+
+        @Override
+        public String typeNamePlural() {
+            return this.typeName();
+        }
+    }
+    
+    public static final TournoisParent tournois = new TournoisParent();
+    private static class TournoisParent extends ParentFace<Tournois> {
+        @Override
+        public String parentObjectName() {
+            return "";
+        }
+
+        @Override
+        public String parentTypeName() {
+            return "";
+        }
+
+        @Override
+        public String le() {
+            return "";
+        }
+
+        @Override
+        public String du() {
+            return "";
+        }
+
+        @Override
+        public int add(Tournois tournois, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            return tournois.getId();
+        }
+
+        @Override
+        public void remove(Tournois tournois, Connection con) throws SQLException, EntiteNonSauvegardee {
+            tournois.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Tournois> get(Connection con) throws SQLException {
+            return Tournois.tousLesTournois(con);
+        }
+
+        public TournoisParent() {
+            super(new Tournois.AsChild());
+        }
+    }
 
     public final JoueurParent joueurs = new JoueurParent();
     private class JoueurParent extends ParentFace<Joueur> {
         @Override
         public String parentObjectName() {
-            return getNom();
+            return getName();
         }
 
         @Override
@@ -88,7 +153,7 @@ public class Tournois extends ClasseMiroir {
     private class MatchsParent extends ParentFace<Matchs> {
         @Override
         public String parentObjectName() {
-            return getNom();
+            return getName();
         }
 
         @Override
@@ -132,11 +197,11 @@ public class Tournois extends ClasseMiroir {
         }
     }
 
-    public final EquipeParent equipe = new EquipeParent();
+    public final EquipeParent equipes = new EquipeParent();
     private class EquipeParent extends ParentFace<Equipe> {
         @Override
         public String parentObjectName() {
-            return getNom();
+            return getName();
         }
 
         @Override
@@ -187,7 +252,7 @@ public class Tournois extends ClasseMiroir {
     private class RondeParent extends ParentFace<Ronde> {
         @Override
         public String parentObjectName() {
-            return getNom();
+            return getName();
         }
 
         @Override
@@ -237,11 +302,11 @@ public class Tournois extends ClasseMiroir {
         return this.nomTable;
     }
 
-    public String getNom() {
+    public String getName() {
         return nom;
     }
 
-    public void setNom(String nom) {
+    public void setName(String nom) {
         this.nom = nom;
     }
 
