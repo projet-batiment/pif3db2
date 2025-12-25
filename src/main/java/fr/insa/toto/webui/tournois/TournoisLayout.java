@@ -86,7 +86,7 @@ public class TournoisLayout extends Layout implements BeforeEnterObserver {
             }
         });
 
-        SideNav sideNav = new SideNav("Ce tournois");
+        SideNav sideNav = new SideNav("Ce tournoi");
 
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);

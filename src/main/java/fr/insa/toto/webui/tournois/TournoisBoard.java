@@ -20,56 +20,88 @@ package fr.insa.toto.webui.tournois;
 
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.equipe.EquipeStats;
 import fr.insa.toto.webui.utils.NotificationError;
+import fr.insa.toto.webui.utils.PodiumComponent;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 /**
- *
  * @author elio
  */
 @Route(value = "tournois/:tournoisId([0-9]*)", layout = TournoisLayout.class)
 public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver {
+
     private Tournois tournois;
-    private H2 title;
-    private VerticalLayout NomTournoi;
-    private VerticalLayout NombreRondes;
-    private Text nom;
-    private Text nombreRondes;
+    private final VerticalLayout NomTournoi = new VerticalLayout();
+    private final VerticalLayout NombreRondes = new VerticalLayout();
+    private final VerticalLayout podiumSection = new VerticalLayout();
     
+    private final Span nomText = new Span();
+    private final Span rondesText = new Span();
+
+    public TournoisBoard() {
+        this.setSpacing(true);
+        this.setPadding(true);
+        
+        NomTournoi.add(new H2("Nom du Tournoi"));
+        NombreRondes.add(new H2("Nombre de Rondes"));
+        
+        this.add(NomTournoi, NombreRondes, podiumSection);
+    }
+
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.tournois = Tournois.findById(con, id).get();
 
-            this.nom.setText(tournois.getName());
-            this.nombreRondes.setText(String.valueOf(tournois.getNombreRondes()));
-            this.NomTournoi.add(nom);
-            this.NombreRondes.add(nombreRondes);
-            
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+        Optional<String> tournoisIdOpt = event.getRouteParameters().get("tournoisId");
+        
+        if (tournoisIdOpt.isPresent()) {
+            int id = Integer.parseInt(tournoisIdOpt.get());
+
+            try (Connection con = ConnectionPool.getConnection()) {
+                Optional<Tournois> optTournois = Tournois.findById(con, id);
+                if (optTournois.isPresent()) {
+                    this.tournois = optTournois.get();
+                    nomText.setText(tournois.getName());
+                    rondesText.setText(String.valueOf(tournois.getNombreRondes()));
+                    
+                    if (!NomTournoi.getChildren().anyMatch(c -> c == nomText)) {
+                        NomTournoi.add(nomText);
+                        NombreRondes.add(rondesText);
+                    }
+                }
+                podiumSection.removeAll();
+                podiumSection.setAlignItems(FlexComponent.Alignment.CENTER);
+
+                H2 titre = new H2("Classement actuel");
+                podiumSection.setAlignSelf(FlexComponent.Alignment.CENTER, titre);
+                podiumSection.add(titre);
+
+                List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+
+                if (top3.isEmpty()) {
+                    podiumSection.add(new Span("Aucun match avec score n'a été trouvé dans la base."));
+                } else {
+                    podiumSection.add(new PodiumComponent(top3));
+                }
+
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("Erreur lors du chargement des données.");
+            }
         }
-    }
-    
-    public TournoisBoard() {
-        this.title = new H2("Tableau de bord : tournois");
-        nom = new Text("temp");
-        nombreRondes = new Text("temp");
-        this.NomTournoi = new VerticalLayout(new H2("Nom du tournoi"));
-        this.NombreRondes = new VerticalLayout(new H2("Nombre de rondes"));
-        this.add(title);
-        this.add(NomTournoi);
-        this.add(NombreRondes);
     }
 }

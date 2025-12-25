@@ -18,42 +18,50 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.parentChild;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.equipe.EquipeEditor;
-import fr.insa.toto.webui.utils.DialogDelete;
-import fr.insa.toto.webui.utils.DialogDeleteChild;
+import fr.insa.toto.webui.equipe.EquipeStats;
 import fr.insa.toto.webui.utils.NotificationError;
+import fr.insa.toto.webui.utils.PodiumComponent;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
-import org.apache.commons.lang3.StringUtils;
+import java.util.List;
+import java.util.Optional;
 
 /**
- *
  * @author elio
  */
 public abstract class ParentEquipe extends ParentChild<Equipe> {
+
     public ParentEquipe() {
         super(new EquipeEditor());
 
-        super.addColumn(Equipe::getNom).setHeader("Nom");
-        super.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs");
-        super.addColumn(t -> "TODO").setHeader("Classement");
+        super.addColumn(Equipe::getNom).setHeader("Nom").setSortable(true);
+        super.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs").setSortable(true);
+
+        super.addColumn(equipe -> {
+            return EquipeStats.findById(equipe.getId())
+                    .map(s -> s.getPoints() + " pts")
+                    .orElse("0 pts");
+        }).setHeader("Points").setSortable(true);
+
+        super.addColumn(equipe -> {
+            int rang = EquipeStats.getRangEquipe(equipe.getId());
+            return (rang == 1) ? "1er" : rang + "ème";
+        }).setHeader("Rang").setSortable(true);
+
+        H2 titreClassement = new H2("Classement actuel");
+        this.setAlignSelf(FlexComponent.Alignment.CENTER, titreClassement);
+        this.add(titreClassement);
+        
+        try (Connection con = ConnectionPool.getConnection()) {
+            List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+            this.add(new PodiumComponent(top3));
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
     }
 }
