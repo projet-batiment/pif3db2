@@ -42,9 +42,8 @@ public class EquipeStats implements Serializable {
     private final int nuls;
     private final int butsInscrits;
     private final int butsEncaisses;
-    private final int points; // Nouvelle donnée
+    private final int points;
 
-    // Requête mise à jour avec calcul des points : (Victoires * 3) + (Nuls * 1)
     private static final String SQL_GET_STATS_BY_EQUIPE_ID = """
         SELECT
             COUNT(M.id) AS Nombre_de_matchs,
@@ -72,7 +71,7 @@ public class EquipeStats implements Serializable {
     SELECT 
         E.id,
         RANK() OVER (ORDER BY 
-            SUM(CASE WHEN S1.score > S2.score THEN 3 WHEN S1.score = S2.score THEN 1 ELSE 0 END) DESC, 
+            SUM(CASE WHEN S1.score > S2.score THEN 3 WHEN S1.score = S2.score THEN 2 ELSE 1 END) DESC, 
             (SUM(S1.score) - SUM(S2.score)) DESC
         ) AS rang
     FROM equipe E

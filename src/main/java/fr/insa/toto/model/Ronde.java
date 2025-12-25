@@ -19,6 +19,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.model;
 
 import fr.insa.beuvron.utils.database.ClasseMiroir;
+import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.webui.utils.NotificationError;
@@ -104,6 +105,25 @@ public class Ronde extends ClasseMiroir implements Named {
 
     public void setEnCours(boolean enCours) {
         this.enCours = enCours;
+    }
+    
+    public int getNbMatchs(){
+        
+        int nbMatchs = 0;
+
+    try (Connection con = ConnectionPool.getConnection();
+        PreparedStatement pst = con.prepareStatement("select count(*) as total from matchs where idRonde = ?")) {
+        pst.setInt(1,this.numero);
+
+        try (ResultSet rs = pst.executeQuery()) {
+            if (rs.next()) {
+                nbMatchs = rs.getInt("total");
+            }
+        }
+    } catch (SQLException ex) {
+        NotificationError.sql(ex);
+    }
+    return nbMatchs;
     }
 
     @Override

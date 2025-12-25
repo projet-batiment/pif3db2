@@ -127,7 +127,7 @@ public class JoueurEditor extends Editor<Joueur> {
     public JoueurEditor() {
         nouveau = Joueur.PORCELAINE;
 
-        super.setHeaderTitle("Apperçu du joueur");
+        super.setHeaderTitle("Aperçu du joueur");
 
         super.setSelectItemLabelGenerator(Joueur::getSurnom);
         super.setSelectLabel("Joueur");

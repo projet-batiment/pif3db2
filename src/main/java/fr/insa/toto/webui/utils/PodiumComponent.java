@@ -31,7 +31,6 @@ public class PodiumComponent extends HorizontalLayout {
         this.setWidthFull();
         this.setAlignItems(Alignment.END); 
         this.setJustifyContentMode(JustifyContentMode.CENTER);
-        this.getStyle().set("padding-bottom", "20px");
 
         if (top3 != null && !top3.isEmpty()) {
             Equipe p1 = top3.get(0);

@@ -55,7 +55,7 @@ public abstract class ParentRonde extends ParentChild<Ronde> {
         super(new RondeEditor());
 
         super.addColumn(m -> m.getNumero()).setHeader("Ronde n°");
-        super.addColumn(m -> "TODO").setHeader("Nombre de matchs");
-        super.addColumn(m -> m.isEnCours() ? "En cours" : "Terminée");
+        super.addColumn(m -> m.getNbMatchs()).setHeader("Nombre de matchs");
+        super.addColumn(m -> m.isEnCours() ? "En cours" : "Terminée").setHeader("Etat");
     }
 }
