@@ -41,7 +41,7 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "equipe/", layout = Layout.Default.class)
+@Route(value = "equipe/list", layout = Layout.Default.class)
 public class EquipeList extends ParentEquipe implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {

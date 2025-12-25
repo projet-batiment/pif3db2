@@ -31,6 +31,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
@@ -41,7 +43,7 @@ import java.util.NoSuchElementException;
  *
  * @author qleveque01
  */
-@Route(value = "equipe/:equipeId([0-9]*)", layout = EquipeLayout.class)
+@Route(value = "equipe/", layout = EquipeLayout.class)
 public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
     private Equipe equipe;
     private H2 title;
@@ -49,19 +51,22 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("equipeId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("EquipeBoard: pas d'ID d'équipe en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            try (Connection con = ConnectionPool.getConnection()) {
+                this.equipe = Equipe.findById(con, id).get();
+                grid.setItems(EquipeStats.findStatsForGrid(this.equipe.getId()));
+                title.setText("Équipes " + equipe.getNom());
+                title.setText("Tableau de bord : équipe " + equipe.getNom());
 
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.equipe = Equipe.findById(con, id).get();
-            grid.setItems(EquipeStats.findStatsForGrid(this.equipe.getId()));
-            title.setText("Équipes " + equipe.getNom());
-            title.setText("Tableau de bord : équipe " + equipe.getNom());
-            
-
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+            }
         }
     }
     private void deleteDialog(Equipe e) {

@@ -77,7 +77,7 @@ public class EquipeEditor extends Editor<Equipe> {
 
     @Override
     protected String generatedUrl() {
-        return "equipe/" + this.object.getId();
+        return "equipe";
     }
 
     public EquipeEditor() {

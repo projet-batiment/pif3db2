@@ -4,7 +4,6 @@
  */
 package fr.insa.toto.webui.matchs;
 
-import fr.insa.toto.webui.matchs.MatchsLayout;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -13,6 +12,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -23,7 +24,7 @@ import java.util.NoSuchElementException;
  *
  * @author pmarchal01
  */
-@Route(value = "matchs/:matchId([0-9]*)", layout = MatchsLayout.class)
+@Route(value = "match", layout = MatchsLayout.class)
 public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
     private Matchs matchs;
     private H2 title;
@@ -34,19 +35,29 @@ public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
     
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("matchsId").get());
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.matchs = Matchs.findById(con, id).get();
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("MatchsBoard: pas d'ID de match en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            try (Connection con = ConnectionPool.getConnection()) {
+                this.matchs = Matchs.findById(con, id).get();
+                try {
+                    matchs.populate(con);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.error("L'un des éléments du match n'a pas été trouvé : " + ex.getLocalizedMessage());
+                }
 
-            this.nom.setText(matchs.getName());
-            this.ronde.setText(String.valueOf(matchs.getRonde()));
-            this.NomMatch.add(nom);
-            this.Ronde.add(Ronde);
-            
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("Le match " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                this.nom.setText(matchs.getName());
+                this.ronde.setText(String.valueOf(matchs.getRonde().getNumero()));
+                this.NomMatch.add(nom);
+                this.Ronde.add(ronde);
+                
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("Le match " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+            }
         }
     }
     

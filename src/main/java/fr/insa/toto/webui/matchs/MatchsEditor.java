@@ -157,7 +157,7 @@ public class MatchsEditor extends Editor<Matchs> {
 
     @Override
     protected String generatedUrl() {
-        return "match/" + this.object.getId();
+        return "match";
     }
 
     public MatchsEditor() {

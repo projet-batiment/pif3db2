@@ -30,7 +30,7 @@ import fr.insa.toto.webui.utils.Layout;
  *
  * @author elio
  */
-@Route(value = "user/", layout = Layout.Default.class)
+@Route(value = "user/list", layout = Layout.Default.class)
 public class UserList extends ParentUser implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {

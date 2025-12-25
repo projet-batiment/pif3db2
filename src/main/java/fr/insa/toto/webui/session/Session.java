@@ -26,6 +26,8 @@ import fr.insa.toto.webui.utils.NotificationError;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -33,33 +35,42 @@ import java.sql.SQLException;
  */
 public class Session implements Serializable {
     private User user;
-    private boolean checkedAdmin = false;
+    private boolean checkedFirstSession;
+    private List<Integer> ids;
+    private List<String> errorMessage;
 
     private class LocalSession {
-        static User user;
+        static User user = null;
         static boolean checkedAdmin = false;
+        static List<Integer> ids = new ArrayList<>();
+        static List<String> errorMessage = new ArrayList<>();
     }
 
     private static Session getSession() {
         Session session = new Session();
 
         session.user = LocalSession.user;
-        session.checkedAdmin = LocalSession.checkedAdmin;
+        session.checkedFirstSession = LocalSession.checkedAdmin;
+        session.ids = LocalSession.ids;
+        session.errorMessage = LocalSession.errorMessage;
 
         return session;
     }
 
-    private static void saveSession(Session session) {
-        LocalSession.user = session.user;
-        LocalSession.checkedAdmin = session.checkedAdmin;
+    private void saveSession() {
+        LocalSession.user = this.user;
+        LocalSession.checkedAdmin = this.checkedFirstSession;
+        LocalSession.ids = this.ids;
+        LocalSession.errorMessage = this.errorMessage;
     }
 
     public static void init() {
         Session session = getSession();
 
-        if (session.checkedAdmin) return;
+        if (session.checkedFirstSession) return;
 
-        session.checkedAdmin = true;
+        session.checkedFirstSession = true;
+        session.saveSession();
 
         try (Connection con = ConnectionPool.getConnection()) {
             if (User.tousLesAdmins(con).size() == 0) {
@@ -73,9 +84,55 @@ public class Session implements Serializable {
         }
     }
 
+    public static List<Integer> getIds() {
+        return getSession().ids;
+    }
+
+    public static Integer getId(int which) {
+        try {
+            return getSession().ids.get(which);
+        } catch (IndexOutOfBoundsException ex) {
+            return null;
+        }
+    }
+
+    public static void setIds(Integer ...ids) {
+        var session = getSession();
+        session.ids = List.of(ids);
+        session.saveSession();
+    }
+
+    public static void pushId(Integer id) {
+        var session = getSession();
+        session.ids.add(id);
+        session.saveSession();
+    }
+
+    public static void popId() {
+        var session = getSession();
+        session.ids.removeLast();
+        session.saveSession();
+    }
+
     public static User getUser() {
         Session session = getSession();
         return session.user;
+    }
+
+    public static List<String> getErrorMessages() {
+        return getSession().errorMessage;
+    }
+
+    public static void clearErrorMessages() {
+        var session = getSession();
+        session.errorMessage.clear();
+        session.saveSession();
+    }
+
+    public static void addErrorMessage(String errorMessage) {
+        var session = getSession();
+        session.errorMessage.add(errorMessage);
+        session.saveSession();
     }
 
     public static boolean isConnected() {
@@ -131,9 +188,8 @@ public class Session implements Serializable {
             var unwrapped = ans.get();
             if (unwrapped.getPassword().equals(password)) {
                 session.user = unwrapped;
-                saveSession(session);
+                session.saveSession();
                 NotificationError.show("Connexion à " + session.user.getUsername() + " réussie");
-                UI.getCurrent().refreshCurrentRoute(true);
                 UI.getCurrent().navigate("/");
                 return true;
             }
@@ -142,14 +198,12 @@ public class Session implements Serializable {
         return false;
     }
 
-    public static void disconnect() {
+    public static void disconnect(UI ui) {
         Session session = getSession();
         if (isConnected()) {
             NotificationError.show("Déconnexion de " + session.user.getUsername());
             session.user = null;
-            saveSession(session);
-            UI.getCurrent().refreshCurrentRoute(true);
-            UI.getCurrent().navigate("/");
+            session.saveSession();
         }
     }
 }

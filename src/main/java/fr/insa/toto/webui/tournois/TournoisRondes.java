@@ -18,17 +18,15 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.utils.NotificationError;
-import fr.insa.toto.webui.parentChild.ParentChild;
-import fr.insa.toto.webui.parentChild.ParentJoueur;
 import fr.insa.toto.webui.parentChild.ParentRonde;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -37,24 +35,28 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "tournois/:tournoisId([0-9]*)/ronde", layout = TournoisLayout.class)
+@Route(value = "tournois/ronde", layout = TournoisLayout.class)
 public class TournoisRondes extends ParentRonde implements BeforeEnterObserver {
     private Tournois tournois;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("TournoisRondes: pas d'ID de tournois en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            try (Connection con = ConnectionPool.getConnection()) {
+                this.tournois = Tournois.findById(con, id).get();
 
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.tournois = Tournois.findById(con, id).get();
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
 
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
-
-        } finally {
-            super.initialize(this.tournois.rondes);
+            } finally {
+                super.initialize(this.tournois.rondes);
+            }
         }
     }
 }

@@ -31,6 +31,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
@@ -41,7 +43,7 @@ import java.util.NoSuchElementException;
  *
  * @author qleveque01
  */
-@Route(value = "joueur/:joueurId([0-9]*)", layout = JoueurLayout.class)
+@Route(value = "joueur", layout = JoueurLayout.class)
 public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
 
     private Joueur joueur;
@@ -50,22 +52,26 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("joueurId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("JoueurBoard: pas d'ID de joueur en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            try (Connection con = ConnectionPool.getConnection()) {
+                var optJoueur = Joueur.findById(con, id);
+                if (optJoueur.isPresent()) {
+                    this.joueur = optJoueur.get();
+                    grid.setItems(JoueurStats.findStatsForGrid(this.joueur.getId()));
+                    title.setText("Tableau de bord : " + joueur.getSurnom());
+                } else {
+                    throw new NoSuchElementException("ID non trouvé");
+                }
 
-        try (Connection con = ConnectionPool.getConnection()) {
-            var optJoueur = Joueur.findById(con, id);
-            if (optJoueur.isPresent()) {
-                this.joueur = optJoueur.get();
-                grid.setItems(JoueurStats.findStatsForGrid(this.joueur.getId()));
-                title.setText("Tableau de bord : " + joueur.getSurnom());
-            } else {
-                throw new NoSuchElementException("ID non trouvé");
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("Le joueur " + id + " n'a pas été trouvé dans la base de données.");
             }
-
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("Le joueur " + id + " n'a pas été trouvé dans la base de données.");
         }
     }
 

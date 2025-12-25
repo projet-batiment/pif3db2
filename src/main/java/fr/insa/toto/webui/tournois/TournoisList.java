@@ -35,7 +35,7 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "tournois/", layout = Layout.Default.class)
+@Route(value = "tournois/list", layout = Layout.Default.class)
 public class TournoisList extends ParentTournois implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {

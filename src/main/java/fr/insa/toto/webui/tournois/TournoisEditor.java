@@ -21,6 +21,7 @@ package fr.insa.toto.webui.tournois;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Editor;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -93,7 +94,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
     @Override
     protected String generatedUrl() {
-        return "tournois/" + this.object.getId();
+        return "tournois";
     }
 
     public TournoisEditor() {

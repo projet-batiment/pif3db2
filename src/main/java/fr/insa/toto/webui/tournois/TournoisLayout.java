@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -30,6 +31,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
@@ -50,28 +53,33 @@ public class TournoisLayout extends Layout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        this.tournoisId = Integer.parseInt(event.getRouteParameters().get("tournoisId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("TournoisLayout: pas d'ID de tournois en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            this.tournoisId = id;
 
-        final String pfx = "tournois/" + tournoisId + "/";
-        this.board.setPath(pfx);
-        this.ronde.setPath(pfx + "ronde");
-        this.matchs.setPath(pfx + "match");
-        this.equipes.setPath(pfx + "equipe");
-        this.joueurs.setPath(pfx + "joueur");
+            this.board.setPath(TournoisBoard.class);
+            this.ronde.setPath(TournoisRondes.class);
+            this.matchs.setPath(TournoisMatchs.class);
+            this.equipes.setPath(TournoisEquipe.class);
+            this.joueurs.setPath(TournoisJoueur.class);
 
-        try (var con = ConnectionPool.getConnection()) {
-            var list = Tournois.tousLesTournois(con);
-            select.setItems(list);
+            try (var con = ConnectionPool.getConnection()) {
+                var list = Tournois.tousLesTournois(con);
+                select.setItems(list);
 
-            var tournois = Tournois.findById(con, tournoisId);
-            if (tournois.isPresent()) {
-                select.setValue(tournois.get());
-            } else {
+                var tournois = Tournois.findById(con, tournoisId);
+                if (tournois.isPresent()) {
+                    select.setValue(tournois.get());
+                } else {
 
-                NotificationError.error("Le tournois " + tournoisId + " n'existe pas !");
+                    NotificationError.error("Le tournois " + tournoisId + " n'existe pas !");
+                }
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
             }
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
         }
     }
 
@@ -82,7 +90,8 @@ public class TournoisLayout extends Layout implements BeforeEnterObserver {
         select.addValueChangeListener(t -> {
             if (t.getValue() != null) {
                 this.tournoisId = t.getValue().getId();
-                this.getUI().ifPresent(ui -> ui.navigate("tournois/" + this.tournoisId));
+                Session.setIds(this.tournoisId);
+                UI.getCurrent().refreshCurrentRoute(true);
             }
         });
 

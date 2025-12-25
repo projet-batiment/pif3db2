@@ -4,7 +4,7 @@
  */
 package fr.insa.toto.webui.matchs;
 
-import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -14,9 +14,12 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
 
 /**
@@ -25,34 +28,43 @@ import java.sql.SQLException;
  */
 public class MatchsLayout extends Layout implements BeforeEnterObserver {
     private int matchId;
-    private final SideNavItem todo;
-    private final SideNavItem ronde;
     private final SideNavItem board;
     
     private Select<Matchs> select;
     
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        this.matchId = Integer.parseInt(event.getRouteParameters().get("matchsId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("MatchsLayout: pas d'ID de match en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            this.matchId = id;
 
+            this.board.setPath(MatchsBoard.class);
+         
+            try (var con = ConnectionPool.getConnection()) {
+                var list = Matchs.tousLesMatchs(con);
+                list.forEach(each -> {
+                    try {
+                        each.populate();
+                    } catch (SQLException ex) {
+                        NotificationError.sql(ex);
+                    } catch (NoSuchElementException ex) {
+                        NotificationError.error("L'un des éléments du match n'a pas été trouvé : " + ex.getLocalizedMessage());
+                    }
+                });
+                select.setItems(list);
 
-        final String pfx = "matchs/" + matchId + "/";
-        this.board.setPath(pfx);
-        this.ronde.setPath(pfx + "ronde");
-     
-        try (var con = ConnectionPool.getConnection()) {
-            var list = Matchs.tousLesMatchs(con);
-            select.setItems(list);
-
-            var tournois = Matchs.findById(con, matchId);
-            if (tournois.isPresent()) {
-                select.setValue(tournois.get());
-            } else {
-
-                NotificationError.error("Le match " + matchId + " n'existe pas !");
+                var tournois = Matchs.findById(con, matchId);
+                if (tournois.isPresent()) {
+                    select.setValue(tournois.get());
+                } else {
+                    NotificationError.error("Le match " + matchId + " n'existe pas !");
+                }
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
             }
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
         }
     }
     
@@ -63,19 +75,16 @@ public class MatchsLayout extends Layout implements BeforeEnterObserver {
         select.addValueChangeListener(t -> {
             if (t.getValue() != null) {
                 this.matchId = t.getValue().getId();
-                this.getUI().ifPresent(ui -> ui.navigate("matchs/" + this.matchId));
+                Session.setIds(this.matchId);
+                UI.getCurrent().refreshCurrentRoute(true);
             }
         });
         select.setLabel("Matchs");
 
         SideNav sideNav = new SideNav();
 
-        this.todo = new SideNavItem("TODO: classes et nav");
-        sideNav.addItem(this.todo);
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
-        this.ronde = new SideNavItem("Matchs");
-        sideNav.addItem(this.ronde);
 
         sideNav.setWidthFull();
         sideNav.getStyle().set("display", "flex");

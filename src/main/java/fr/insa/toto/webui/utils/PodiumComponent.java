@@ -23,19 +23,20 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import fr.insa.toto.model.Equipe;
+import fr.insa.toto.model.utils.Named;
 import java.util.List;
 
-public class PodiumComponent extends HorizontalLayout {
+public class PodiumComponent<T extends Named> extends HorizontalLayout {
 
-    public PodiumComponent(List<Equipe> top3) {
+    public PodiumComponent(List<T> top3) {
         this.setWidthFull();
         this.setAlignItems(Alignment.END); 
         this.setJustifyContentMode(JustifyContentMode.CENTER);
 
         if (top3 != null && !top3.isEmpty()) {
-            Equipe p1 = top3.get(0);
-            Equipe p2 = (top3.size() > 1) ? top3.get(1) : null;
-            Equipe p3 = (top3.size() > 2) ? top3.get(2) : null;
+            T p1 = top3.get(0);
+            T p2 = (top3.size() > 1) ? top3.get(1) : null;
+            T p3 = (top3.size() > 2) ? top3.get(2) : null;
 
             if (p2 != null) this.add(creerMarche(p2, "120px", "#C0C0C0", "2ème"));
             this.add(creerMarche(p1, "180px", "#FFD700", "1er"));
@@ -43,14 +44,14 @@ public class PodiumComponent extends HorizontalLayout {
         }
     }
 
-    private VerticalLayout creerMarche(Equipe equipe, String hauteur, String couleur, String label) {
+    private VerticalLayout creerMarche(T current, String hauteur, String couleur, String label) {
         VerticalLayout colonne = new VerticalLayout();
         colonne.setAlignItems(Alignment.CENTER);
         colonne.setPadding(false);
         colonne.setSpacing(false);
         colonne.setWidth("140px");
 
-        Span nom = new Span(equipe.getNom());
+        Span nom = new Span(current.getName());
         nom.getStyle().set("font-weight", "bold").set("margin-bottom", "10px");
 
         Div bloc = new Div();

@@ -32,6 +32,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.model.User;
+import fr.insa.toto.webui.joueur.JoueurEditor;
 import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Editor;
 import fr.insa.toto.webui.utils.NotificationError;
@@ -72,6 +73,8 @@ public class UserEditor extends Editor<User> {
 
     protected void setObject() {
         if (this.object instanceof User user) {
+            super.setVisibleLegitimate(this.object);
+
             if (this.joueur == null) {
                 try (Connection con = ConnectionPool.getConnection()) {
                     var joueur = Joueur.findByIdUser(con, this.object.getId());
@@ -102,6 +105,7 @@ public class UserEditor extends Editor<User> {
             if (this.object.getId() == Session.getUser().getId() || this.object.getId() == ClasseMiroir.ID_UNSAVED) {
                 this.resetPwd.setVisible(false);
                 this.password.setVisible(true);
+                this.password.setValue(this.object.getPassword());
             } else {
                 this.resetPwd.setVisible(true);
                 this.password.setVisible(false);
@@ -136,6 +140,7 @@ public class UserEditor extends Editor<User> {
         }
 
         object.setUsername(nom.getValue());
+        object.setPassword(password.getValue());
         object.setAdmin(admin.getValue().equals(ADMIN));
 
         return this.object;
@@ -159,7 +164,7 @@ public class UserEditor extends Editor<User> {
 
     @Override
     protected String generatedUrl() {
-        return "user/" + this.object.getId();
+        return "user/";
     }
 
     public void setJoueur(Joueur joueur) {
@@ -193,13 +198,25 @@ public class UserEditor extends Editor<User> {
         viewJoueur = new Button("Voir le joueur associé");
         viewJoueur.addClickListener(e -> {
             if (this.joueurId != null) {
-                super.getUI().ifPresent(ui -> ui.navigate("joueur/" + this.joueurId));
-                super.close();
+                try (Connection con = ConnectionPool.getConnection()) {
+                    var ans = Joueur.findById(con, this.joueurId);
+                    if (ans.isPresent()) {
+                        var editor = new JoueurEditor();
+                        super.close();
+                        editor.open(ans.get());
+                    } else {
+                        NotificationError.error("Le joueur associé est introuvable");
+                    }
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
             }
         });
 
         viewJoueurAbsent = new Span("Cet utilisateur n'est relié à aucun joueur");
         newJoueur = new Span();
+
+        super.setSelectEnableAdmin();
 
         super.addChildren(nom, admin, resetPwd, password, viewJoueur, viewJoueurAbsent, newJoueur);
     }

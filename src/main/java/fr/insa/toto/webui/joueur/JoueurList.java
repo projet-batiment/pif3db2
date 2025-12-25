@@ -38,7 +38,7 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "joueur/", layout = Layout.Default.class)
+@Route(value = "joueur/list", layout = Layout.Default.class)
 public class JoueurList extends ParentJoueur implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {

@@ -28,6 +28,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.User;
 import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -76,6 +77,11 @@ public abstract class EditorDialog extends Dialog {
         view.setAlignItems(FlexComponent.Alignment.CENTER);
 
         super.getFooter().add(view);
+    }
+
+    public void setVisibleLegitimate(User user) {
+        Utils.visibleLegitimate(delete, user);
+        Utils.visibleLegitimate(apply, user);
     }
 
     public void setSaveCallback(Runnable c) {

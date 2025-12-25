@@ -121,7 +121,7 @@ public class JoueurEditor extends Editor<Joueur> {
 
     @Override
     protected String generatedUrl() {
-        return "joueur/" + this.object.getId();
+        return "joueur";
     }
 
     public JoueurEditor() {
@@ -158,13 +158,12 @@ public class JoueurEditor extends Editor<Joueur> {
         });
         openUser = new Button("Voir l'utilisateur associé");
         openUser.addClickListener(e -> {
-            this.close();
-
             if (this.object instanceof Joueur joueur) {
                 try (Connection con = ConnectionPool.getConnection()) {
                     var user = User.findById(con, joueur.getIdUser());
                     if (user.isPresent()) {
                         var editor = new UserEditor();
+                        super.close();
                         editor.open(user.get());
                     } else {
                         NotificationError.error("L'utilisateur associé est introuvable");

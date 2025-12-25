@@ -18,7 +18,6 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -30,6 +29,8 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.equipe.EquipeStats;
+import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.utils.PodiumComponent;
 import java.sql.Connection;
@@ -41,7 +42,7 @@ import java.util.Optional;
 /**
  * @author elio
  */
-@Route(value = "tournois/:tournoisId([0-9]*)", layout = TournoisLayout.class)
+@Route(value = "tournois/", layout = TournoisLayout.class)
 public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver {
 
     private Tournois tournois;
@@ -64,12 +65,11 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-
-        Optional<String> tournoisIdOpt = event.getRouteParameters().get("tournoisId");
-        
-        if (tournoisIdOpt.isPresent()) {
-            int id = Integer.parseInt(tournoisIdOpt.get());
-
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("TournoisBoard: pas d'ID de tournois en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
             try (Connection con = ConnectionPool.getConnection()) {
                 Optional<Tournois> optTournois = Tournois.findById(con, id);
                 if (optTournois.isPresent()) {

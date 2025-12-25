@@ -18,26 +18,15 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.equipe;
 
-import fr.insa.toto.webui.equipe.*;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
-import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Matchs;
-import fr.insa.toto.model.Equipe;
-import fr.insa.toto.webui.utils.DialogDelete;
-import fr.insa.toto.webui.joueur.JoueurEditor;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.parentChild.ParentJoueur;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -46,26 +35,28 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "equipe/:equipeId([0-9]*)/joueur", layout = EquipeLayout.class)
+@Route(value = "equipe/joueur", layout = EquipeLayout.class)
 public class EquipeJoueur extends ParentJoueur implements BeforeEnterObserver {
     private Equipe equipe = null;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        int id = Integer.parseInt(event.getRouteParameters().get("equipeId").get());
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("EquipeJoueur: pas d'ID d'équipe en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            try (Connection con = ConnectionPool.getConnection()) {
+                this.equipe = Equipe.findById(con, id).get();
 
-        event.getUI().getPage().fetchCurrentURL(u -> NotificationError.show("joueur " + u));
+            } catch (SQLException ex) {
+                NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.error("L'équipe " + id + " n'a pas été trouvée dans la base de données : " + ex.getMessage());
 
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.equipe = Equipe.findById(con, id).get();
-
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        } catch (NoSuchElementException ex) {
-            NotificationError.error("L'équipe " + id + " n'a pas été trouvée dans la base de données : " + ex.getMessage());
-
-        } finally {
-            super.initialize(this.equipe.joueurs);
+            } finally {
+                super.initialize(this.equipe.joueurs);
+            }
         }
     }
 }

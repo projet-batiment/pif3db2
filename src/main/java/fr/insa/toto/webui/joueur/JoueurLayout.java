@@ -1,5 +1,6 @@
 package fr.insa.toto.webui.joueur;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -8,7 +9,13 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Joueur;
+import fr.insa.toto.webui.equipe.EquipeBoard;
+import fr.insa.toto.webui.equipe.EquipeJoueur;
+import fr.insa.toto.webui.equipe.EquipeMatchs;
+import fr.insa.toto.webui.session.InternError;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
@@ -25,7 +32,9 @@ public class JoueurLayout extends Layout implements BeforeEnterObserver {
         select.setLabel("Joueur");
         select.addValueChangeListener(e -> {
             if (e.getValue() != null && e.isFromClient()) {
-                this.getUI().ifPresent(ui -> ui.navigate("joueur/" + e.getValue().getId()));
+                this.joueurId = e.getValue().getId();
+                Session.setIds(this.joueurId);
+                UI.getCurrent().refreshCurrentRoute(true);
             }
         });
 
@@ -42,9 +51,13 @@ public class JoueurLayout extends Layout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        event.getRouteParameters().get("joueurId").ifPresent(idStr -> {
-            this.joueurId = Integer.parseInt(idStr);
-            this.board.setPath("joueur/" + joueurId);
+        Integer id = Session.getId(0);
+        if (id == null) {
+            Session.addErrorMessage("JoueurLayout: pas d'ID de joueur en mémoire");
+            event.forwardTo(InternError.class);
+        } else {
+            this.joueurId = id;
+            this.board.setPath(JoueurBoard.class);
 
             try (var con = ConnectionPool.getConnection()) {
                 select.setItems(Joueur.tousLesJoueurs(con));
@@ -52,6 +65,6 @@ public class JoueurLayout extends Layout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             }
-        });
+        }
     }
 }

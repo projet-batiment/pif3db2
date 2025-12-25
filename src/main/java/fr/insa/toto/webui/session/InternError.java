@@ -39,15 +39,20 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-@Route(value = "logout", layout = Layout.Default.class)
-public class Logout extends VerticalLayout implements BeforeEnterObserver {
+@Route(value = "erreur", layout = Layout.Default.class)
+public class InternError extends VerticalLayout {
+    public InternError() {
+        super.add(new H2("Erreur interne"));
 
-    @Override
-    public void beforeEnter(BeforeEnterEvent bee) {
-        Session.disconnect(bee.getUI());
-    }
+        var messages = Session.getErrorMessages();
 
-    public Logout() {
-        super.add(new H2("Déconnexion"));
+        if (messages.size() == 0) {
+            super.add(new Span("(Erreur inconnue)"));
+        } else {
+            for (var each: messages) {
+                super.add(new Span(each));
+            }
+            Session.clearErrorMessages();
+        }
     }
 }

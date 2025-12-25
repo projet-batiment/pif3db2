@@ -82,7 +82,7 @@ public class RondeEditor extends Editor<Ronde> {
 
     @Override
     protected String generatedUrl() {
-        return "ronde/" + this.object.getId();
+        return "ronde/";
     }
 
     public RondeEditor() {

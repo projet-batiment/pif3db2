@@ -24,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -123,10 +124,15 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
 
         super.setBoardCallback(() -> {
             if (this.object != null) {
+                Session.setIds(this.object.getId());
                 this.getUI().ifPresent(ui -> ui.navigate(this.generatedUrl()));
                 this.close();
             }
         });
+    }
+
+    protected void setSelectEnableAdmin() {
+        Utils.enableAdmin(select);
     }
 
     protected void addChildren(Component... components) {

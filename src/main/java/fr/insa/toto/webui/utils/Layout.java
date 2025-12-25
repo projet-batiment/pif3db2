@@ -27,6 +27,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
@@ -40,39 +42,21 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-public abstract class Layout extends AppLayout {
+public abstract class Layout extends AppLayout implements AfterNavigationObserver {
     private SideNavItem tournois;
     private SideNavItem joueurs;
     private SideNavItem equipes;
     private SideNavItem matchs;
     private SideNavItem connect;
     private SideNavItem disconnect;
+    private SideNavItem users;
 
     private SideNav primaryNav;
     private SideNav userNav;
 
-    public static class Default extends Layout {
-        public Default() {
-            super.addToDrawer();
-        }
-    }
-
     @Override
-    public final void addToDrawer(Component... components) {
-        super.addToDrawer(components);
-
-        this.primaryNav = new SideNav("Général");
-
-        this.tournois = new SideNavItem("Tournois", "/tournois");
-        this.primaryNav.addItem(this.tournois);
-        this.joueurs = new SideNavItem("Joueurs", "/joueur");
-        this.primaryNav.addItem(this.joueurs);
-        this.equipes = new SideNavItem("Équipes", "/equipe");
-        this.primaryNav.addItem(this.equipes);
-        this.matchs = new SideNavItem("Matchs", "/match");
-        this.primaryNav.addItem(this.matchs);
-        var users = new SideNavItem("Utilisateurs", "/user");
-        this.primaryNav.addItem(users);
+    public void afterNavigation(AfterNavigationEvent ane) {
+        Utils.visibleConnected(this.disconnect);
         Utils.visibleAdmin(users);
 
         String userHeader;
@@ -87,10 +71,37 @@ public abstract class Layout extends AppLayout {
             userLabel = "Se connecter";
             userLink = "login";
         }
-        this.userNav = new SideNav(userHeader);
-        this.connect = new SideNavItem(userLabel, userLink);
+        this.userNav.setLabel(userHeader);
+        this.connect.setLabel(userLabel);
+        this.connect.setPath(userLink);
+    }
+
+    public static class Default extends Layout {
+        public Default() {
+            super.addToDrawer();
+        }
+    }
+
+    @Override
+    public final void addToDrawer(Component... components) {
+        super.addToDrawer(components);
+
+        this.primaryNav = new SideNav("Général");
+
+        this.tournois = new SideNavItem("Tournois", "/tournois/list");
+        this.primaryNav.addItem(this.tournois);
+        this.joueurs = new SideNavItem("Joueurs", "/joueur/list");
+        this.primaryNav.addItem(this.joueurs);
+        this.equipes = new SideNavItem("Équipes", "/equipe/list");
+        this.primaryNav.addItem(this.equipes);
+        this.matchs = new SideNavItem("Matchs", "/match/list");
+        this.primaryNav.addItem(this.matchs);
+        this.users = new SideNavItem("Utilisateurs", "/user/list");
+        this.primaryNav.addItem(users);
+
+        this.userNav = new SideNav();
+        this.connect = new SideNavItem("");
         this.disconnect = new SideNavItem("Déconnexion", "logout");
-        Utils.visibleConnected(this.disconnect);
         this.userNav.addItem(this.connect, this.disconnect);
 
         this.primaryNav.setWidthFull();

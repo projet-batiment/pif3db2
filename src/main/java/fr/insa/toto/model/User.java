@@ -159,9 +159,11 @@ public class User extends ClasseMiroir implements Named {
 
     @Override
     public void deleteChildren(Connection con) throws SQLException {
-        var joueur = Joueur.findByIdUser(con, this.getId());
-        if (joueur.isPresent()) {
-            joueur.get().setIdUser(null);
+        var ans = Joueur.findByIdUser(con, this.getId());
+        if (ans.isPresent()) {
+            var joueur = ans.get();
+            joueur.setIdUser(null);
+            joueur.update(con);
         }
     }
 
