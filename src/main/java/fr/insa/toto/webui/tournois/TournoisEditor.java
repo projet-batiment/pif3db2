@@ -40,10 +40,6 @@ public class TournoisEditor extends Editor<Tournois> {
         this.onSavedCallback = onSavedCallback;
     }
 
-    public void setOnDeletedCallback(Consumer<Tournois> onDeletedCallback) {
-        super.setDeleteCallback(() -> onDeletedCallback.accept(object));
-    }
-
     private TextField nom;
     private TextField nombreRondes;
 

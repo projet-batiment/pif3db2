@@ -16,12 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.utils;
+package fr.insa.toto.webui.user;
 
-import fr.insa.beuvron.utils.database.ClasseMiroir;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.utils.Named;
-import fr.insa.toto.model.utils.ParentFace;
+import fr.insa.toto.model.User;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -29,16 +29,25 @@ import java.sql.SQLException;
  *
  * @author elio
  */
-public class DialogDeleteChild<ChildType extends ClasseMiroir & Named> extends DialogDelete {
-    public DialogDeleteChild(ParentFace parent, ChildType child, Runnable onRemoved) {
-        super(parent.leChildNameDuParentName(child), () -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                parent.remove(child, con);
-                NotificationError.show(parent.child.leChild() + " " + child.getName() + " a bien été supprimé(e) " + parent.duParentName());
-                onRemoved.run();
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        });
+public class ResetPasswordDialog {
+    public static void open(User user) {
+        try (Connection con = ConnectionPool.getConnection()) {
+            user.resetPassword();
+            user.update(con);
+
+            var info = new ConfirmDialog();
+
+            info.setHeader("Information");
+            info.setText("Le nouveau mot de passe de l'utilisateur " + user.getUsername() + " est : " + user.getPassword() + ". Retenez-le bien !");
+
+            info.setRejectable(false);
+            info.setCancelable(false);
+
+            info.setConfirmText("OK");
+
+            info.open();
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
     }
 }

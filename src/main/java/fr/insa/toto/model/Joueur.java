@@ -174,7 +174,7 @@ public class Joueur extends ClasseMiroir implements Named {
     }
 
     public void setIdUser(Integer idUser) throws IllegalStateException {
-        if (this.idUser == null)
+        if (this.idUser == null || idUser == null)
             this.idUser = idUser;
         else {
             throw new IllegalStateException("le joueur " + this.getSurnom() + " a déjà un utilisateur associé : " + this.getIdUser());

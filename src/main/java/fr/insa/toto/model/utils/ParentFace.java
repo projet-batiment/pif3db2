@@ -61,6 +61,9 @@ public abstract class ParentFace<T> {
     public final String leChildDuParentName() {
         return this.leChildDuParent() + " " + this.parentObjectName();
     }
+    public final String leChildNameDuParentName(Named named) {
+        return this.child.leChild() + " " + named.getName() + " " + this.duParentName();
+    }
 
     public final String lesChildrenDuParent() {
         return this.child.lesChild() + " " + this.du() + this.parentTypeName();

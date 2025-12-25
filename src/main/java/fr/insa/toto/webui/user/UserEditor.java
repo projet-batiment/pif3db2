@@ -21,6 +21,7 @@ package fr.insa.toto.webui.user;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Span;
 import fr.insa.toto.webui.tournois.*;
 import com.vaadin.flow.component.notification.Notification;
@@ -59,6 +60,8 @@ public class UserEditor extends Editor<User> {
     private Span newJoueur;
 
     private Integer joueurId;
+
+    private boolean isNewObject = false;
 
     // Le joueur auquel associer le nouveau User
     private Joueur joueur = null;
@@ -102,10 +105,13 @@ public class UserEditor extends Editor<User> {
             this.admin.setValue(this.object.isAdmin() ? ADMIN : NORMAL);
             this.admin.setEnabled(Session.isAdmin());
 
-            if (this.object.getId() == Session.getUser().getId() || this.object.getId() == ClasseMiroir.ID_UNSAVED) {
+            if (this.object.getId() == Session.getUser().getId()) {
                 this.resetPwd.setVisible(false);
                 this.password.setVisible(true);
                 this.password.setValue(this.object.getPassword());
+            } else if (this.object.getId() == ClasseMiroir.ID_UNSAVED) {
+                this.resetPwd.setVisible(false);
+                this.password.setVisible(false);
             } else {
                 this.resetPwd.setVisible(true);
                 this.password.setVisible(false);
@@ -140,8 +146,15 @@ public class UserEditor extends Editor<User> {
         }
 
         object.setUsername(nom.getValue());
-        object.setPassword(password.getValue());
         object.setAdmin(admin.getValue().equals(ADMIN));
+
+        if (this.object.getId() == ClasseMiroir.ID_UNSAVED) {
+            this.isNewObject = true;
+        } else {
+            if (Session.getUser().equals(this.object))
+                this.object.setPassword(password.getValue());
+            this.isNewObject = false;
+        }
 
         return this.object;
     }
@@ -159,6 +172,10 @@ public class UserEditor extends Editor<User> {
             }
 
             Notification.show("L'utilisateur " + object.getUsername() + " a bien été sauvegardé et lié au joueur " + this.joueur.getName());
+        }
+
+        if (this.isNewObject) {
+            ResetPasswordDialog.open(this.object);
         }
     }
 
@@ -194,6 +211,24 @@ public class UserEditor extends Editor<User> {
 
         resetPwd = new Button("Réinitialiser le mot de passe");
         resetPwd.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        resetPwd.addClickListener(e -> {
+            var dialog = new ConfirmDialog();
+            dialog.setHeader("Confirmer");
+            dialog.setText("Réinitialiser le mot de passe de l'utilisateur " + this.object.getUsername() + " ?");
+
+            dialog.setRejectable(false);
+
+            dialog.setCancelable(true);
+            dialog.setCancelText("Annuler");
+
+            dialog.setConfirmText("Réinitialiser");
+            dialog.setConfirmButtonTheme("error primary");
+            dialog.addConfirmListener(t -> {
+                ResetPasswordDialog.open(this.object);
+            });
+
+            dialog.open();
+        });
 
         viewJoueur = new Button("Voir le joueur associé");
         viewJoueur.addClickListener(e -> {

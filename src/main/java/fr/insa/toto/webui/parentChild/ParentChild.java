@@ -149,7 +149,7 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         });
 
         this.editor.setOnDeletedCallback(j -> {
-            new DialogDeleteChild<ChildType>(getParentFace(), j, () -> {
+            new DialogDeleteChild<>(getParentFace(), j, () -> {
                 updateGridList();
             }).open();
         });

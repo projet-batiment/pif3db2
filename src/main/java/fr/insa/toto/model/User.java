@@ -157,6 +157,20 @@ public class User extends ClasseMiroir implements Named {
         this.admin = admin;
     }
 
+    public void resetPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                     + "abcdefghijklmnopqrstuvwxyz"
+                     + "0123456789";
+
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            int index = (int) (Math.random() * chars.length());
+            password.append(chars.charAt(index));
+        }
+
+        this.password = password.toString();
+    }
+
     @Override
     public void deleteChildren(Connection con) throws SQLException {
         var ans = Joueur.findByIdUser(con, this.getId());
