@@ -36,6 +36,7 @@ import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -70,15 +71,11 @@ public class TournoisLayout extends Layout implements BeforeEnterObserver {
                 var list = Tournois.tousLesTournois(con);
                 select.setItems(list);
 
-                var tournois = Tournois.findById(con, tournoisId);
-                if (tournois.isPresent()) {
-                    select.setValue(tournois.get());
-                } else {
-
-                    NotificationError.error("Le tournois " + tournoisId + " n'existe pas !");
-                }
+                select.setValue(Tournois.findById(con, tournoisId).get());
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }

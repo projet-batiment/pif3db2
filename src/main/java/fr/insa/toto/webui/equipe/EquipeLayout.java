@@ -34,6 +34,7 @@ import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -63,16 +64,11 @@ public class EquipeLayout extends Layout implements BeforeEnterObserver {
             try (var con = ConnectionPool.getConnection()) {
                 var list = Equipe.toutesLesEquipes(con);
                 select.setItems(list);
-
-                var equipe = Equipe.findById(con, equipeId);
-                if (equipe.isPresent()) {
-                    select.setValue(equipe.get());
-                } else {
-
-                    NotificationError.error("L'équipe " + equipeId + " n'existe pas !");
-                }
+                select.setValue(Equipe.findById(con, equipeId).get());
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
+            } catch (NoSuchElementException ex) {
+                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }

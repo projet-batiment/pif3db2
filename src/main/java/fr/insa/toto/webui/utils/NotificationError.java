@@ -26,20 +26,42 @@ import java.sql.SQLException;
  * @author elio
  */
 public class NotificationError extends Notification {
-    public static final void error(String message) {
+    public static final int NORMAL = 0;
+    public static final int LOG = 1;
+    public static int loglevel = 0;
+
+    public static final void info(String message) {
+        String s = message;
+        Notification.show(s);
+    }
+
+    public static final void userError(String message) {
         String s = "Erreur : '" + message + "'";
+        Notification.show(s);
+    }
+
+    public static final void internError(String message) {
+        String s = "Erreur interne : '" + message + "'";
         Notification.show(s);
         System.out.println(s);
     }
 
     public static final void log(String message) {
-        String s = "Info : '" + message + "'";
-        Notification.show(s);
+        String s = "Log : '" + message + "'";
+        if (loglevel > LOG)
+            Notification.show(s);
+        System.out.println(s);
+    }
+
+    public static final void todo(String message) {
+        String s = "TODO : '" + message + "'";
+        if (loglevel > LOG)
+            Notification.show(s);
         System.out.println(s);
     }
 
     public static void sql(SQLException ex) {
-        var s = "Erreur SQLException: " + ex.getLocalizedMessage();
+        var s = "Erreur SQL: " + ex.getLocalizedMessage();
         Notification.show(s);
         System.out.println(s);
         ex.printStackTrace();

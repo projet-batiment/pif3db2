@@ -41,6 +41,7 @@ import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -136,12 +137,12 @@ public class UserEditor extends Editor<User> {
 
     public User compile() {
         if (this.nom.getValue().isBlank()) {
-            Notification.show("Il manque le nom de l'utilisateur");
+            NotificationError.userError("Il manque le nom de l'utilisateur");
             return null;
         }
 
         if (this.admin.getValue().isBlank()) {
-            Notification.show("Il manque le type de l'utilisateur");
+            NotificationError.userError("Il manque le type de l'utilisateur");
             return null;
         }
 
@@ -162,7 +163,7 @@ public class UserEditor extends Editor<User> {
     @Override
     protected void onSaved() {
         if (this.joueur == null)
-            Notification.show("L'utilisateur " + object.getUsername() + " a bien été sauvegardé");
+            NotificationError.info("L'utilisateur " + object.getUsername() + " a bien été sauvegardé");
         else {
             this.joueur.setIdUser(this.object.getId());
             try (Connection con = ConnectionPool.getConnection()) {
@@ -171,7 +172,7 @@ public class UserEditor extends Editor<User> {
                 NotificationError.sql(ex);
             }
 
-            Notification.show("L'utilisateur " + object.getUsername() + " a bien été sauvegardé et lié au joueur " + this.joueur.getName());
+            NotificationError.info("L'utilisateur " + object.getUsername() + " a bien été sauvegardé et lié au joueur " + this.joueur.getName());
         }
 
         if (this.isNewObject) {
@@ -234,16 +235,13 @@ public class UserEditor extends Editor<User> {
         viewJoueur.addClickListener(e -> {
             if (this.joueurId != null) {
                 try (Connection con = ConnectionPool.getConnection()) {
-                    var ans = Joueur.findById(con, this.joueurId);
-                    if (ans.isPresent()) {
-                        var editor = new JoueurEditor();
-                        super.close();
-                        editor.open(ans.get());
-                    } else {
-                        NotificationError.error("Le joueur associé est introuvable");
-                    }
+                    new JoueurEditor().open(Joueur.findById(con, this.joueurId).get());
+                    super.close();
+
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.internError("L'utilisateur " + this.joueurId + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
                 }
             }
         });

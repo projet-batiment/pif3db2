@@ -70,7 +70,7 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("Le joueur " + id + " n'a pas été trouvé dans la base de données.");
+                NotificationError.internError("Le joueur " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }
@@ -79,7 +79,7 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
         new DialogDelete("le joueur " + j.getSurnom(), () -> {
             try (Connection con = ConnectionPool.getConnection()) {
                 j.deleteFromDB(con);
-                Notification.show("Le joueur " + j.getSurnom() + " a bien été supprimé");
+                NotificationError.info("Le joueur " + j.getSurnom() + " a bien été supprimé");
                 this.getUI().ifPresent(ui -> ui.navigate("/"));
             } catch (SQLException ex) {
                 NotificationError.sql(ex);

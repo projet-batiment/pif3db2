@@ -18,16 +18,14 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.tournois;
 
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.toto.model.Tournois;
-import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Editor;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -69,11 +67,11 @@ public class TournoisEditor extends Editor<Tournois> {
 
     public Tournois compile() {
         if (this.nom.getValue().isBlank()) {
-            Notification.show("Il manque le nom du tournois");
+            NotificationError.userError("Il manque le nom du tournois");
             return null;
         }
         if (this.nombreRondes.getValue().isBlank()) {
-            Notification.show("Il manque le nombre de rondes");
+            NotificationError.userError("Il manque le nombre de rondes");
             return null;
         }
 
@@ -85,7 +83,7 @@ public class TournoisEditor extends Editor<Tournois> {
 
     @Override
     protected void onSaved() {
-        Notification.show("Le tournoi " + object.getName()+ " a bien été sauvegardé");
+        NotificationError.info("Le tournoi " + object.getName()+ " a bien été sauvegardé");
     }
 
     @Override

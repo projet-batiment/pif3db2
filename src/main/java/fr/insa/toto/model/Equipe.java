@@ -141,7 +141,7 @@ public class Equipe extends ClasseMiroir implements Named {
                 state = ModifiedState.DEPTH_EDITED;
                 populate(con);
 
-                Notification.show("TODO: ajouter le nouveau joueur au tournois ?");
+                NotificationError.todo("Ajouter le nouveau joueur au tournois ?");
 
                 return compositionId;
             }
@@ -241,7 +241,7 @@ public class Equipe extends ClasseMiroir implements Named {
                                     if (each.ofEquipe(Equipe.this))
                                         out.add(each);
                                 } catch (SQLException ex) {
-                                    NotificationError.error(ex.getLocalizedMessage());
+                                    NotificationError.sql(ex);
                                 }
                             },
                             (out, next) -> {

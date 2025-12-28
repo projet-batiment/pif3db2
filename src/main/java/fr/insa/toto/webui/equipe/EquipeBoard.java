@@ -65,7 +65,7 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }
@@ -73,7 +73,7 @@ public class EquipeBoard extends VerticalLayout implements BeforeEnterObserver {
         new DialogDelete("l'équipe " + e.getNom(), () -> {
             try (Connection con = ConnectionPool.getConnection()) {
                 e.deleteFromDB(con);
-                Notification.show("L'équipe " + e.getNom() + " a bien été supprimée");
+                NotificationError.info("L'équipe " + e.getNom() + " a bien été supprimée");
                 this.getUI().ifPresent(ui->ui.navigate("/"));
             } catch (SQLException ex) {
                 NotificationError.sql(ex);

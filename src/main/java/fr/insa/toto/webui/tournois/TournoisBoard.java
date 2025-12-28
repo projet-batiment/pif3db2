@@ -71,17 +71,15 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
             event.forwardTo(InternError.class);
         } else {
             try (Connection con = ConnectionPool.getConnection()) {
-                Optional<Tournois> optTournois = Tournois.findById(con, id);
-                if (optTournois.isPresent()) {
-                    this.tournois = optTournois.get();
-                    nomText.setText(tournois.getName());
-                    rondesText.setText(String.valueOf(tournois.getNombreRondes()));
-                    
-                    if (!NomTournoi.getChildren().anyMatch(c -> c == nomText)) {
-                        NomTournoi.add(nomText);
-                        NombreRondes.add(rondesText);
-                    }
+                this.tournois = Tournois.findById(con, id).get();
+                nomText.setText(tournois.getName());
+                rondesText.setText(String.valueOf(tournois.getNombreRondes()));
+
+                if (!NomTournoi.getChildren().anyMatch(c -> c == nomText)) {
+                    NomTournoi.add(nomText);
+                    NombreRondes.add(rondesText);
                 }
+
                 podiumSection.removeAll();
                 podiumSection.setAlignItems(FlexComponent.Alignment.CENTER);
 
@@ -100,7 +98,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("Erreur lors du chargement des données.");
+                NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }

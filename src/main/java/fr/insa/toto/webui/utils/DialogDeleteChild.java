@@ -34,7 +34,7 @@ public class DialogDeleteChild<ChildType extends ClasseMiroir & Named> extends D
         super(parent.leChildNameDuParentName(child), () -> {
             try (Connection con = ConnectionPool.getConnection()) {
                 parent.remove(child, con);
-                NotificationError.show(parent.child.leChild() + " " + child.getName() + " a bien été supprimé(e) " + parent.duParentName());
+                NotificationError.info(parent.child.leChild() + " " + child.getName() + " a bien été supprimé(e) " + parent.duParentName());
                 onRemoved.run();
             } catch (SQLException ex) {
                 NotificationError.sql(ex);

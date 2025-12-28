@@ -18,22 +18,11 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.session;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
-import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
-import fr.insa.toto.webui.utils.NotificationError;
-import java.sql.SQLException;
 
 /**
  *
@@ -42,14 +31,14 @@ import java.sql.SQLException;
 @Route(value = "erreur", layout = Layout.Default.class)
 public class InternError extends VerticalLayout {
     public InternError() {
-        super.add(new H2("Erreur interne"));
+        super.add(new H2("Erreur : identifiant introuvable"));
+        super.add(new Span("Avez-vous tenté d'accéder à une URL saisie manuellement, sans passer par l'interface habituelle ?"));
 
         var messages = Session.getErrorMessages();
-
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             super.add(new Span("(Erreur inconnue)"));
         } else {
-            for (var each: messages) {
+            for (var each : messages) {
                 super.add(new Span(each));
             }
             Session.clearErrorMessages();

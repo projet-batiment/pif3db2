@@ -88,14 +88,14 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         try (Connection con = ConnectionPool.getConnection()) {
             var list = parent.get(con);
 
-            Notification.show("TODO: populate children ?");
-            for (var each: list) {
-                try {
-                    //each.populate(con);
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé");
-                }
-            }
+            NotificationError.todo("populate children ?");
+//            for (var each: list) {
+//                try {
+//                    each.populate(con);
+//                } catch (NoSuchElementException ex) {
+//                    NotificationError.internError("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé");
+//                }
+//            }
             grid.setItems(list);
         } catch (SQLException ex) {
             NotificationError.sql(ex);
@@ -103,12 +103,11 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
     }
 
     protected final void deleteDialog(ChildType object) {
-        // TODO
         new DialogDelete(this.parent.leChildDuParentName(), () -> {
             try (Connection con = ConnectionPool.getConnection()) {
                 this.parent.remove(object, con);
                 this.updateGridList();
-                Notification.show(this.parent.child.leChild() + " a bien été supprimé(e) " + this.parent.duParent());
+                NotificationError.info(this.parent.child.leChild() + " a bien été supprimé(e) " + this.parent.duParent());
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             }

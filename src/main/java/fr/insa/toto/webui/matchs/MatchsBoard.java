@@ -45,7 +45,7 @@ public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
                 try {
                     matchs.populate(con);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.error("L'un des éléments du match n'a pas été trouvé : " + ex.getLocalizedMessage());
+                    NotificationError.internError("L'un des éléments du match " + matchs.getId() + " n'a pas été trouvé : " + ex.getLocalizedMessage());
                 }
 
                 this.nom.setText(matchs.getName());
@@ -56,7 +56,7 @@ public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("Le match " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("Le match " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         }
     }

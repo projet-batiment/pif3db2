@@ -61,7 +61,7 @@ public class EquipeEditor extends Editor<Equipe> {
 
     public Equipe compile() {
         if (this.nom.getValue().isBlank()) {
-            Notification.show("Il manque le nom de l'équipe");
+            NotificationError.userError("Il manque le nom de l'équipe");
             return null;
         }
 
@@ -72,7 +72,7 @@ public class EquipeEditor extends Editor<Equipe> {
 
     @Override
     protected void onSaved() {
-        Notification.show("L'équipe " + object.getNom()+ " a bien été sauvegardée");
+        NotificationError.info("L'équipe " + object.getNom()+ " a bien été sauvegardée");
     }
 
     @Override

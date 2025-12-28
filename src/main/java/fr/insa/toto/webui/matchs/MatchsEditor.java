@@ -100,7 +100,7 @@ public class MatchsEditor extends Editor<Matchs> {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("L'un des éléments du matchs " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("L'un des éléments du matchs " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
             }
         });
 
@@ -117,25 +117,25 @@ public class MatchsEditor extends Editor<Matchs> {
         if (this.object == null) return null;
 
         if (this.equipeA.getValue() == null) {
-            Notification.show("Il manque l'équipe A");
+            NotificationError.userError("Il manque l'équipe A");
             return null;
         }
         if (this.equipeB.getValue() == null) {
-            Notification.show("Il manque l'équipe B");
+            NotificationError.userError("Il manque l'équipe B");
             return null;
         }
 
         if (this.ronde.getValue() == null) {
-            Notification.show("Il manque la ronde");
+            NotificationError.userError("Il manque la ronde");
             return null;
         }
 
         if (this.scoreA.getValue().isBlank()) {
-            Notification.show("Il manque le score de l'équipe A");
+            NotificationError.userError("Il manque le score de l'équipe A");
             return null;
         }
         if (this.scoreA.getValue().isBlank()) {
-            Notification.show("Il manque le score de l'équipe B");
+            NotificationError.userError("Il manque le score de l'équipe B");
             return null;
         }
 
@@ -152,7 +152,7 @@ public class MatchsEditor extends Editor<Matchs> {
 
     @Override
     protected void onSaved() {
-        Notification.show("Le match " + object.getName()+ " a bien été sauvegardé");
+        NotificationError.info("Le match " + object.getName()+ " a bien été sauvegardé");
     }
 
     @Override

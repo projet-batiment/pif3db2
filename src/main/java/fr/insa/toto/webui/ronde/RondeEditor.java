@@ -19,17 +19,13 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.webui.ronde;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
-import fr.insa.toto.webui.joueur.*;
 import fr.insa.toto.webui.utils.Editor;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
-import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.Ronde;
+import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -65,7 +61,7 @@ public class RondeEditor extends Editor<Ronde> {
 
     public Ronde compile() {
         if (this.numero.getValue().isBlank()) {
-            Notification.show("Il manque le surnom du ronde");
+            NotificationError.userError("Il manque le surnom du ronde");
             return null;
         }
 
@@ -77,7 +73,7 @@ public class RondeEditor extends Editor<Ronde> {
 
     @Override
     protected void onSaved() {
-        Notification.show("La ronde " + object.getNumero()+ " a bien été sauvegardée");
+        NotificationError.info("La ronde " + object.getNumero()+ " a bien été sauvegardée");
     }
 
     @Override

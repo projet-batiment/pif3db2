@@ -52,7 +52,7 @@ public class EquipeJoueur extends ParentJoueur implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.error("L'équipe " + id + " n'a pas été trouvée dans la base de données : " + ex.getMessage());
+                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
 
             } finally {
                 super.initialize(this.equipe.joueurs);

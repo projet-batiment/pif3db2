@@ -32,6 +32,7 @@ import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -95,15 +96,15 @@ public class JoueurEditor extends Editor<Joueur> {
 
     public Joueur compile() {
         if (this.surnom.getValue().isBlank()) {
-            Notification.show("Il manque le surnom du joueur");
+            NotificationError.userError("Il manque le surnom du joueur");
             return null;
         }
         if (this.taillecm.getValue().isBlank()) {
-            Notification.show("Il manque la taille du joueur");
+            NotificationError.userError("Il manque la taille du joueur");
             return null;
         }
         if (this.categorie.getValue().isBlank()) {
-            Notification.show("Il manque la catégorie du joueur");
+            NotificationError.userError("Il manque la catégorie du joueur");
             return null;
         }
 
@@ -116,7 +117,7 @@ public class JoueurEditor extends Editor<Joueur> {
 
     @Override
     protected void onSaved() {
-        Notification.show("Le joueur " + object.getSurnom()+ " a bien été sauvegardé");
+        NotificationError.info("Le joueur " + object.getSurnom()+ " a bien été sauvegardé");
     }
 
     @Override
@@ -153,26 +154,22 @@ public class JoueurEditor extends Editor<Joueur> {
                 editor.setJoueur(joueur);
                 editor.open(null);
             } else {
-                NotificationError.error("Trying to create a user but joueur is null");
+                NotificationError.internError("Trying to create a user but joueur is null");
             }
         });
         openUser = new Button("Voir l'utilisateur associé");
         openUser.addClickListener(e -> {
             if (this.object instanceof Joueur joueur) {
                 try (Connection con = ConnectionPool.getConnection()) {
-                    var user = User.findById(con, joueur.getIdUser());
-                    if (user.isPresent()) {
-                        var editor = new UserEditor();
-                        super.close();
-                        editor.open(user.get());
-                    } else {
-                        NotificationError.error("L'utilisateur associé est introuvable");
-                    }
+                    new UserEditor().open(User.findById(con, joueur.getIdUser()).get());
+                    super.close();
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.internError("L'utilisateur " + joueur.getIdUser() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
                 }
             } else {
-                NotificationError.error("Trying to create a user but joueur is null");
+                NotificationError.internError("Trying to create a user but joueur is null");
             }
         });
 

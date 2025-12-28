@@ -189,7 +189,7 @@ public class Session implements Serializable {
             if (unwrapped.getPassword().equals(password)) {
                 session.user = unwrapped;
                 session.saveSession();
-                NotificationError.show("Connexion à " + session.user.getUsername() + " réussie");
+                NotificationError.info("Connexion à " + session.user.getUsername() + " réussie");
                 UI.getCurrent().navigate("/");
                 return true;
             }
@@ -201,7 +201,7 @@ public class Session implements Serializable {
     public static void disconnect(UI ui) {
         Session session = getSession();
         if (isConnected()) {
-            NotificationError.show("Déconnexion de " + session.user.getUsername());
+            NotificationError.info("Déconnexion de " + session.user.getUsername());
             session.user = null;
             session.saveSession();
         }

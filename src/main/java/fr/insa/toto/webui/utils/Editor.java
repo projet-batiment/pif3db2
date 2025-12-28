@@ -116,8 +116,6 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
                     this.onSaved();
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
-                } catch (NoSuchElementException ex) {
-                    NotificationError.error(ex.getLocalizedMessage());
                 }
             }
         });

@@ -46,7 +46,7 @@ public class Login extends VerticalLayout {
                 if (Session.tryConnect(username.getValue(), password.getValue())) {
                     super.getUI().ifPresent(ui -> ui.navigate("user"));
                 } else {
-                    NotificationError.show("Nom d'utilisateur ou mot de passe erroné...");
+                    NotificationError.userError("Nom d'utilisateur ou mot de passe erroné...");
                 }
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
