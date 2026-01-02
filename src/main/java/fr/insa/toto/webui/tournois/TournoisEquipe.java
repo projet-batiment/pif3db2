@@ -23,6 +23,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
+import fr.insa.toto.webui.equipe.EquipeEditor;
 import fr.insa.toto.webui.parentChild.ParentEquipe;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.session.InternError;
@@ -49,6 +50,7 @@ public class TournoisEquipe extends ParentEquipe implements BeforeEnterObserver 
         } else {
             try (Connection con = ConnectionPool.getConnection()) {
                 this.tournois = Tournois.findById(con, id).get();
+                ((EquipeEditor)super.editor).setIdTournois(id);
 
             } catch (SQLException ex) {
                 NotificationError.sql(ex);

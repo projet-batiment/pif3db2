@@ -24,14 +24,4 @@ public class Application extends SpringBootServletInitializer implements AppShel
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
-
-    @Component
-    public class OnUIInit implements VaadinServiceInitListener {
-        @Override
-        public void serviceInit(ServiceInitEvent event) {
-            event.getSource().addUIInitListener(uiEvent -> {
-                Session.init();
-            });
-        }
-    }
 }

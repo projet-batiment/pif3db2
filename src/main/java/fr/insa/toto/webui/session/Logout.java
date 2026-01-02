@@ -44,7 +44,7 @@ public class Logout extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent bee) {
-        Session.disconnect(bee.getUI());
+        Session.disconnect();
     }
 
     public Logout() {

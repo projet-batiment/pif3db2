@@ -281,6 +281,9 @@ public class GestionSchema {
             private boolean unique;
             private boolean primary;
 
+            private boolean hasMinimum;
+            private int minimumEqual;
+
             private static final ColumnSkeleton id = new ColumnSkeleton("id", SQLType.INTEGER);
 
             /**
@@ -299,8 +302,9 @@ public class GestionSchema {
                     },
                     ifTrue(notNull, "NOT NULL"),
                     ifTrue(unique, "UNIQUE"),
-                    ifTrue(primary, "PRIMARY"),}
-                ).trim();
+                    ifTrue(primary, "PRIMARY"),
+                    ifTrue(hasMinimum, "CHECK (" + this.name + " >= " + minimumEqual + ")"),
+                }).trim();
             }
 
             /**
@@ -344,6 +348,16 @@ public class GestionSchema {
              */
             public ColumnSkeleton setUnique() {
                 this.unique = true;
+                return this;
+            }
+
+            /**
+             * set unique to true
+             * @return 
+             */
+            public ColumnSkeleton setMinimum(int minimum) {
+                this.hasMinimum = true;
+                this.minimumEqual = minimum;
                 return this;
             }
 
@@ -398,12 +412,12 @@ public class GestionSchema {
         var scoreIdMatch = new Beton.ColumnSkeleton(
                 "idMatch",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
 
         var scoreIdEquipe = new Beton.ColumnSkeleton(
                 "idEquipe",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
 
         var joueurIdUser = new Beton.ColumnSkeleton(
                 "idUser",
@@ -413,32 +427,37 @@ public class GestionSchema {
         var compositionIdEquipe = new Beton.ColumnSkeleton(
                 "idEquipe",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
 
         var compositionIdJoueur = new Beton.ColumnSkeleton(
                 "idJoueur",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
+
+        var equipeIdTournois = new Beton.ColumnSkeleton(
+                "idTournois",
+                Beton.ColumnSkeleton.SQLType.INTEGER
+        ).setNotNull();
 
         var rondesIdTournois = new Beton.ColumnSkeleton(
                 "idTournois",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
 
         var rondesEnCours = new Beton.ColumnSkeleton(
                 "enCours",
                 Beton.ColumnSkeleton.SQLType.BOOL
-        );
+        ).setNotNull();
 
         var rondesNumero = new Beton.ColumnSkeleton(
                 "numero",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull().setMinimum(1);
 
         var matchsIdRonde = new Beton.ColumnSkeleton(
                 "idRonde",
                 Beton.ColumnSkeleton.SQLType.INTEGER
-        );
+        ).setNotNull();
 
         /// tables and unshared columns
 
@@ -449,11 +468,11 @@ public class GestionSchema {
                             "nom",
                             Beton.ColumnSkeleton.SQLType.VARCHAR,
                             24
-                    ).setUnique(),
+                    ).setNotNull().setUnique(),
                     new Beton.ColumnSkeleton(
-                            "nombreRondes",
+                            "nombreTerrains",
                             Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),
+                    ).setNotNull().setMinimum(1),
                 }
         );
 
@@ -464,16 +483,16 @@ public class GestionSchema {
                             "surnom",
                             Beton.ColumnSkeleton.SQLType.VARCHAR,
                             24
-                    ).setUnique(),
+                    ).setNotNull().setUnique(),
                     new Beton.ColumnSkeleton(
                             "categorie",
                             Beton.ColumnSkeleton.SQLType.VARCHAR,
                             1
-                    ),
+                    ).setNotNull(),
                     new Beton.ColumnSkeleton(
                             "taillecm",
                             Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),
+                    ).setNotNull().setMinimum(50),
                     joueurIdUser,
                 }
         );
@@ -521,7 +540,8 @@ public class GestionSchema {
                             "nom",
                             Beton.ColumnSkeleton.SQLType.VARCHAR,
                             24
-                    ).setUnique(),
+                    ).setNotNull().setUnique(),
+                    equipeIdTournois,
                 }
         );
 
@@ -539,7 +559,7 @@ public class GestionSchema {
                     new Beton.ColumnSkeleton(
                             "score",
                             Beton.ColumnSkeleton.SQLType.INTEGER
-                    ),
+                    ).setNotNull().setMinimum(0),
                     scoreIdEquipe,
                     scoreIdMatch
                 }
@@ -575,7 +595,21 @@ public class GestionSchema {
                 Beton.ColumnSkeleton.id
         );
 
-        Beton.UniqueConstraintSkeleton ctrRondeTournois = new Beton.UniqueConstraintSkeleton(
+        Beton.BorrowConstraintSkeleton ctrEquipeTournois = new Beton.BorrowConstraintSkeleton(
+                equipe,
+                tournois,
+                equipeIdTournois,
+                Beton.ColumnSkeleton.id
+        );
+
+        Beton.BorrowConstraintSkeleton ctrRondeTournois = new Beton.BorrowConstraintSkeleton(
+                ronde,
+                tournois,
+                rondesIdTournois,
+                Beton.ColumnSkeleton.id
+        );
+
+        Beton.UniqueConstraintSkeleton brwRondeTournois = new Beton.UniqueConstraintSkeleton(
                 ronde,
                 new Beton.ColumnSkeleton[]{
                     rondesIdTournois,
@@ -600,7 +634,9 @@ public class GestionSchema {
                 ctrCompositionEquipe,
                 ctrCompositionJoueur,
                 ctrJoueurUser,
+                ctrEquipeTournois,
                 ctrRondeTournois,
+                brwRondeTournois,
             }
         );
     }

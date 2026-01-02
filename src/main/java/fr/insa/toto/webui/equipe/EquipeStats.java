@@ -84,7 +84,7 @@ public class EquipeStats implements Serializable {
         List<Equipe> equipes = new ArrayList<>();
         
         StringBuilder sql = new StringBuilder("""
-            SELECT e.id, e.nom 
+            SELECT e.id, e.nom, e.idTournois 
             FROM equipe e 
             JOIN score s1 ON e.id = s1.idEquipe 
             JOIN matchs m ON s1.idMatch = m.id 
@@ -115,7 +115,7 @@ public class EquipeStats implements Serializable {
             }
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
-                    equipes.add(new Equipe(rs.getInt("id"), rs.getString("nom")));
+                    equipes.add(new Equipe(rs.getInt("id"), rs.getString("nom"), rs.getInt("idTournois")));
                 }
             }
         }

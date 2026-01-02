@@ -44,6 +44,9 @@ import java.util.stream.Collector;
 public class Equipe extends ClasseMiroir implements Named {
     private String nom;
     private ModifiedState state;
+    private int idTournois;
+
+    public final static Equipe PORCELAINE = new Equipe(Equipe.ID_PORCELAINE, "Nouveau...", ClasseMiroir.ID_UNSAVED);
 
     public static class AsChild extends ChildFace {
         @Override
@@ -264,26 +267,28 @@ public class Equipe extends ClasseMiroir implements Named {
 
     private Integer nbJoueurs = null;
 
-    public Equipe() {
+    public Equipe(int idTournois) {
         this.nom = "";
+        this.idTournois = idTournois;
 
         this.state = ModifiedState.CREATED;
     }
 
-    public Equipe(int id) {
+    public Equipe(int id, int idTournois) {
         super(id);
         this.nom = "";
+        this.idTournois = idTournois;
 
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
 
-    public Equipe(String nom) {
+    public Equipe(String nom, int idTournois) {
         this.nom = nom;
 
         this.state = ModifiedState.CREATED;
     }
 
-    public Equipe(int id, String nom) {
+    public Equipe(int id, String nom, int idTournois) {
         super(id);
         this.nom = nom;
 
@@ -311,12 +316,8 @@ public class Equipe extends ClasseMiroir implements Named {
         return this.nbJoueurs;
     }
 
-    public void populate() throws SQLException {
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.populate(con);
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
+    public int getIdTournois() {
+        return idTournois;
     }
 
     public void populate(Connection con) throws SQLException {
@@ -329,9 +330,10 @@ public class Equipe extends ClasseMiroir implements Named {
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into equipe (nom) values (?)",
+        var st = con.prepareStatement("insert into equipe (nom, idTournois) values (?, ?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
+        st.setInt(2, idTournois);
 
         st.executeUpdate();
         return st;
@@ -359,14 +361,25 @@ public class Equipe extends ClasseMiroir implements Named {
     private static List<Equipe> fromResultSetToList(ResultSet list) throws SQLException {
         List<Equipe> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Equipe(list.getInt("id"), list.getString("nom")));
+            res.add(new Equipe(list.getInt("id"), list.getString("nom"), list.getInt("idTournois")));
         }
         return res; 
     }
     
     public static List<Equipe> toutesLesEquipes(Connection con) throws SQLException {
         List<Equipe> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select id,nom from equipe")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,idTournois from equipe")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+
+    public static List<Equipe> findByIdTournois(Connection con, int idTournois) throws SQLException {
+        List<Equipe> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,idTournois from equipe where idTournois=?")) {
+            pst.setInt(1, idTournois);
+
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -374,13 +387,14 @@ public class Equipe extends ClasseMiroir implements Named {
     }
     
     public static Optional<Equipe> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id,nom from equipe where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,idTournois from equipe where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
             if (res.next()) {
                 String nom = res.getString(2);
-                return Optional.of(new Equipe(id, nom));
+                int idTournois = res.getInt("idTournois");
+                return Optional.of(new Equipe(id, nom, idTournois));
             } else {
                 return Optional.empty();
             }

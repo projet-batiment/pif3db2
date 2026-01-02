@@ -225,6 +225,15 @@ public class Joueur extends ClasseMiroir implements Named {
             }
         }
     }
+
+    public static List<Joueur> findByIdTournois(Connection con, int idTournois) throws SQLException {
+        List<Joueur> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm,idUser from joueur")) {
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
     
     public static Optional<Joueur> findById(Connection con, int id) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select id,surnom,categorie,taillecm,idUser from joueur where id=?")) {

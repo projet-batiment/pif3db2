@@ -57,6 +57,7 @@ public abstract class ParentTournois extends ParentChild<Tournois> {
         super(new TournoisEditor());
 
         super.addColumn(m -> m.getName()).setHeader("Nom");
-        super.addColumn(m -> m.getNombreRondes()).setHeader("Nombre de rondes");
+        super.addColumn(m -> m.getNombreTerrains()).setHeader("Terrains");
+        super.addColumn(m -> m.getNombreRondes()).setHeader("Rondes");
     }
 }

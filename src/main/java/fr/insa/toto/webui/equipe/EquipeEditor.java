@@ -39,9 +39,14 @@ import java.util.stream.Collectors;
 public class EquipeEditor extends Editor<Equipe> {
     private TextField nom;
 
+    private int idTournois = Equipe.ID_UNSAVED;
+    public void setIdTournois(int idTournois) {
+        this.idTournois = idTournois;
+    }
+
     @Override
     protected Equipe newObject() {
-        return new Equipe();
+        return new Equipe(this.idTournois);
     }
 
     protected void setObject() {
@@ -81,9 +86,9 @@ public class EquipeEditor extends Editor<Equipe> {
     }
 
     public EquipeEditor() {
-        nouveau = new Equipe(Equipe.ID_PORCELAINE, "Nouveau...");
+        nouveau = Equipe.PORCELAINE;
 
-        super.setHeaderTitle("Apperçu de l'équipe");
+        super.setHeaderTitle("Aperçu de l'équipe");
 
         super.setSelectItemLabelGenerator(Equipe::getNom);
         super.setSelectLabel("Équipe");

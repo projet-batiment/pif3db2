@@ -32,14 +32,8 @@ import java.util.function.Consumer;
  * @author elio
  */
 public class TournoisEditor extends Editor<Tournois> {
-    private Consumer<Tournois> onSavedCallback;
-
-    public void setOnSavedCallback(Consumer<Tournois> onSavedCallback) {
-        this.onSavedCallback = onSavedCallback;
-    }
-
     private TextField nom;
-    private TextField nombreRondes;
+    private TextField nombreTerrains;
 
     @Override
     protected Tournois newObject() {
@@ -50,13 +44,13 @@ public class TournoisEditor extends Editor<Tournois> {
         if (this.object instanceof Tournois tournois) {
             this.nom.setValue(tournois.getName());
             this.nom.setEnabled(true);
-            this.nombreRondes.setValue("" + tournois.getNombreRondes());
-            this.nombreRondes.setEnabled(true);
+            this.nombreTerrains.setValue("" + tournois.getNombreTerrains());
+            this.nombreTerrains.setEnabled(true);
         } else {
             this.nom.setValue("");
             this.nom.setEnabled(false);
-            this.nombreRondes.setValue("");
-            this.nombreRondes.setEnabled(false);
+            this.nombreTerrains.setValue("");
+            this.nombreTerrains.setEnabled(false);
         }
     }
 
@@ -70,13 +64,19 @@ public class TournoisEditor extends Editor<Tournois> {
             NotificationError.userError("Il manque le nom du tournois");
             return null;
         }
-        if (this.nombreRondes.getValue().isBlank()) {
-            NotificationError.userError("Il manque le nombre de rondes");
+        if (this.nombreTerrains.getValue().isBlank()) {
+            NotificationError.userError("Il manque le nombre de terrains");
+            return null;
+        }
+
+        int terrains = Integer.parseInt(nombreTerrains.getValue());
+        if (terrains <= 0) {
+            NotificationError.userError("Il faut au moins 1 terrain");
             return null;
         }
 
         object.setName(nom.getValue());
-        object.setNombreRondes(Integer.parseInt(nombreRondes.getValue()));
+        object.setNombreTerrains(terrains);
 
         return this.object;
     }
@@ -102,11 +102,11 @@ public class TournoisEditor extends Editor<Tournois> {
         nom = new TextField();
         nom.setLabel("Nom du tournois");
 
-        nombreRondes = new TextField();
-        nombreRondes.setLabel("Nombre de rondes");
-        nombreRondes.setAllowedCharPattern("[0-9]");
-        nombreRondes.setMaxLength(2);
+        nombreTerrains = new TextField();
+        nombreTerrains.setLabel("Nombre de terrains");
+        nombreTerrains.setAllowedCharPattern("[0-9]");
+        nombreTerrains.setMaxLength(2);
 
-        super.addChildren(nom, nombreRondes);
+        super.addChildren(nom, nombreTerrains);
     }
 }

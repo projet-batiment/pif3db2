@@ -21,6 +21,7 @@ package fr.insa.toto.model;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.ChildFace;
+import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
@@ -30,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -41,6 +43,9 @@ public class Ronde extends ClasseMiroir implements Named {
     private int numero;
     private boolean enCours;
 
+    private ModifiedState state;
+    private String tournoisName = "(Tournoi inconnu)";
+
     private static final String nomTable = "ronde";
     protected final String nomTable() {
         return this.nomTable;
@@ -48,7 +53,7 @@ public class Ronde extends ClasseMiroir implements Named {
 
     @Override
     public String getName() {
-        return Integer.toString(this.getNumero());
+        return this.tournoisName + " #" + Integer.toString(this.getNumero());
     }
 
     public Ronde(int id, int idTournois, int numero, boolean enCours) {
@@ -64,10 +69,17 @@ public class Ronde extends ClasseMiroir implements Named {
         this.numero = numero;
     }
 
-    public Ronde() {
+    public Ronde(int idTournois) {
         this.enCours = false;
-        this.idTournois = ClasseMiroir.ID_UNSAVED;
-        this.numero = 1;
+        this.idTournois = idTournois;
+
+        try (Connection con = ConnectionPool.getConnection()) {
+            this.numero = findNextByTournois(con, idTournois);
+
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+            this.numero = 99;
+        }
     }
 
     public static class AsChild extends ChildFace {
@@ -152,6 +164,20 @@ public class Ronde extends ClasseMiroir implements Named {
         st.executeUpdate();
     }
 
+    public void populate(Connection con) throws SQLException, NoSuchElementException {
+        if (this.state != ModifiedState.POPULATED) {
+            if (this.idTournois == ClasseMiroir.ID_UNSAVED)
+                throw new NoSuchElementException("Aucun tournois n'est renseigné pour la ronde " + this.getId());
+
+            var tournois = Tournois.findById(con, this.idTournois);
+            if (tournois.isEmpty())
+                throw new NoSuchElementException("Le tournois " + idTournois + " de la ronde " + this.getId() + " est introuvable dans la base de données");
+
+            this.tournoisName = tournois.get().getName();
+
+            this.state = ModifiedState.POPULATED;
+        }
+    }
     private static List<Ronde> fromResultSetToList(ResultSet list) throws SQLException {
         List<Ronde> res = new ArrayList<>();
         while (list.next()) {
@@ -167,7 +193,7 @@ public class Ronde extends ClasseMiroir implements Named {
             }
         }
     }
-        
+
     public static Optional<Ronde> findById(Connection con, int id) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select idTournois,numero,enCours from ronde where id=?")) {
             pst.setInt(1, id);
@@ -184,8 +210,18 @@ public class Ronde extends ClasseMiroir implements Named {
         }
     }
 
+    public static List<Ronde> findByIdTournois(Connection con, int idTournois) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id,idTournois,numero,enCours from ronde where idTournois=?")) {
+            pst.setInt(1, idTournois);
+
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+        
     public static Optional<Ronde> findByTournoisNumero(Connection con, int idTournois, int numero) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id,enCours from ronde where idTournois=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,mumero,enCours from ronde where idTournois=?")) {
             pst.setInt(1, idTournois);
             ResultSet res = pst.executeQuery();
 
@@ -197,6 +233,18 @@ public class Ronde extends ClasseMiroir implements Named {
                 return Optional.empty();
             }
         }
+    }
+
+    public static int findNextByTournois(Connection con, int idTournois) throws SQLException {
+        var list = findByIdTournois(con, idTournois);
+
+        int max = 0;
+        for (var each: list) {
+            if (each.numero > max)
+                max = each.numero;
+        }
+
+        return max + 1;
     }
 
     public static Optional<Ronde> findByTournoisEnCours(Connection con, int idTournois) throws SQLException {

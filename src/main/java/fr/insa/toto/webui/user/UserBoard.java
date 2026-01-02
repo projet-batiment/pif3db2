@@ -18,7 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.user;
 
-import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -26,14 +26,13 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Tournois;
 import fr.insa.toto.model.User;
 import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
 
 /**
  *
@@ -52,6 +51,17 @@ public class UserBoard extends VerticalLayout implements BeforeEnterObserver {
 
         this.user = Session.getUser();
         this.editor = new UserEditor();
+
+        this.editor.setOnDeletedCallback(u -> {
+            new DialogDelete("l'utilisateur " + u.getName(), () -> {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    u.deleteFromDB(con);
+                    UI.getCurrent().getPage().setLocation("logout");
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            }).open();
+        });
 
         this.title = new H2("Tableau de bord : utilisateur " + this.user.getUsername());
 

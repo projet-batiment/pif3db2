@@ -20,6 +20,7 @@ package fr.insa.toto.webui.session;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.server.VaadinSession;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.User;
 import fr.insa.toto.webui.utils.NotificationError;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -38,42 +40,37 @@ public class Session implements Serializable {
     private boolean checkedFirstSession;
     private List<Integer> ids;
     private List<String> errorMessage;
+    private HashMap<String, Integer> map;
 
-    private class LocalSession {
-        static User user = null;
-        static boolean checkedAdmin = false;
-        static List<Integer> ids = new ArrayList<>();
-        static List<String> errorMessage = new ArrayList<>();
+    public Session() {
+        this.user = null;
+        this.checkedFirstSession = false;
+        this.ids = new ArrayList<>();
+        this.errorMessage = new ArrayList<>();
+        this.map = new HashMap<>();
     }
 
     private static Session getSession() {
-        Session session = new Session();
+        VaadinSession vaadinSession = VaadinSession.getCurrent();
+        Session session = vaadinSession.getAttribute(Session.class);
 
-        session.user = LocalSession.user;
-        session.checkedFirstSession = LocalSession.checkedAdmin;
-        session.ids = LocalSession.ids;
-        session.errorMessage = LocalSession.errorMessage;
+        if (session == null) {
+            session = new Session();
+            vaadinSession.setAttribute(Session.class, session);
+            session.init();
+        }
 
         return session;
     }
 
-    private void saveSession() {
-        LocalSession.user = this.user;
-        LocalSession.checkedAdmin = this.checkedFirstSession;
-        LocalSession.ids = this.ids;
-        LocalSession.errorMessage = this.errorMessage;
-    }
+    public void init() {
+        if (this.checkedFirstSession) return;
+        NotificationError.log("session/init: now");
 
-    public static void init() {
-        Session session = getSession();
-
-        if (session.checkedFirstSession) return;
-
-        session.checkedFirstSession = true;
-        session.saveSession();
+        this.checkedFirstSession = true;
 
         try (Connection con = ConnectionPool.getConnection()) {
-            if (User.tousLesAdmins(con).size() == 0) {
+            if (User.tousLesAdmins(con).isEmpty()) {
                 new User("admin", "admin", true).saveInDB(con);
                 NotificationError.log("session/initAdmins: created default admin user");
             } else {
@@ -99,19 +96,16 @@ public class Session implements Serializable {
     public static void setIds(Integer ...ids) {
         var session = getSession();
         session.ids = List.of(ids);
-        session.saveSession();
     }
 
     public static void pushId(Integer id) {
         var session = getSession();
         session.ids.add(id);
-        session.saveSession();
     }
 
     public static void popId() {
         var session = getSession();
         session.ids.removeLast();
-        session.saveSession();
     }
 
     public static User getUser() {
@@ -126,13 +120,11 @@ public class Session implements Serializable {
     public static void clearErrorMessages() {
         var session = getSession();
         session.errorMessage.clear();
-        session.saveSession();
     }
 
     public static void addErrorMessage(String errorMessage) {
         var session = getSession();
         session.errorMessage.add(errorMessage);
-        session.saveSession();
     }
 
     public static boolean isConnected() {
@@ -188,7 +180,6 @@ public class Session implements Serializable {
             var unwrapped = ans.get();
             if (unwrapped.getPassword().equals(password)) {
                 session.user = unwrapped;
-                session.saveSession();
                 NotificationError.info("Connexion à " + session.user.getUsername() + " réussie");
                 UI.getCurrent().navigate("/");
                 return true;
@@ -198,12 +189,11 @@ public class Session implements Serializable {
         return false;
     }
 
-    public static void disconnect(UI ui) {
+    public static void disconnect() {
         Session session = getSession();
         if (isConnected()) {
             NotificationError.info("Déconnexion de " + session.user.getUsername());
             session.user = null;
-            session.saveSession();
         }
     }
 }

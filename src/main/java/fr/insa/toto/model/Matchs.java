@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.littemplate.IllegalAttributeException;
 import fr.insa.toto.model.utils.Named;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -53,7 +55,7 @@ public class Matchs extends ClasseMiroir implements Named {
     private int idRonde;
 
     private ScoreEquipe seA = new ScoreEquipe();
-    private ScoreEquipe seB = new ScoreEquipe();;
+    private ScoreEquipe seB = new ScoreEquipe();
 
     public Matchs() {
         this.idRonde = ClasseMiroir.ID_UNSAVED;
@@ -84,7 +86,7 @@ public class Matchs extends ClasseMiroir implements Named {
         }
 
         public ScoreEquipe() {
-            this.equipe = new Equipe();
+            this.equipe = null;
             this.score = new Score();
             score.setIdMatch(getId());
         }
@@ -197,14 +199,6 @@ public class Matchs extends ClasseMiroir implements Named {
         return Ronde.findById(con, idRonde).get();
     }
 
-    public void populate() throws SQLException, NoSuchElementException {
-        try (Connection con = ConnectionPool.getConnection()) {
-            this.populate(con);
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
-    }
-    
     public void populate(Connection con) throws SQLException, NoSuchElementException, IndexOutOfBoundsException {
         switch (this.state) {
             case POPULATED, PORCELAINE -> {}
@@ -261,12 +255,30 @@ public class Matchs extends ClasseMiroir implements Named {
         this.seB.score.deleteFromDB(con);
     }
 
+    public void checkSavable(Connection con) throws SQLException, NoSuchElementException, IllegalAttributeException {
+        if (this.seA.equipe.equals(this.seB.equipe))
+            throw new IllegalAttributeException("Les deux équipes du match sont identiques : " + this.seA.equipe.getName());
+
+        Ronde ronde = Ronde.findById(con, this.idRonde).get();
+        int nombreMatchsParalleles = Tournois.findById(con, ronde.getIdTournois()).get().getNombreTerrains();
+        int nombreMatchsAutres = findByIdRonde(con, this.idRonde)
+                .stream()
+                .filter(each -> each.getId() != this.getId())
+                .collect(Collectors.toList())
+                .size();
+
+        NotificationError.log(nombreMatchsParalleles + " // " + nombreMatchsAutres);
+        if (nombreMatchsParalleles <= nombreMatchsAutres)
+            throw new IllegalAttributeException("La ronde " + ronde.getName() + " est remplie : le match " + this.getName() + " ne peut pas être ajouté.");
+    }
+
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
+        this.checkSavable(con);
+
         var st = con.prepareStatement("insert into matchs (idRonde) values (?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
         st.setInt(1, idRonde);
-        
         
         st.executeUpdate();
         return st;
@@ -289,9 +301,12 @@ public class Matchs extends ClasseMiroir implements Named {
             case CREATED, PORCELAINE -> throw new EntiteNonSauvegardee();
 
             case EDITED, NORMAL, POPULATED, DEPTH_EDITED -> {
-                var st = con.prepareStatement("update matchs set ronde = ? where id = ?");
+                this.checkSavable(con);
+
+                var st = con.prepareStatement("update matchs set idRonde = ? where id = ?");
                 st.setInt(1, idRonde);
                 st.setInt(2, super.getId());
+                st.executeUpdate();
 
                 this.seA.score.setIdEquipe(this.seA.equipe.getId());
                 this.seB.score.setIdEquipe(this.seB.equipe.getId());
@@ -302,6 +317,7 @@ public class Matchs extends ClasseMiroir implements Named {
                 this.seA.score.updateOrNew(con);
                 this.seB.score.updateOrNew(con);
             }
+
         }
 
         this.state = ModifiedState.NORMAL;
@@ -323,6 +339,27 @@ public class Matchs extends ClasseMiroir implements Named {
         }
     }
     
+    public static List<Matchs> findByIdRonde(Connection con, int idRonde) throws SQLException {
+        try (PreparedStatement pst = con.prepareStatement("select id, idRonde from matchs where idRonde=?")) {
+            pst.setInt(1, idRonde);
+
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+
+    public static List<Matchs> findByIdTournois(Connection con, int idTournois) throws SQLException {
+        List<Ronde> rondes = Ronde.findByIdTournois(con, idTournois);
+        List<Matchs> matchs = new ArrayList<>();
+
+        for (Ronde ronde: rondes) {
+            matchs.addAll(findByIdRonde(con, ronde.getId()));
+        }
+
+        return matchs;
+    }
+
     public static Optional<Matchs> findById(Connection con, int id) throws SQLException {
         try (PreparedStatement pst = con.prepareStatement("select idRonde from matchs where id=?")) {
             pst.setInt(1, id);

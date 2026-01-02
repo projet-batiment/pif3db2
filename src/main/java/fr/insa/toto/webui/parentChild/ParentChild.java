@@ -49,7 +49,7 @@ import java.util.NoSuchElementException;
 public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extends VerticalLayout {
     private ParentFace<ChildType> parent;
     private Grid<ChildType> grid;
-    private Editor<ChildType> editor;
+    protected final Editor<ChildType> editor;
 
     private boolean initialized = false;
 
@@ -88,14 +88,13 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
         try (Connection con = ConnectionPool.getConnection()) {
             var list = parent.get(con);
 
-            NotificationError.todo("populate children ?");
-//            for (var each: list) {
-//                try {
-//                    each.populate(con);
-//                } catch (NoSuchElementException ex) {
-//                    NotificationError.internError("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé");
-//                }
-//            }
+            for (var each: list) {
+                try {
+                    each.populate(con);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.internError("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé : " + ex.getLocalizedMessage());
+                }
+            }
             grid.setItems(list);
         } catch (SQLException ex) {
             NotificationError.sql(ex);

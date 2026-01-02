@@ -35,9 +35,14 @@ public class RondeEditor extends Editor<Ronde> {
     private TextField numero;
     private Checkbox enCours;
 
+    private int idTournois = Ronde.ID_UNSAVED;
+    public void setIdTournois(int idTournois) {
+        this.idTournois = idTournois;
+    }
+
     @Override
     protected Ronde newObject() {
-        return new Ronde();
+        return new Ronde(this.idTournois);
     }
 
     protected void setObject() {
@@ -84,9 +89,9 @@ public class RondeEditor extends Editor<Ronde> {
     public RondeEditor() {
         nouveau = new Ronde(Ronde.ID_PORCELAINE, 0, 0, false);
 
-        super.setHeaderTitle("Apperçu du ronde");
+        super.setHeaderTitle("Aperçu du ronde");
 
-        super.setSelectItemLabelGenerator(each -> each.getId() == Ronde.ID_PORCELAINE ? "Nouvelle..." : ""+each.getNumero());
+        super.setSelectItemLabelGenerator(each -> each.getId() == Ronde.ID_PORCELAINE ? "Nouvelle..." : each.getName());
         super.setSelectLabel("Ronde");
 
         numero = new TextField();

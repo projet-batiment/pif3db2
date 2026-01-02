@@ -27,6 +27,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
@@ -82,6 +83,15 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
     private void updateSelect(T object) {
         try (var con = ConnectionPool.getConnection()) {
             var list = this.openObject(con);
+            for (var each: list) {
+                try {
+                    each.populate(con);
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                } catch (NoSuchElementException ex) {
+                    NotificationError.internError("L'un des éléments de l'objet édité " + each.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                }
+            }
             list.add(this.nouveau);
 
             select.setItems(list);

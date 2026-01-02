@@ -25,6 +25,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.parentChild.ParentRonde;
+import fr.insa.toto.webui.ronde.RondeEditor;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
@@ -48,6 +49,7 @@ public class TournoisRondes extends ParentRonde implements BeforeEnterObserver {
         } else {
             try (Connection con = ConnectionPool.getConnection()) {
                 this.tournois = Tournois.findById(con, id).get();
+                ((RondeEditor)super.editor).setIdTournois(id);
 
             } catch (SQLException ex) {
                 NotificationError.sql(ex);

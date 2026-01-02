@@ -38,7 +38,9 @@ import java.util.Optional;
  */
 public class Tournois extends ClasseMiroir implements Named {
     private String nom;
-    private int nombreRondes;
+    private int nombreTerrains;
+
+    private int nombreRondes = -1;
 
     public static class AsChild extends ChildFace {
         @Override
@@ -54,11 +56,6 @@ public class Tournois extends ClasseMiroir implements Named {
         @Override
         protected String duChildPrefix() {
             return "du ";
-        }
-
-        @Override
-        public String typeNamePlural() {
-            return this.typeName();
         }
     }
     
@@ -185,8 +182,7 @@ public class Tournois extends ClasseMiroir implements Named {
 
         @Override
         public List<Matchs> get(Connection con) throws SQLException {
-            // pour l'instant, les matchs ne sont pas assignés aux tournois
-            var list = Matchs.tousLesMatchs(con);
+            var list = Matchs.findByIdTournois(con, getId());
             for (var each: list)
                 each.populate(con);
             return list;
@@ -237,7 +233,7 @@ public class Tournois extends ClasseMiroir implements Named {
         public List<Equipe> get(Connection con) throws SQLException {
             // TODO
             // pour l'instant, les equipe ne sont pas assignés aux tournois
-            var list = Equipe.toutesLesEquipes(con);
+            var list = Equipe.findByIdTournois(con, getId());
             for (var each: list)
                 each.populate(con);
             return list;
@@ -286,9 +282,7 @@ public class Tournois extends ClasseMiroir implements Named {
 
         @Override
         public List<Ronde> get(Connection con) throws SQLException {
-            // TODO
-            // pour l'instant, les ronde ne sont pas assignés aux tournois
-            var list = Ronde.toutesLesRondes(con);
+            var list = Ronde.findByIdTournois(con, getId());
             return list;
         }
 
@@ -297,7 +291,7 @@ public class Tournois extends ClasseMiroir implements Named {
         }
     }
 
-    private static final String nomTable = "tournois";
+    private static final String nomTable = "tournoi";
     protected final String nomTable() {
         return this.nomTable;
     }
@@ -310,49 +304,58 @@ public class Tournois extends ClasseMiroir implements Named {
         this.nom = nom;
     }
 
+    public int getNombreTerrains() {
+        return nombreTerrains;
+    }
+
+    public void setNombreTerrains(int nombreTerrains) {
+        this.nombreTerrains = nombreTerrains;
+    }
+
     public int getNombreRondes() {
         return nombreRondes;
     }
 
-    public void setNombreRondes(int nombreRondes) {
-        this.nombreRondes = nombreRondes;
-    }
-
-    public Tournois(int id, String nom, int nombreRondes) {
+    public Tournois(int id, String nom, int nombreTerrains) {
         super(id);
         this.nom = nom;
-        this.nombreRondes = nombreRondes;
+        this.nombreTerrains = nombreTerrains;
     }
 
-    public Tournois(String nom, int nombreRondes) {
+    public Tournois(String nom, int nombreTerrains) {
         this.nom = nom;
-        this.nombreRondes = nombreRondes;
+        this.nombreTerrains = nombreTerrains;
     }
 
     public Tournois(int id) {
         super(id);
         this.nom = "";
-        this.nombreRondes = 0;
+        this.nombreTerrains = 0;
     }
 
     public Tournois() {
         this.nom = "";
-        this.nombreRondes = 0;
+        this.nombreTerrains = 0;
     }
 
     public Tournois clone() {
-        return new Tournois(getId(), nom, nombreRondes);
+        return new Tournois(getId(), nom, nombreTerrains);
     }
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into tournois (nom, nombreRondes) values (?, ?)",
+        var st = con.prepareStatement("insert into tournois (nom, nombreTerrains) values (?, ?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
-        st.setInt(2, nombreRondes);
+        st.setInt(2, nombreTerrains);
 
         st.executeUpdate();
         return st;
+    }
+
+    @Override
+    public void populate(Connection con) throws SQLException {
+        this.nombreRondes = Ronde.findByIdTournois(con, this.getId()).size();
     }
 
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
@@ -360,9 +363,9 @@ public class Tournois extends ClasseMiroir implements Named {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update tournois set nom = ?, nombreRondes = ? where id = ?");
+        var st = con.prepareStatement("update tournois set nom = ?, nombreTerrains = ? where id = ?");
         st.setString(1, nom);
-        st.setInt(2, nombreRondes);
+        st.setInt(2, nombreTerrains);
         st.setInt(3, super.getId());
 
         st.executeUpdate();
@@ -371,7 +374,7 @@ public class Tournois extends ClasseMiroir implements Named {
     private static List<Tournois> fromResultSetToList(ResultSet list) throws SQLException {
         List<Tournois> res = new ArrayList<>();
         while (list.next()) {
-            res.add(new Tournois(list.getInt("id"), list.getString("nom"), list.getInt("nombreRondes")));
+            res.add(new Tournois(list.getInt("id"), list.getString("nom"), list.getInt("nombreTerrains")));
         }
         return res;
         
@@ -379,7 +382,7 @@ public class Tournois extends ClasseMiroir implements Named {
 
     public static List<Tournois> tousLesTournois(Connection con) throws SQLException {
         List<Tournois> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreRondes from tournois")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournois")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -387,14 +390,14 @@ public class Tournois extends ClasseMiroir implements Named {
     }
 
     public static Optional<Tournois> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreRondes from tournois where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournois where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
             if (res.next()) {
                 String nom = res.getString(2);
-                int nombreRondes = res.getInt(3);
-                return Optional.of(new Tournois(id, nom, nombreRondes));
+                int nombreTerrains = res.getInt(3);
+                return Optional.of(new Tournois(id, nom, nombreTerrains));
             } else {
                 return Optional.empty();
             }

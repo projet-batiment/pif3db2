@@ -174,6 +174,8 @@ public abstract class ClasseMiroir {
         }
     }
 
+    public void populate(Connection con) throws SQLException {};
+
     /**
      * cette méthode doit être utilisée avec précaution pour signaler par
      * exemple que l'on a supprimé l'entité de la base de donnée.

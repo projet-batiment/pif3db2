@@ -58,7 +58,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
         this.setPadding(true);
         
         NomTournoi.add(new H2("Nom du Tournoi"));
-        NombreRondes.add(new H2("Nombre de Rondes"));
+        NombreRondes.add(new H2("Nombre de Terrains"));
         
         this.add(NomTournoi, NombreRondes, podiumSection);
     }
@@ -73,7 +73,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
             try (Connection con = ConnectionPool.getConnection()) {
                 this.tournois = Tournois.findById(con, id).get();
                 nomText.setText(tournois.getName());
-                rondesText.setText(String.valueOf(tournois.getNombreRondes()));
+                rondesText.setText(String.valueOf(tournois.getNombreTerrains()));
 
                 if (!NomTournoi.getChildren().anyMatch(c -> c == nomText)) {
                     NomTournoi.add(nomText);

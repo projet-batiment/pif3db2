@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.matchs;
 
+import com.vaadin.flow.component.littemplate.IllegalAttributeException;
 import fr.insa.toto.webui.utils.Editor;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -69,8 +70,8 @@ public class MatchsEditor extends Editor<Matchs> {
         } else {
             super.setEnabled(true);
 
-            this.equipeA.setValue(this.object.getScoreEquipeA().equipe.getState() == ModifiedState.CREATED ? currentEquipe : this.object.getScoreEquipeA().equipe);
-            this.equipeB.setValue(this.object.getScoreEquipeB().equipe.getState() == ModifiedState.CREATED ? null : this.object.getScoreEquipeB().equipe);
+            this.equipeA.setValue(this.object.getScoreEquipeA().equipe == null ? currentEquipe : this.object.getScoreEquipeA().equipe);
+            this.equipeB.setValue(this.object.getScoreEquipeB().equipe == null ? currentEquipe : this.object.getScoreEquipeB().equipe);
             this.ronde.setValue(this.object.getRonde());
             this.scoreA.setValue("" + this.object.getScoreEquipeA().score.getScore());
             this.scoreB.setValue("" + this.object.getScoreEquipeB().score.getScore());
@@ -94,21 +95,17 @@ public class MatchsEditor extends Editor<Matchs> {
     @Override
     protected List<Matchs> openObject(Connection con) throws SQLException {
         var list = Matchs.tousLesMatchs(con);
-        list.forEach(e -> {
-            try {
-                e.populate(con);
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            } catch (NoSuchElementException ex) {
-                NotificationError.internError("L'un des éléments du matchs " + e.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
-            }
-        });
 
         var equipes = Equipe.toutesLesEquipes(con);
         equipeA.setItems(equipes);
         equipeB.setItems(equipes);
 
-        ronde.setItems(Ronde.toutesLesRondes(con));
+        NotificationError.todo("uniquement les rondes du tournois actuel !!!");
+        var rondes = Ronde.toutesLesRondes(con);
+        for (Ronde each: rondes) {
+            each.populate(con);
+        }
+        ronde.setItems(rondes);
 
         return list;
     }
@@ -147,6 +144,22 @@ public class MatchsEditor extends Editor<Matchs> {
         // inutile car déjà effectué par (Select)ronde.addValueChangeListener
         // this.object.setIdRonde(this.ronde.getValue().getId());
 
+        try (Connection con = ConnectionPool.getConnection()) {
+            this.object.checkSavable(con);
+
+        } catch (NoSuchElementException ex) {
+            NotificationError.internError(ex.getLocalizedMessage());
+            return null;
+
+        } catch (IllegalAttributeException ex) {
+            NotificationError.userError(ex.getLocalizedMessage());
+            return null;
+
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+            return null;
+        }
+
         return this.object;
     }
 
@@ -163,7 +176,7 @@ public class MatchsEditor extends Editor<Matchs> {
     public MatchsEditor() {
         nouveau = Matchs.PORCELAINE;
 
-        super.setHeaderTitle("Apperçu du match");
+        super.setHeaderTitle("Aperçu du match");
 
         super.setSelectItemLabelGenerator(t -> {
             if (t == Matchs.PORCELAINE) {

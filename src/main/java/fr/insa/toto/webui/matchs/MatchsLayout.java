@@ -47,7 +47,7 @@ public class MatchsLayout extends Layout implements BeforeEnterObserver {
                 var list = Matchs.tousLesMatchs(con);
                 list.forEach(each -> {
                     try {
-                        each.populate();
+                        each.populate(con);
                     } catch (SQLException ex) {
                         NotificationError.sql(ex);
                     } catch (NoSuchElementException ex) {

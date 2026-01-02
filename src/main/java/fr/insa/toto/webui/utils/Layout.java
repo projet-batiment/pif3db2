@@ -92,10 +92,10 @@ public abstract class Layout extends AppLayout implements AfterNavigationObserve
         this.primaryNav.addItem(this.tournois);
         this.joueurs = new SideNavItem("Joueurs", "/joueur/list");
         this.primaryNav.addItem(this.joueurs);
-        this.equipes = new SideNavItem("Équipes", "/equipe/list");
-        this.primaryNav.addItem(this.equipes);
-        this.matchs = new SideNavItem("Matchs", "/match/list");
-        this.primaryNav.addItem(this.matchs);
+//        this.equipes = new SideNavItem("Équipes", "/equipe/list");
+//        this.primaryNav.addItem(this.equipes);
+//        this.matchs = new SideNavItem("Matchs", "/match/list");
+//        this.primaryNav.addItem(this.matchs);
         this.users = new SideNavItem("Utilisateurs", "/user/list");
         this.primaryNav.addItem(users);
 

@@ -59,6 +59,7 @@ public class UserEditor extends Editor<User> {
     private Button viewJoueur;
     private Span viewJoueurAbsent;
     private Span newJoueur;
+    private Span newPassword;
 
     private Integer joueurId;
 
@@ -98,7 +99,7 @@ public class UserEditor extends Editor<User> {
                 this.viewJoueur.setVisible(false);
                 this.viewJoueurAbsent.setVisible(false);
                 this.newJoueur.setVisible(true);
-                this.newJoueur.setText("Création d'un utilisateur pour le joueur " + this.joueur.getName());
+                this.newJoueur.setText("Création d'un utilisateur pour le joueur " + this.joueur.getName() + ".");
             }
 
             this.nom.setValue(user.getUsername());
@@ -110,12 +111,15 @@ public class UserEditor extends Editor<User> {
                 this.resetPwd.setVisible(false);
                 this.password.setVisible(true);
                 this.password.setValue(this.object.getPassword());
+                this.newPassword.setVisible(false);
             } else if (this.object.getId() == ClasseMiroir.ID_UNSAVED) {
                 this.resetPwd.setVisible(false);
                 this.password.setVisible(false);
+                this.newPassword.setVisible(true);
             } else {
                 this.resetPwd.setVisible(true);
                 this.password.setVisible(false);
+                this.newPassword.setVisible(false);
             }
         } else {
             this.nom.setValue("");
@@ -246,11 +250,12 @@ public class UserEditor extends Editor<User> {
             }
         });
 
-        viewJoueurAbsent = new Span("Cet utilisateur n'est relié à aucun joueur");
+        viewJoueurAbsent = new Span("Cet utilisateur n'est relié à aucun joueur.");
+        newPassword = new Span("Le mot de passe sera généré automatiquement.");
         newJoueur = new Span();
 
         super.setSelectEnableAdmin();
 
-        super.addChildren(nom, admin, resetPwd, password, viewJoueur, viewJoueurAbsent, newJoueur);
+        super.addChildren(nom, admin, resetPwd, password, viewJoueur, viewJoueurAbsent, newJoueur, newPassword);
     }
 }
