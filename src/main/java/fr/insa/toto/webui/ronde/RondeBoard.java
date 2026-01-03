@@ -85,7 +85,7 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
         rondesText.setText("Nombre de matchs : " + ronde.getNbMatchs(con));
 
         podiumSection.removeAll();
-        List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+        List<Equipe> top3 = EquipeStats.getTop3(con, ronde.getId());
 
         if (top3.isEmpty()) {
             podiumSection.add(new Span("Aucun match avec score n'a été trouvé pour ce tournoi."));

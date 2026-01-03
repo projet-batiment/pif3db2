@@ -1,21 +1,3 @@
-/*
-Copyright 2000- Francois de Bertrand de Beuvron
-
-This file is part of CoursBeuvron.
-
-CoursBeuvron is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-CoursBeuvron is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
- */
 package fr.insa.toto.webui.equipe;
 
 import fr.insa.beuvron.utils.database.ConnectionPool;
@@ -67,7 +49,8 @@ public class EquipeStats implements Serializable {
             S1.idEquipe = ?
     """;
     
-    private static final String SQL_CLASSEMENT_GLOBAL = """
+    // Requête modifiée pour calculer le rang au sein d'un tournoi spécifique
+    private static final String SQL_CLASSEMENT_PAR_TOURNOI = """
     SELECT 
         E.id,
         RANK() OVER (ORDER BY 
@@ -75,44 +58,44 @@ public class EquipeStats implements Serializable {
             (SUM(S1.score) - SUM(S2.score)) DESC
         ) AS rang
     FROM equipe E
-    LEFT JOIN score S1 ON E.id = S1.idEquipe
-    LEFT JOIN score S2 ON S1.idMatch = S2.idMatch AND S1.idEquipe <> S2.idEquipe
+    JOIN score S1 ON E.id = S1.idEquipe
+    JOIN matchs M ON S1.idMatch = M.id
+    JOIN ronde R ON M.idRonde = R.id
+    JOIN score S2 ON S1.idMatch = S2.idMatch AND S1.idEquipe <> S2.idEquipe
+    WHERE R.idTournois = ?
     GROUP BY E.id
 """;
     
-    public static List<Equipe> getTop3(Connection con, Optional<Integer> tournoisId) throws SQLException {
+    /**
+     * Récupère le Top 3 des équipes pour un tournoi spécifique.
+     */
+    public static List<Equipe> getTop3(Connection con, int tournoisId) throws SQLException {
         List<Equipe> equipes = new ArrayList<>();
         
+        // On force la jointure avec 'ronde' pour filtrer par tournoi
         StringBuilder sql = new StringBuilder("""
             SELECT e.id, e.nom, e.idTournois 
             FROM equipe e 
             JOIN score s1 ON e.id = s1.idEquipe 
             JOIN matchs m ON s1.idMatch = m.id 
+            JOIN ronde r ON m.idRonde = r.id
+            JOIN score s2 ON m.id = s2.idMatch AND s1.idEquipe <> s2.idEquipe 
             """);
-
-        if (tournoisId.isPresent()) {
-            sql.append("JOIN ronde r ON m.idRonde = r.id ");
-        }
-
-        sql.append("JOIN score s2 ON m.id = s2.idMatch AND s1.idEquipe <> s2.idEquipe ");
-        
-        if (tournoisId.isPresent()) {
             sql.append("WHERE r.idTournois = ? "); 
-        }
+
         
         sql.append("""
-            GROUP BY e.id, e.nom 
+            GROUP BY e.id, e.nom, e.idTournois 
             ORDER BY SUM(CASE 
                 WHEN s1.score > s2.score THEN 3 
                 WHEN s1.score = s2.score THEN 2 
-                ELSE 1 END) DESC 
+                ELSE 1 END) DESC,
+                (SUM(s1.score) - SUM(s2.score)) DESC
             LIMIT 3
             """);
 
         try (PreparedStatement pst = con.prepareStatement(sql.toString())) {
-            if (tournoisId.isPresent()) {
-                pst.setInt(1, tournoisId.get());
-            }
+            pst.setInt(1, tournoisId);
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
                     equipes.add(new Equipe(rs.getInt("id"), rs.getString("nom"), rs.getInt("idTournois")));
@@ -122,9 +105,15 @@ public class EquipeStats implements Serializable {
         return equipes;
     }
 
-    public static int getRangEquipe(int equipeId) {
+    /**
+     * Récupère le rang d'une équipe au sein d'un tournoi spécifique.
+     */
+    public static int getRangEquipe(int equipeId, int tournoiId) {
         try (Connection con = ConnectionPool.getConnection();
-             PreparedStatement pst = con.prepareStatement(SQL_CLASSEMENT_GLOBAL)) {
+             PreparedStatement pst = con.prepareStatement(SQL_CLASSEMENT_PAR_TOURNOI)) {
+            
+            pst.setInt(1, tournoiId);
+            
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("id") == equipeId) {
@@ -161,7 +150,6 @@ public class EquipeStats implements Serializable {
         return butsInscrits - butsEncaisses;
     }
 
-   
     public static Optional<EquipeStats> findById(int equipeId) {
         List<EquipeStats> list = findStatsForGrid(equipeId);
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
@@ -203,4 +191,3 @@ public class EquipeStats implements Serializable {
         return statsOpt.map(List::of).orElse(Collections.emptyList());
     }
 }
-   

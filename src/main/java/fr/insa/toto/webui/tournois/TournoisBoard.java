@@ -76,7 +76,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
         rondesText.setText("Nombre de matchs : " + tournois.getNombreMatchs());
 
         podiumSection.removeAll();
-        List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+        List<Equipe> top3 = EquipeStats.getTop3(con, tournois.getId());
 
         if (top3.isEmpty()) {
             podiumSection.add(new Span("Aucun match avec score n'a été trouvé pour ce tournoi."));

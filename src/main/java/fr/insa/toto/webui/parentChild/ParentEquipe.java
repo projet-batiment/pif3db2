@@ -1,21 +1,3 @@
-/*
-Copyright 2000- Francois de Bertrand de Beuvron
-
-This file is part of CoursBeuvron.
-
-CoursBeuvron is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-CoursBeuvron is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
- */
 package fr.insa.toto.webui.parentChild;
 
 import com.vaadin.flow.component.html.H2;
@@ -24,6 +6,7 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Equipe;
 import fr.insa.toto.webui.equipe.EquipeEditor;
 import fr.insa.toto.webui.equipe.EquipeStats;
+import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.utils.PodiumComponent;
 import java.sql.Connection;
@@ -38,6 +21,8 @@ public abstract class ParentEquipe extends ParentChild<Equipe> {
 
     public ParentEquipe() {
         super(new EquipeEditor());
+        
+        Integer tournoiId = Session.getId(0); 
 
         super.addColumn(Equipe::getNom).setHeader("Nom").setSortable(true);
         super.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs").setSortable(true);
@@ -49,7 +34,11 @@ public abstract class ParentEquipe extends ParentChild<Equipe> {
         }).setHeader("Points").setSortable(true);
 
         super.addColumn(equipe -> {
-            int rang = EquipeStats.getRangEquipe(equipe.getId());
+            int rang = 0;
+            if (tournoiId != null) {
+                rang = EquipeStats.getRangEquipe(equipe.getId(), tournoiId);
+            }
+            if (rang == 0) return "-";
             return (rang == 1) ? "1er" : rang + "ème";
         }).setHeader("Rang").setSortable(true);
 
@@ -58,7 +47,7 @@ public abstract class ParentEquipe extends ParentChild<Equipe> {
         this.add(titreClassement);
         
         try (Connection con = ConnectionPool.getConnection()) {
-            List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+            List<Equipe> top3 = EquipeStats.getTop3(con, tournoiId);
             this.add(new PodiumComponent(top3));
         } catch (SQLException ex) {
             NotificationError.sql(ex);

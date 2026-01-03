@@ -3,68 +3,28 @@ package fr.insa.toto.webui.joueur;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class JoueurStats implements Serializable {
-
     private final String nomEquipe;
-    private final int nombreDeMatchs;
-    private final int victoires;
-    private final int defaites;
-    private final int nuls;
-    private final int butsInscrits;
-    private final int butsEncaisses;
+    private String nomTournoi; 
+    private final int nombreDeMatchs, victoires, defaites, nuls, butsInscrits, butsEncaisses;
 
-private static final String SQL_GET_ALL_STATS = """
-        SELECT 
-            E.nom AS equipe_nom,
-            COUNT(DISTINCT S1.idMatch) AS nb_matchs,
-            SUM(CASE WHEN S1.score > S2.score THEN 1 ELSE 0 END) AS victoires,
-            SUM(CASE WHEN S1.score < S2.score THEN 1 ELSE 0 END) AS defaites,
-            SUM(CASE WHEN S1.score = S2.score THEN 1 ELSE 0 END) AS nuls,
-            SUM(S1.score) AS buts_inscrits,
-            SUM(S2.score) AS buts_encaisses
-        FROM composition C
-        JOIN equipe E ON E.id = C.idEquipe
-        JOIN score S1 ON S1.idEquipe = C.idEquipe
-        JOIN score S2 ON S2.idMatch = S1.idMatch AND S2.idEquipe <> S1.idEquipe
-        WHERE C.idJoueur = ?
-        GROUP BY E.nom
-        
-        UNION ALL
-        
-        SELECT 
-            ' TOTAL CUMULÉ' AS equipe_nom,
-            COUNT(DISTINCT S1.idMatch),
-            SUM(CASE WHEN S1.score > S2.score THEN 1 ELSE 0 END),
-            SUM(CASE WHEN S1.score < S2.score THEN 1 ELSE 0 END),
-            SUM(CASE WHEN S1.score = S2.score THEN 1 ELSE 0 END),
-            SUM(S1.score),
-            SUM(S2.score)
-        FROM composition C
-        JOIN score S1 ON S1.idEquipe = C.idEquipe
-        JOIN score S2 ON S2.idMatch = S1.idMatch AND S2.idEquipe <> S1.idEquipe
-        WHERE C.idJoueur = ?
-        ORDER BY equipe_nom ASC
-    """;
-
-    public JoueurStats(String nomEquipe, int nbM, int v, int d, int n, int bi, int be) {
+    public JoueurStats(String nomEquipe, int nbMatchs, int wins, int losses, int draws, int goalsFor, int goalsAgainst) {
         this.nomEquipe = nomEquipe;
-        this.nombreDeMatchs = nbM;
-        this.victoires = v;
-        this.defaites = d;
-        this.nuls = n;
-        this.butsInscrits = bi;
-        this.butsEncaisses = be;
+        this.nombreDeMatchs = nbMatchs;
+        this.victoires = wins;
+        this.defaites = losses;
+        this.nuls = draws;
+        this.butsInscrits = goalsFor;
+        this.butsEncaisses = goalsAgainst;
     }
 
+    // Getters pour la Grid
     public String getNomEquipe() { return nomEquipe; }
+    public String getNomTournoi() { return nomTournoi; }
     public int getNombreDeMatchs() { return nombreDeMatchs; }
     public int getVictoires() { return victoires; }
     public int getDefaites() { return defaites; }
@@ -73,28 +33,78 @@ private static final String SQL_GET_ALL_STATS = """
     public int getButsEncaisses() { return butsEncaisses; }
     public int getDifferenceDeButs() { return butsInscrits - butsEncaisses; }
 
+    /**
+     * Grilles par Tournoi
+     */
+    public static List<JoueurStats> findStatsDetaillees(int joueurId) {
+        List<JoueurStats> list = new ArrayList<>();
+        // On lie le joueur à l'équipe (Composition), puis l'équipe au score (Match)
+        String sql = """
+            SELECT T.nom AS Tournoi, E.nom AS Equipe,
+                   COUNT(M.id) AS NB,
+                   SUM(CASE WHEN S1.score > S2.score THEN 1 ELSE 0 END) AS V,
+                   SUM(CASE WHEN S1.score < S2.score THEN 1 ELSE 0 END) AS D,
+                   SUM(CASE WHEN S1.score = S2.score THEN 1 ELSE 0 END) AS N,
+                   SUM(S1.score) AS BI, SUM(S2.score) AS BE
+            FROM composition C
+            JOIN equipe E  ON C.idEquipe = E.id
+            JOIN score S1  ON E.id = S1.idEquipe
+            JOIN matchs M  ON S1.idMatch = M.id
+            JOIN score S2  ON M.id = S2.idMatch AND S2.idEquipe <> S1.idEquipe
+            JOIN ronde R   ON M.idRonde = R.id
+            JOIN tournois T ON R.idTournois = T.id
+            WHERE C.idJoueur = ?
+            GROUP BY T.id, T.nom, E.id, E.nom
+            ORDER BY T.nom ASC
+        """;
+        try (Connection con = ConnectionPool.getConnection();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, joueurId);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                JoueurStats s = new JoueurStats(rs.getString("Equipe"), rs.getInt("NB"), rs.getInt("V"),
+                                                rs.getInt("D"), rs.getInt("N"), rs.getInt("BI"), rs.getInt("BE"));
+                s.nomTournoi = rs.getString("Tournoi");
+                list.add(s);
+            }
+        } catch (SQLException ex) { NotificationError.sql(ex); }
+        return list;
+    }
+
+    /**
+     * Grille Totale : On garde ton récapitulatif global tel quel
+     */
     public static List<JoueurStats> findStatsForGrid(int joueurId) {
         List<JoueurStats> list = new ArrayList<>();
+        String sql = """
+            SELECT E.nom AS Equipe, COUNT(M.id) AS NB,
+                   SUM(CASE WHEN S1.score > S2.score THEN 1 ELSE 0 END) AS V,
+                   SUM(CASE WHEN S1.score < S2.score THEN 1 ELSE 0 END) AS D,
+                   SUM(CASE WHEN S1.score = S2.score THEN 1 ELSE 0 END) AS N,
+                   SUM(S1.score) AS BI, SUM(S2.score) AS BE
+            FROM composition C
+            JOIN equipe E ON C.idEquipe = E.id
+            JOIN score S1 ON E.id = S1.idEquipe
+            JOIN matchs M ON S1.idMatch = M.id
+            JOIN score S2 ON M.id = S2.idMatch AND S2.idEquipe <> S1.idEquipe
+            WHERE C.idJoueur = ?
+            GROUP BY E.id, E.nom
+        """;
         try (Connection con = ConnectionPool.getConnection();
-             PreparedStatement pst = con.prepareStatement(SQL_GET_ALL_STATS)) {
+             PreparedStatement pst = con.prepareStatement(sql)) {
             pst.setInt(1, joueurId);
-            pst.setInt(2, joueurId);
-            try (ResultSet rs = pst.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new JoueurStats(
-                        rs.getString("equipe_nom"),
-                        rs.getInt("nb_matchs"),
-                        rs.getInt("victoires"),
-                        rs.getInt("defaites"),
-                        rs.getInt("nuls"),
-                        rs.getInt("buts_inscrits"),
-                        rs.getInt("buts_encaisses")
-                    ));
-                }
+            ResultSet rs = pst.executeQuery();
+            int tM=0, tV=0, tD=0, tN=0, tBI=0, tBE=0;
+            while (rs.next()) {
+                JoueurStats s = new JoueurStats(rs.getString("Equipe"), rs.getInt("NB"), rs.getInt("V"),
+                                                rs.getInt("D"), rs.getInt("N"), rs.getInt("BI"), rs.getInt("BE"));
+                list.add(s);
+                tM+=s.nombreDeMatchs; tV+=s.victoires; tD+=s.defaites; tN+=s.nuls; tBI+=s.butsInscrits; tBE+=s.butsEncaisses;
             }
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
+            if (!list.isEmpty()) {
+                list.add(new JoueurStats(" TOTAL CUMULÉ", tM, tV, tD, tN, tBI, tBE));
+            }
+        } catch (SQLException ex) { NotificationError.sql(ex); }
         return list;
     }
 }
