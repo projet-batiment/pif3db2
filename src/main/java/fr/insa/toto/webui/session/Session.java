@@ -80,7 +80,7 @@ public class Session implements Serializable {
             NotificationError.sql(ex);
         }
     }
-
+    
     public static List<Integer> getIds() {
         return getSession().ids;
     }

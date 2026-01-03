@@ -87,7 +87,7 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
                 podiumSection.setAlignSelf(FlexComponent.Alignment.CENTER, titre);
                 podiumSection.add(titre);
 
-                List<Equipe> top3 = EquipeStats.getTop3(con, Optional.empty());
+                List<Equipe> top3 = EquipeStats.getTop3(con, id);
 
                 if (top3.isEmpty()) {
                     podiumSection.add(new Span("Aucun match avec score n'a été trouvé dans la base."));

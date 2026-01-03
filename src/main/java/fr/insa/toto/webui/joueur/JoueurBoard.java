@@ -1,21 +1,3 @@
-/*
-Copyright 2000- Francois de Bertrand de Beuvron
-
-This file is part of CoursBeuvron.
-
-CoursBeuvron is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-CoursBeuvron is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
- */
 package fr.insa.toto.webui.joueur;
 
 import com.vaadin.flow.component.button.Button;
@@ -23,7 +5,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -37,7 +18,10 @@ import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -48,7 +32,8 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
 
     private Joueur joueur;
     private H2 title;
-    private Grid<JoueurStats> grid;
+    private VerticalLayout containerTournois; 
+    private Grid<JoueurStats> gridtotal;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -61,8 +46,23 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
                 var optJoueur = Joueur.findById(con, id);
                 if (optJoueur.isPresent()) {
                     this.joueur = optJoueur.get();
-                    grid.setItems(JoueurStats.findStatsForGrid(this.joueur.getId()));
                     title.setText("Tableau de bord : " + joueur.getSurnom());
+
+                    gridtotal.setItems(JoueurStats.findStatsForGrid(this.joueur.getId()));
+
+                    containerTournois.removeAll();
+                    List<JoueurStats> details = JoueurStats.findStatsDetaillees(this.joueur.getId());
+                    
+                    Map<String, List<JoueurStats>> maps = details.stream()
+                            .collect(Collectors.groupingBy(JoueurStats::getNomTournoi));
+
+                    maps.forEach((nomTournoi, stats) -> {
+                        containerTournois.add(new H3("Tournoi : " + nomTournoi));
+                        Grid<JoueurStats> g = createGridTemplate(); 
+                        g.setItems(stats);
+                        containerTournois.add(g);
+                    });
+
                 } else {
                     throw new NoSuchElementException("ID non trouvé");
                 }
@@ -89,7 +89,6 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
 
     public JoueurBoard() {
         this.title = new H2("Tableau de bord : Joueur");
-        // Supposant que vous avez un éditeur pour Joueur similaire à EquipeEditor
         var joueurEditor = new JoueurEditor(); 
 
         this.add(title);
@@ -110,24 +109,34 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
         });
 
         this.add(new HorizontalLayout(bEdit, bDelete));
-        this.add(new H3("Statistiques détaillées"));
 
-        this.grid = new Grid<>();
-        grid.addColumn(JoueurStats::getNomEquipe).setHeader("Équipe / Cumul");
-        grid.addColumn(JoueurStats::getNombreDeMatchs).setHeader("Nombre de matchs");
-        grid.addColumn(JoueurStats::getVictoires).setHeader("Victoires");
-        grid.addColumn(JoueurStats::getDefaites).setHeader("Défaites");
-        grid.addColumn(JoueurStats::getNuls).setHeader("Nuls");
-        grid.addColumn(JoueurStats::getButsInscrits).setHeader("Score +");
-        grid.addColumn(JoueurStats::getButsEncaisses).setHeader("Score -");
-        grid.addColumn(JoueurStats::getDifferenceDeButs).setHeader("Différence");
+        this.containerTournois = new VerticalLayout();
+        this.containerTournois.setPadding(false);
+        this.add(containerTournois);
 
-        grid.setPartNameGenerator(item -> {
+        this.add(new H3("Statistiques tous tournois confondus"));
+
+        this.gridtotal = createGridTemplate();
+        
+        gridtotal.setPartNameGenerator(item -> {
             if (" TOTAL CUMULÉ".equals(item.getNomEquipe())) return "total-row";
             return null;
         });
 
-        grid.setWidthFull();
-        add(grid);
+        add(gridtotal);
+    }
+    private Grid<JoueurStats> createGridTemplate() {
+        Grid<JoueurStats> g = new Grid<>();
+        g.addColumn(JoueurStats::getNomEquipe).setHeader("Équipe / Cumul");
+        g.addColumn(JoueurStats::getNombreDeMatchs).setHeader("Nombre de matchs");
+        g.addColumn(JoueurStats::getVictoires).setHeader("Victoires");
+        g.addColumn(JoueurStats::getDefaites).setHeader("Défaites");
+        g.addColumn(JoueurStats::getNuls).setHeader("Nuls");
+        g.addColumn(JoueurStats::getButsInscrits).setHeader("Score +");
+        g.addColumn(JoueurStats::getButsEncaisses).setHeader("Score -");
+        g.addColumn(JoueurStats::getDifferenceDeButs).setHeader("Différence");
+        g.setWidthFull();
+        g.setAllRowsVisible(true);
+        return g;
     }
 }
