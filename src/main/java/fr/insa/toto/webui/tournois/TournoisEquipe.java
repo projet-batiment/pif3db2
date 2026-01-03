@@ -22,8 +22,10 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
+import fr.insa.toto.model.Equipe;
 import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.equipe.EquipeEditor;
+import fr.insa.toto.webui.equipe.EquipeStats;
 import fr.insa.toto.webui.parentChild.ParentEquipe;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.session.InternError;
@@ -31,7 +33,7 @@ import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+import java.util.Optional;
 
 /**
  *
@@ -40,10 +42,22 @@ import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 @Route(value = "tournois/equipe", layout = TournoisLayout.class)
 public class TournoisEquipe extends ParentEquipe implements BeforeEnterObserver {
     private Tournois tournois;
+    private int tournoiId;
+
+    @Override
+    protected Optional<Integer> pointsLabel(Equipe equipe) {
+        return EquipeStats.getPointsEquipeTournoi(equipe.getId());
+    }
+
+    @Override
+    protected Optional<Integer> classementLabel(Equipe equipe) {
+        return EquipeStats.getRangEquipeTournoi(equipe.getId(), this.tournoiId);
+    }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         Integer id = Session.getId(0);
+        this.tournoiId = id;
         if (id == null) {
             Session.addErrorMessage("TournoisEquipe: pas d'ID de tournois en mémoire");
             event.forwardTo(InternError.class);
@@ -52,13 +66,14 @@ public class TournoisEquipe extends ParentEquipe implements BeforeEnterObserver 
                 this.tournois = Tournois.findById(con, id).get();
                 ((EquipeEditor)super.editor).setIdTournois(id);
 
+                super.addClassement(EquipeStats.getTop3Tournoi(con, id));
+
+                super.initialize(this.tournois.equipes);
+
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
                 NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données", ex);
-
-            } finally {
-                super.initialize(this.tournois.equipes);
             }
         }
     }

@@ -196,7 +196,9 @@ public class Matchs extends ClasseMiroir implements Named {
     }
 
     private Ronde retreiveRonde(Connection con) throws SQLException, NoSuchElementException {
-        return Ronde.findById(con, idRonde).get();
+        var ronde = Ronde.findById(con, idRonde).get();
+        ronde.populate(con);
+        return ronde;
     }
 
     public void populate(Connection con) throws SQLException, NoSuchElementException, IndexOutOfBoundsException {
@@ -235,8 +237,8 @@ public class Matchs extends ClasseMiroir implements Named {
         return ronde;
     }
 
-    public Ronde getIdRonde() {
-        return ronde;
+    public int getIdRonde() {
+        return idRonde;
     }
 
     // does NOT retreive the updated Ronde

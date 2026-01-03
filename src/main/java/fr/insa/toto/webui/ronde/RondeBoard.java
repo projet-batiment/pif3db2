@@ -54,10 +54,12 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
 
     private final VerticalLayout infoSection = new VerticalLayout();
     private final VerticalLayout podiumSection = new VerticalLayout();
+    private final VerticalLayout podium = new VerticalLayout();
     
     private final Span nomText = new Span();
-    private final Span rondesText = new Span();
+    private final Span matchsText = new Span();
     private final Span tournoisText = new Span();
+    private final H2 podiumHeader = new H2();
 
     private final Button buttonEdit = new Button("Éditer");
     private final Button buttonTournois = new Button("Afficher");
@@ -82,15 +84,16 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
         }
 
         nomText.setText("Nom de la ronde : " + ronde.getName());
-        rondesText.setText("Nombre de matchs : " + ronde.getNbMatchs(con));
+        matchsText.setText("Nombre de matchs : " + ronde.getNbMatchs(con));
 
-        podiumSection.removeAll();
-        List<Equipe> top3 = EquipeStats.getTop3(con, ronde.getId());
+        podiumHeader.setText("Classement des équipes (points de résultats)");
+        podium.removeAll();
+        List<Equipe> top3 = EquipeStats.getTop3Ronde(con, ronde.getId());
 
         if (top3.isEmpty()) {
-            podiumSection.add(new Span("Aucun match avec score n'a été trouvé pour ce tournoi."));
+            podium.add(new Span("Aucun match avec score n'a été trouvé pour cette ronde."));
         } else {
-            podiumSection.add(new PodiumComponent(top3));
+            podium.add(new PodiumComponent(top3));
         }
     }
 
@@ -105,10 +108,9 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
                 this.ronde = Ronde.findById(con, id).get();
 
                 if (!infoSection.getChildren().anyMatch(c -> c == nomText)) {
-                    infoSection.add(nomText, rondesText);
-
                     buttonEdit.addClickListener(e -> {
                         var editor = new RondeEditor();
+                        editor.setIdTournois(ronde.getIdTournois());
                         editor.open(ronde);
 
                         editor.setOnSavedCallback(t -> {
@@ -119,8 +121,8 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
                             }
                         });
                     });
-                    Utils.visibleAdmin(buttonEdit);
-                    infoSection.add(buttonEdit);
+                    buttonEdit.setText(Session.isAdmin() ? "Éditer" : "Afficher");
+                    infoSection.add(buttonEdit, nomText, matchsText);
 
                     buttonTournois.addClickListener(e -> {
                         var editor = new TournoisEditor();
@@ -137,10 +139,7 @@ public class RondeBoard extends VerticalLayout implements BeforeEnterObserver {
                     infoSection.add(new HorizontalLayout(tournoisText, buttonTournois));
 
                     podiumSection.setAlignItems(FlexComponent.Alignment.CENTER);
-
-                    H2 titre = new H2("Classement des équipes dans la ronde " + ronde.getName());
-                    podiumSection.setAlignSelf(FlexComponent.Alignment.CENTER, titre);
-                    podiumSection.add(titre);
+                    podiumSection.add(this.podiumHeader, this.podium);
                 }
 
                 this.updateContents(con);

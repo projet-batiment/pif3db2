@@ -63,12 +63,13 @@ public class RondeLayout extends Layout implements BeforeEnterObserver {
             this.rondeId = id;
 
             this.board.setPath(RondeBoard.class);
-//            this.matchs.setPath(RondeMatchs.class);
-//            this.equipes.setPath(RondeEquipe.class);
-//            this.joueurs.setPath(RondeJoueur.class);
+            this.matchs.setPath(RondeMatchs.class);
+            this.equipes.setPath(RondeEquipe.class);
+            this.joueurs.setPath(RondeJoueur.class);
 
             try (var con = ConnectionPool.getConnection()) {
                 var ronde = Ronde.findById(con, rondeId).get();
+                ronde.populate(con);
 
                 var list = Ronde.findByIdTournois(con, ronde.getIdTournois());
                 for (var each: list)

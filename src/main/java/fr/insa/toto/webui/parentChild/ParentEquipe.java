@@ -18,39 +18,41 @@ import java.util.Optional;
  * @author elio
  */
 public abstract class ParentEquipe extends ParentChild<Equipe> {
+    private boolean hasClassement = false;
+
+    protected Optional<Integer> classementLabel(Equipe equipe) {
+        return Optional.empty();
+    }
+
+    protected Optional<Integer> pointsLabel(Equipe equipe) {
+        return Optional.empty();
+    }
+
+    public void addClassement(List<Equipe> top3) {
+        if (hasClassement)
+            return;
+
+        hasClassement = true;
+
+        H2 titreClassement = new H2("Classement actuel (points de résultats)");
+        this.setAlignSelf(FlexComponent.Alignment.CENTER, titreClassement);
+        this.add(titreClassement);
+        
+        this.add(new PodiumComponent(top3));
+    }
 
     public ParentEquipe() {
         super(new EquipeEditor());
-        
-        Integer tournoiId = Session.getId(0); 
 
         super.addColumn(Equipe::getNom).setHeader("Nom").setSortable(true);
         super.addColumn(Equipe::getNbJoueurs).setHeader("Joueurs").setSortable(true);
 
         super.addColumn(equipe -> {
-            return EquipeStats.findById(equipe.getId())
-                    .map(s -> s.getPoints() + " pts")
-                    .orElse("0 pts");
-        }).setHeader("Points").setSortable(true);
+            return this.pointsLabel(equipe).map(v -> v + " pts").orElse("-");
+        }).setHeader("Points de résultats").setSortable(true);
 
         super.addColumn(equipe -> {
-            int rang = 0;
-            if (tournoiId != null) {
-                rang = EquipeStats.getRangEquipe(equipe.getId(), tournoiId);
-            }
-            if (rang == 0) return "-";
-            return (rang == 1) ? "1er" : rang + "ème";
-        }).setHeader("Rang").setSortable(true);
-
-        H2 titreClassement = new H2("Classement actuel");
-        this.setAlignSelf(FlexComponent.Alignment.CENTER, titreClassement);
-        this.add(titreClassement);
-        
-        try (Connection con = ConnectionPool.getConnection()) {
-            List<Equipe> top3 = EquipeStats.getTop3(con, tournoiId);
-            this.add(new PodiumComponent(top3));
-        } catch (SQLException ex) {
-            NotificationError.sql(ex);
-        }
+            return this.classementLabel(equipe).map(v -> v + (v == 1 ? "er" : "ème")).orElse("-");
+        }).setHeader("Classement").setSortable(true);
     }
 }

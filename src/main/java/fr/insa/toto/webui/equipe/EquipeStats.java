@@ -65,11 +65,63 @@ public class EquipeStats implements Serializable {
     WHERE R.idTournois = ?
     GROUP BY E.id
 """;
+
+    // Requête modifiée pour calculer le rang au sein d'une ronde spécifique
+    private static final String SQL_CLASSEMENT_PAR_RONDE = """
+    SELECT 
+        E.id,
+        RANK() OVER (ORDER BY 
+            SUM(CASE WHEN S1.score > S2.score THEN 3 WHEN S1.score = S2.score THEN 2 ELSE 1 END) DESC, 
+            (SUM(S1.score) - SUM(S2.score)) DESC
+        ) AS rang
+    FROM equipe E
+    JOIN score S1 ON E.id = S1.idEquipe
+    JOIN matchs M ON S1.idMatch = M.id AND M.idRonde = ?
+    JOIN score S2 ON S1.idMatch = S2.idMatch AND S1.idEquipe <> S2.idEquipe
+    GROUP BY E.id
+""";
     
+    /**
+     * Récupère le Top 3 des équipes pour une ronde spécifique.
+     */
+    public static List<Equipe> getTop3Ronde(Connection con, int idRonde) throws SQLException {
+        List<Equipe> equipes = new ArrayList<>();
+        
+        // On force la jointure avec 'ronde' pour filtrer par tournoi
+        StringBuilder sql = new StringBuilder("""
+            SELECT e.id, e.nom, e.idTournois 
+            FROM equipe e 
+            JOIN score s1 ON e.id = s1.idEquipe 
+            JOIN matchs m ON s1.idMatch = m.id AND m.idRonde = ?
+            JOIN score s2 ON m.id = s2.idMatch AND s1.idEquipe <> s2.idEquipe 
+            """);
+
+        
+        sql.append("""
+            GROUP BY e.id, e.nom, e.idTournois 
+            ORDER BY SUM(CASE 
+                WHEN s1.score > s2.score THEN 3 
+                WHEN s1.score = s2.score THEN 2 
+                ELSE 1 END) DESC,
+                (SUM(s1.score) - SUM(s2.score)) DESC
+            LIMIT 3
+            """);
+
+        try (PreparedStatement pst = con.prepareStatement(sql.toString())) {
+            pst.setInt(1, idRonde);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    equipes.add(new Equipe(rs.getInt("id"), rs.getString("nom"), rs.getInt("idTournois")));
+                }
+            }
+        }
+        return equipes;
+    }
+
     /**
      * Récupère le Top 3 des équipes pour un tournoi spécifique.
      */
-    public static List<Equipe> getTop3(Connection con, int tournoisId) throws SQLException {
+    public static List<Equipe> getTop3Tournoi(Connection con, int tournoisId) throws SQLException {
         List<Equipe> equipes = new ArrayList<>();
         
         // On force la jointure avec 'ronde' pour filtrer par tournoi
@@ -108,7 +160,7 @@ public class EquipeStats implements Serializable {
     /**
      * Récupère le rang d'une équipe au sein d'un tournoi spécifique.
      */
-    public static int getRangEquipe(int equipeId, int tournoiId) {
+    public static Optional<Integer> getRangEquipeTournoi(int equipeId, int tournoiId) {
         try (Connection con = ConnectionPool.getConnection();
              PreparedStatement pst = con.prepareStatement(SQL_CLASSEMENT_PAR_TOURNOI)) {
             
@@ -117,14 +169,105 @@ public class EquipeStats implements Serializable {
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("id") == equipeId) {
-                        return rs.getInt("rang");
+                        return Optional.of(rs.getInt("rang"));
                     }
                 }
             }
         } catch (SQLException ex) {
             NotificationError.sql(ex);
         }
-        return 0;
+
+        return Optional.empty();
+    }
+
+    /**
+     * Récupère le rang d'une équipe au sein d'une ronde spécifique.
+     */
+    public static Optional<Integer> getRangEquipeRonde(int equipeId, int rondeId) {
+        try (Connection con = ConnectionPool.getConnection();
+             PreparedStatement pst = con.prepareStatement(SQL_CLASSEMENT_PAR_RONDE)) {
+            
+            pst.setInt(1, rondeId);
+            
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    if (rs.getInt("id") == equipeId) {
+                        return Optional.of(rs.getInt("rang"));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
+
+        return Optional.empty();
+    }
+
+    public static Optional<Integer> getPointsEquipeTournoi(int equipeId) {
+        String sql = """
+SELECT e.id, SUM(CASE 
+WHEN s1.score > s2.score THEN 3 
+WHEN s1.score = s2.score THEN 2 
+ELSE 1 END) as points
+FROM equipe e 
+JOIN score s1 ON e.id = s1.idEquipe 
+JOIN matchs m ON s1.idMatch = m.id
+JOIN score s2 ON m.id = s2.idMatch AND s1.idEquipe <> s2.idEquipe 
+WHERE e.id = ?
+group by e.id
+        """;
+
+        try (Connection con = ConnectionPool.getConnection();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            
+            pst.setInt(1, equipeId);
+            
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    if (rs.getInt("id") == equipeId) {
+                        return Optional.of(rs.getInt("points"));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
+
+        return Optional.empty();
+    }
+
+    public static Optional<Integer> getPointsEquipeRonde(int equipeId, int rondeId) {
+        String sql = """
+SELECT e.id, SUM(CASE 
+WHEN s1.score > s2.score THEN 3 
+WHEN s1.score = s2.score THEN 2 
+ELSE 1 END) as points
+FROM equipe e 
+JOIN score s1 ON e.id = s1.idEquipe 
+JOIN matchs m ON s1.idMatch = m.id AND m.idRonde = ?
+JOIN score s2 ON m.id = s2.idMatch AND s1.idEquipe <> s2.idEquipe 
+WHERE e.id = ?
+group by e.id
+        """;
+
+        try (Connection con = ConnectionPool.getConnection();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            
+            pst.setInt(1, rondeId);
+            pst.setInt(2, equipeId);
+            
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    if (rs.getInt("id") == equipeId) {
+                        return Optional.of(rs.getInt("points"));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+        }
+
+        return Optional.empty();
     }
 
     public EquipeStats(int nbMatchs, int wins, int losses, int draws, int goalsFor, int goalsAgainst, int points) {

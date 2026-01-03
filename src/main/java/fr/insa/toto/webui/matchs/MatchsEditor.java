@@ -99,7 +99,7 @@ public class MatchsEditor extends Editor<Matchs> {
 
     @Override
     protected List<Matchs> openObject(Connection con) throws SQLException {
-        var list = Matchs.tousLesMatchs(con);
+        var list = Matchs.findByIdTournois(con, this.idTournois);
 
         var equipes = Equipe.findByIdTournois(con, this.idTournois);
         equipeA.setItems(equipes);

@@ -284,6 +284,7 @@ public class Equipe extends ClasseMiroir implements Named {
 
     public Equipe(String nom, int idTournois) {
         this.nom = nom;
+        this.idTournois = idTournois;
 
         this.state = ModifiedState.CREATED;
     }
@@ -291,6 +292,7 @@ public class Equipe extends ClasseMiroir implements Named {
     public Equipe(int id, String nom, int idTournois) {
         super(id);
         this.nom = nom;
+        this.idTournois = idTournois;
 
         this.state = id >= 0 ? ModifiedState.NORMAL : ModifiedState.PORCELAINE;
     }
@@ -316,7 +318,7 @@ public class Equipe extends ClasseMiroir implements Named {
         return this.nbJoueurs;
     }
 
-    public int getIdTournois() {
+    public int getIdTournoi() {
         return idTournois;
     }
 
@@ -379,6 +381,25 @@ public class Equipe extends ClasseMiroir implements Named {
         List<Equipe> res = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement("select id,nom,idTournois from equipe where idTournois=?")) {
             pst.setInt(1, idTournois);
+
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+
+    public static List<Equipe> findByIdRonde(Connection con, int idRonde) throws SQLException {
+        List<Equipe> res = new ArrayList<>();
+        String sql = """
+select e.id, e.nom, e.idTournois from equipe e
+join ronde r on r.id = ?
+join matchs m on m.idRonde = r.id
+join score s on s.idEquipe = e.id and s.idMatch = m.id
+group by e.id, e.nom, e.idTournois
+                     """;
+
+        try (PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, idRonde);
 
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);

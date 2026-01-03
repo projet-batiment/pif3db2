@@ -16,16 +16,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.tournois;
+package fr.insa.toto.webui.ronde;
 
+import fr.insa.toto.webui.ronde.*;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Tournois;
+import fr.insa.toto.model.Ronde;
+import fr.insa.toto.webui.matchs.MatchsEditor;
 import fr.insa.toto.webui.utils.NotificationError;
-import fr.insa.toto.webui.parentChild.ParentRonde;
-import fr.insa.toto.webui.ronde.RondeEditor;
+import fr.insa.toto.webui.parentChild.ParentMatchs;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
 import java.sql.Connection;
@@ -36,26 +37,29 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "tournois/ronde", layout = TournoisLayout.class)
-public class TournoisRondes extends ParentRonde implements BeforeEnterObserver {
-    private Tournois tournois;
+@Route(value = "ronde/match", layout = RondeLayout.class)
+public class RondeMatchs extends ParentMatchs implements BeforeEnterObserver {
+    private Ronde ronde;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         Integer id = Session.getId(0);
         if (id == null) {
-            Session.addErrorMessage("TournoisRondes: pas d'ID de tournois en mémoire");
+            Session.addErrorMessage("RondeMatchs: pas d'ID de ronde en mémoire");
             event.forwardTo(InternError.class);
         } else {
             try (Connection con = ConnectionPool.getConnection()) {
-                this.tournois = Tournois.findById(con, id).get();
-                ((RondeEditor)super.editor).setIdTournois(id);
+                this.ronde = Ronde.findById(con, id).get();
+                ronde.populate(con);
+                ((MatchsEditor)super.editor).setIdTournois(ronde.getIdTournois());
 
-                super.initialize(this.tournois.rondes);
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données", ex);
+                NotificationError.internError("La ronde " + id + " n'a pas été trouvée dans la base de données", ex);
+
+            } finally {
+                super.initialize(this.ronde.matchs);
             }
         }
     }

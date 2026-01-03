@@ -34,12 +34,10 @@ import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.utils.PodiumComponent;
-import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 /**
  * @author elio
@@ -48,23 +46,23 @@ import java.util.Optional;
 public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver {
 
     private Tournois tournois;
-    private final VerticalLayout NomTournoi = new VerticalLayout();
+    private final VerticalLayout infoSection = new VerticalLayout();
     private final VerticalLayout podiumSection = new VerticalLayout();
+    private final VerticalLayout podium = new VerticalLayout();
     
     private final Span nomText = new Span();
     private final Span rondesText = new Span();
     private final Span terrainsText = new Span();
     private final Span matchsText = new Span();
-
-    private final Button buttonEdit = new Button("Éditer");
+    private final H2 podiumHeader = new H2();
 
     public TournoisBoard() {
         this.setSpacing(true);
         this.setPadding(true);
         
-        NomTournoi.add(new H2("Tournoi"));
+        infoSection.add(new H2("Tournoi"));
         
-        this.add(NomTournoi, podiumSection);
+        this.add(infoSection, podiumSection);
     }
 
     private void updateContents(Connection con) throws SQLException {
@@ -73,10 +71,11 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
         nomText.setText("Nom du tournoi : " + tournois.getName());
         terrainsText.setText("Nombre de terrains : " + tournois.getNombreTerrains());
         rondesText.setText("Nombre de rondes : " + tournois.getNombreRondes());
-        rondesText.setText("Nombre de matchs : " + tournois.getNombreMatchs());
+        matchsText.setText("Nombre de matchs : " + tournois.getNombreMatchs());
 
-        podiumSection.removeAll();
-        List<Equipe> top3 = EquipeStats.getTop3(con, tournois.getId());
+        podiumHeader.setText("Classement des équipes (points de résultats)");
+        podium.removeAll();
+        List<Equipe> top3 = EquipeStats.getTop3Tournoi(con, tournois.getId());
 
         if (top3.isEmpty()) {
             podiumSection.add(new Span("Aucun match avec score n'a été trouvé pour ce tournoi."));
@@ -95,9 +94,8 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
             try (Connection con = ConnectionPool.getConnection()) {
                 this.tournois = Tournois.findById(con, id).get();
 
-                if (!NomTournoi.getChildren().anyMatch(c -> c == nomText)) {
-                    NomTournoi.add(nomText, rondesText, terrainsText, matchsText);
-
+                if (!infoSection.getChildren().anyMatch(c -> c == nomText)) {
+                    var buttonEdit = new Button(Session.isAdmin() ? "Éditer" : "Afficher");
                     buttonEdit.addClickListener(e -> {
                         var editor = new TournoisEditor();
                         editor.open(tournois);
@@ -110,14 +108,10 @@ public class TournoisBoard extends VerticalLayout implements BeforeEnterObserver
                             }
                         });
                     });
-                    Utils.visibleAdmin(buttonEdit);
-                    NomTournoi.add(buttonEdit);
+                    infoSection.add(buttonEdit, nomText, rondesText, terrainsText, matchsText);
 
                     podiumSection.setAlignItems(FlexComponent.Alignment.CENTER);
-
-                    H2 titre = new H2("Classement actuel des équipes");
-                    podiumSection.setAlignSelf(FlexComponent.Alignment.CENTER, titre);
-                    podiumSection.add(titre);
+                    podiumSection.add(this.podiumHeader, this.podium);
                 }
 
                 this.updateContents(con);

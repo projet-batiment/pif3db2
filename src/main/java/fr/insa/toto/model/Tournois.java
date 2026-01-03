@@ -415,14 +415,4 @@ public class Tournois extends ClasseMiroir implements Named {
             
         }
     }
-    
-    public static List<Tournois> findByEquipe(Connection con, String nom) throws SQLException{
-        try (PreparedStatement pst = con.prepareStatement("select id,nom,from equipe where nom=?")) {
-            pst.setString(1, nom);
-            try (ResultSet allU = pst.executeQuery()) {
-                return fromResultSetToList(allU);
-            }
-        }
-    }
-    
 }

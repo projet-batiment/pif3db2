@@ -18,11 +18,13 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.model;
 
+import com.vaadin.flow.component.littemplate.IllegalAttributeException;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.utils.ChildFace;
 import fr.insa.toto.model.utils.ModifiedState;
 import fr.insa.toto.model.utils.Named;
+import fr.insa.toto.model.utils.ParentFace;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -100,6 +102,146 @@ public class Ronde extends ClasseMiroir implements Named {
         }
     }
 
+    public final JoueurParent joueurs = new JoueurParent();
+    private class JoueurParent extends ParentFace<Joueur> {
+        @Override
+        public String parentObjectName() {
+            return getName();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return nomTable();
+        }
+
+        @Override
+        public String le() {
+            return "la ";
+        }
+
+        @Override
+        public String du() {
+            return "de la ";
+        }
+
+        @Override
+        public int add(Joueur joueur, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            throw new IllegalArgumentException("On n'ajoute pas un joueur à une ronde");
+        }
+
+        @Override
+        public void remove(Joueur joueur, Connection con) throws SQLException, EntiteNonSauvegardee {
+            // pour l'instant, les joueurs ne sont pas assignés aux tournois
+            joueur.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Joueur> get(Connection con) throws SQLException {
+            return Joueur.findByIdRonde(con, getId());
+        }
+
+        public JoueurParent() {
+            super(new Joueur.AsChild());
+        }
+    }
+
+    public final MatchsParent matchs = new MatchsParent();
+    private class MatchsParent extends ParentFace<Matchs> {
+        @Override
+        public String parentObjectName() {
+            return getName();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return nomTable();
+        }
+
+        @Override
+        public String le() {
+            return "la ";
+        }
+
+        @Override
+        public String du() {
+            return "de la ";
+        }
+
+        @Override
+        public int add(Matchs match, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            if (match.getIdRonde() != getId())
+                throw new IllegalAttributeException("ronde.add: " + match.getIdRonde() + " match.idRonde != ronde.id " + getId());
+
+            return match.getId();
+        }
+
+        @Override
+        public void remove(Matchs match, Connection con) throws SQLException, EntiteNonSauvegardee {
+            // pour l'instant, les matchs ne sont pas assignés aux tournois
+            match.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Matchs> get(Connection con) throws SQLException {
+            var list = Matchs.findByIdRonde(con, getId());
+            for (var each: list)
+                each.populate(con);
+            return list;
+        }
+
+        public MatchsParent() {
+            super(new Matchs.AsChild());
+        }
+    }
+
+    public final EquipeParent equipes = new EquipeParent();
+    private class EquipeParent extends ParentFace<Equipe> {
+        @Override
+        public String parentObjectName() {
+            return getName();
+        }
+
+        @Override
+        public String parentTypeName() {
+            return nomTable();
+        }
+
+        @Override
+        public String le() {
+            return "la ";
+        }
+
+        @Override
+        public String du() {
+            return "de la ";
+        }
+
+        @Override
+        public int add(Equipe match, Connection con) throws SQLException, EntiteDejaSauvegardee {
+            throw new IllegalArgumentException("On n'ajoute pas une équipe à une ronde");
+        }
+
+        @Override
+        public void remove(Equipe match, Connection con) throws SQLException, EntiteNonSauvegardee {
+            // pour l'instant, les equipe ne sont pas assignés aux tournois
+            match.deleteFromDB(con);
+        }
+
+        @Override
+        public List<Equipe> get(Connection con) throws SQLException {
+            // TODO
+            // pour l'instant, les equipe ne sont pas assignés aux tournois
+            var list = Equipe.findByIdRonde(con, getId());
+            for (var each: list)
+                each.populate(con);
+            return list;
+        }
+
+        public EquipeParent() {
+            super(new Equipe.AsChild());
+        }
+    }
+
     public int getIdTournois() {
         return idTournois;
     }
@@ -128,7 +270,7 @@ public class Ronde extends ClasseMiroir implements Named {
         int nbMatchs = 0;
 
         PreparedStatement pst = con.prepareStatement("select count(*) as total from matchs where idRonde = ?");
-        pst.setInt(1,this.numero);
+        pst.setInt(1, this.getId());
 
         try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {

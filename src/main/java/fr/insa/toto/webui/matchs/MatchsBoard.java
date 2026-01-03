@@ -4,17 +4,24 @@
  */
 package fr.insa.toto.webui.matchs;
 
-import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Matchs;
+import fr.insa.toto.model.Ronde;
+import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.tournois.TournoisEditor;
 import fr.insa.toto.webui.utils.NotificationError;
+import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -27,11 +34,39 @@ import java.util.NoSuchElementException;
 @Route(value = "match", layout = MatchsLayout.class)
 public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
     private Matchs matchs;
-    private H2 title;
-    private VerticalLayout NomMatch;
-    private VerticalLayout Ronde;
-    private Text nom;
-    private Text ronde;
+    private Ronde ronde;
+    private Tournois tournois;
+
+    private MatchsEditor matchsEditor;
+
+    private final VerticalLayout infoSection = new VerticalLayout();
+    
+    private final Span nomText = new Span();
+    private final Span rondeText = new Span();
+    private final Span tournoisText = new Span();
+
+    private final Button buttonEdit = new Button();
+    private final Button buttonTournois = new Button("Afficher");
+
+    private void updateContents(Connection con) throws SQLException {
+        matchs.populate(con);
+
+        try {
+            ronde = Ronde.findById(con, matchs.getIdRonde()).get();
+            ronde.populate(con);
+            rondeText.setText("Nom de la ronde : " + ronde.getName());
+
+            this.matchsEditor.setIdTournois(ronde.getIdTournois());
+
+            tournois = Tournois.findById(con, ronde.getIdTournois()).get();
+            tournoisText.setText("Nom du tournoi : " + tournois.getName());
+        } catch (NoSuchElementException ex) {
+            NotificationError.internError(ex);
+        }
+
+        nomText.setText("Nom de la ronde : " + ronde.getName());
+        rondeText.setText("Nombre de matchs : " + ronde.getNbMatchs(con));
+    }
     
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -48,10 +83,39 @@ public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
                     NotificationError.internError("L'un des éléments du match " + matchs.getId() + " n'a pas été trouvé", ex);
                 }
 
-                this.nom.setText(matchs.getName());
-                this.ronde.setText(String.valueOf(matchs.getRonde().getNumero()));
-                this.NomMatch.add(nom);
-                this.Ronde.add(ronde);
+                if (!infoSection.getChildren().anyMatch(c -> c == nomText)) {
+                    buttonEdit.addClickListener(e -> {
+                        this.matchsEditor.open(matchs);
+
+                        this.matchsEditor.setOnSavedCallback(t -> {
+                            try {
+                                this.updateContents(con);
+                            } catch (SQLException ex) {
+                                NotificationError.sql(ex);
+                            }
+                        });
+                    });
+                    buttonEdit.setText(Session.isAdmin() ? "Éditer" : "Afficher");
+                    infoSection.add(buttonEdit, nomText, rondeText);
+
+                    buttonTournois.addClickListener(e -> {
+                        var editor = new TournoisEditor();
+                        editor.open(tournois);
+
+                        editor.setOnSavedCallback(t -> {
+                            try {
+                                this.updateContents(con);
+                            } catch (SQLException ex) {
+                                NotificationError.sql(ex);
+                            }
+                        });
+                    });
+                    infoSection.add(new HorizontalLayout(tournoisText, buttonTournois));
+                }
+
+                this.matchsEditor = new MatchsEditor();
+                this.updateContents(con);
+
                 
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
@@ -62,13 +126,11 @@ public class MatchsBoard extends VerticalLayout implements BeforeEnterObserver {
     }
     
      public MatchsBoard() {
-        this.title = new H2("Tableau de bord : matchs");
-        nom = new Text("temp");
-        ronde = new Text("temp");
-        this.NomMatch = new VerticalLayout(new H2("Nom du match"));
-        this.Ronde = new VerticalLayout(new H2("Numéro de la ronde"));
-        this.add(title);
-        this.add(NomMatch);
-        this.add(Ronde);
+        this.setSpacing(true);
+        this.setPadding(true);
+        
+        infoSection.add(new H2("Match"));
+        
+        this.add(infoSection);
     }
 }

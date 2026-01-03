@@ -1,7 +1,6 @@
 package fr.insa.toto.webui.joueur;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -14,7 +13,6 @@ import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
-import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -75,40 +73,20 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-    private void deleteDialog(Joueur j) {
-        new DialogDelete("le joueur " + j.getSurnom(), () -> {
-            try (Connection con = ConnectionPool.getConnection()) {
-                j.deleteFromDB(con);
-                NotificationError.info("Le joueur " + j.getSurnom() + " a bien été supprimé");
-                this.getUI().ifPresent(ui -> ui.navigate("/"));
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            }
-        }).open();
-    }
-
     public JoueurBoard() {
         this.title = new H2("Tableau de bord : Joueur");
         var joueurEditor = new JoueurEditor(); 
 
         this.add(title);
 
-        Button bDelete = new Button("Supprimer");
-        bDelete.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        bDelete.addClickListener(event -> {
-            if (this.joueur != null) {
-                deleteDialog(this.joueur);
-            }
-        });
-
-        Button bEdit = new Button("Modifier");
+        Button bEdit = new Button(Session.isAdmin() ? "Éditer" : "Afficher");
         bEdit.addClickListener(event -> {
             if (this.joueur != null) {
                 joueurEditor.open(this.joueur);
             }
         });
 
-        this.add(new HorizontalLayout(bEdit, bDelete));
+        this.add(new HorizontalLayout(bEdit));
 
         this.containerTournois = new VerticalLayout();
         this.containerTournois.setPadding(false);
