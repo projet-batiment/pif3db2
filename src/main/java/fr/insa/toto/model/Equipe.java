@@ -346,6 +346,9 @@ public class Equipe extends ClasseMiroir implements Named {
         for (Composition each: Composition.findByIdEquipe(con, super.getId())) {
             each.deleteFromDB(con);
         }
+        for (Matchs each: Matchs.findByIdEquipe(con, super.getId())) {
+            each.deleteFromDB(con);
+        }
     }
 
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {

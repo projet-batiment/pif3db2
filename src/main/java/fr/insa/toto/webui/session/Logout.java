@@ -49,5 +49,6 @@ public class Logout extends VerticalLayout implements BeforeEnterObserver {
 
     public Logout() {
         super.add(new H2("Déconnexion"));
+        super.add(new Span("Déconnexion réussie ! Veuillez choisir une section ou fermer la page."));
     }
 }

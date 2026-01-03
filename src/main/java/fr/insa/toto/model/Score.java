@@ -138,7 +138,7 @@ public class Score extends ClasseMiroir {
     }
         
     public static Optional<Score> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select score,idEquipe,idMatch from score where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,score,idEquipe,idMatch from score where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 
@@ -153,7 +153,18 @@ public class Score extends ClasseMiroir {
         }
     }
         
-    public static List<Score> findByMatch(Connection con, int idMatch) throws SQLException {
+    public static List<Score> findByIdEquipe(Connection con, int idEquipe) throws SQLException {
+        List<Score> res = new ArrayList<>();
+        try (PreparedStatement pst = con.prepareStatement("select id,score,idEquipe,idMatch from score where idEquipe=?")) {
+            pst.setInt(1, idEquipe);
+
+            try (ResultSet allU = pst.executeQuery()) {
+                return fromResultSetToList(allU);
+            }
+        }
+    }
+        
+    public static List<Score> findByIdMatch(Connection con, int idMatch) throws SQLException {
         List<Score> res = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement("select id,score,idEquipe,idMatch from score where idMatch=?")) {
             pst.setInt(1, idMatch);

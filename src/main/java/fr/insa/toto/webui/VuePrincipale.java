@@ -19,6 +19,9 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package fr.insa.toto.webui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.ListItem;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.UnorderedList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -33,7 +36,16 @@ import fr.insa.toto.webui.utils.Layout;
 public class VuePrincipale extends VerticalLayout {
 
     public VuePrincipale() {
-        this.add(new H2("TODO"));
+        this.add(new H2("Bienvenue !"));
+
+        this.add(new Span("Choisissez une page dans le menu à droite :"));
+        this.add(new UnorderedList(
+                new ListItem("Catégorie \"Général\" : listes des objets communs à tous les tournois,"),
+                new ListItem("Catégorie \"Compte\" : ensemble des pages relatives à l'utilisateur connecté,"),
+                new ListItem("Catégorie \"Objet affiché\", visible une fois un objet ouvert : ensemble des pages relatives à l'objet en question.")
+        ));
+
+        this.add(new Span("Seuls les administrateurs peuvent modifier les informations, excepté celles des joueurs et des utilisateurs, qui sont modifiables par l'utilisateur associé."));
     }
 
 }

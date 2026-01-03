@@ -20,12 +20,12 @@ package fr.insa.toto.webui.session;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.SQLException;
@@ -55,6 +55,7 @@ public class Login extends VerticalLayout {
 
         super.add(
             new H2("Connexion"),
+            new Span("Veuillez entrer vos identifiants :"),
             new HorizontalLayout(username, password),
             login
         );

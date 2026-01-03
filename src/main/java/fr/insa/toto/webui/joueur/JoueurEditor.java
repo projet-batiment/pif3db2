@@ -56,6 +56,8 @@ public class JoueurEditor extends Editor<Joueur> {
     }
 
     protected void setObject() {
+        super.setVisibleLegitimate(null);
+
         if (this.object instanceof Joueur joueur) {
             this.surnom.setValue(joueur.getSurnom());
             this.surnom.setEnabled(true);
@@ -75,6 +77,8 @@ public class JoueurEditor extends Editor<Joueur> {
                 User user = null;
                 try (Connection con = ConnectionPool.getConnection()) {
                     user = User.findById(con, this.object.getIdUser()).orElse(null);
+
+                    super.setVisibleLegitimate(user);
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
                 }

@@ -179,7 +179,7 @@ public class Matchs extends ClasseMiroir implements Named {
             }
         }
 
-        var scores = Score.findByMatch(con, super.getId());
+        var scores = Score.findByIdMatch(con, super.getId());
         int length = scores.size();
 
         switch (length) {
@@ -253,6 +253,7 @@ public class Matchs extends ClasseMiroir implements Named {
 
     @Override
     public void deleteChildren(Connection con) throws SQLException {
+        this.populate(con);
         this.seA.score.deleteFromDB(con);
         this.seB.score.deleteFromDB(con);
     }
@@ -262,6 +263,7 @@ public class Matchs extends ClasseMiroir implements Named {
             throw new IllegalAttributeException("Les deux équipes du match sont identiques : " + this.seA.equipe.getName());
 
         Ronde ronde = Ronde.findById(con, this.idRonde).get();
+        ronde.populate(con);
         int nombreMatchsParalleles = Tournois.findById(con, ronde.getIdTournois()).get().getNombreTerrains();
         int nombreMatchsAutres = findByIdRonde(con, this.idRonde)
                 .stream()
@@ -269,7 +271,6 @@ public class Matchs extends ClasseMiroir implements Named {
                 .collect(Collectors.toList())
                 .size();
 
-        NotificationError.log(nombreMatchsParalleles + " // " + nombreMatchsAutres);
         if (nombreMatchsParalleles <= nombreMatchsAutres)
             throw new IllegalAttributeException("La ronde " + ronde.getName() + " est remplie : le match " + this.getName() + " ne peut pas être ajouté.");
     }
@@ -357,6 +358,17 @@ public class Matchs extends ClasseMiroir implements Named {
 
         for (Ronde ronde: rondes) {
             matchs.addAll(findByIdRonde(con, ronde.getId()));
+        }
+
+        return matchs;
+    }
+
+    public static List<Matchs> findByIdEquipe(Connection con, int idEquipe) throws SQLException, NoSuchElementException {
+        List<Score> scores = Score.findByIdEquipe(con, idEquipe);
+        List<Matchs> matchs = new ArrayList<>();
+
+        for (Score score: scores) {
+            matchs.add(findById(con, score.getIdMatch()).get());
         }
 
         return matchs;

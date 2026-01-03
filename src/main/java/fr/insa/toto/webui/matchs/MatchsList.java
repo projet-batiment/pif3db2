@@ -43,7 +43,7 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-@Route(value = "match/list", layout = Layout.Default.class)
+//@Route(value = "match/list", layout = Layout.Default.class)
 public class MatchsList extends ParentMatchs implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
