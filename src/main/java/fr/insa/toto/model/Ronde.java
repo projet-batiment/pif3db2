@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -70,7 +71,7 @@ public class Ronde extends ClasseMiroir implements Named {
     }
 
     public Ronde(int idTournois) {
-        this.enCours = false;
+        this.enCours = true;
         this.idTournois = idTournois;
 
         try (Connection con = ConnectionPool.getConnection()) {
@@ -103,6 +104,10 @@ public class Ronde extends ClasseMiroir implements Named {
         return idTournois;
     }
 
+    public String getNomTournois() {
+        return this.tournoisName;
+    }
+
     public int getNumero() {
         return numero;
     }
@@ -118,13 +123,11 @@ public class Ronde extends ClasseMiroir implements Named {
     public void setEnCours(boolean enCours) {
         this.enCours = enCours;
     }
-    
-    public int getNbMatchs(){
-        
+
+    public int getNbMatchs(Connection con) throws SQLException {
         int nbMatchs = 0;
 
-    try (Connection con = ConnectionPool.getConnection();
-        PreparedStatement pst = con.prepareStatement("select count(*) as total from matchs where idRonde = ?")) {
+        PreparedStatement pst = con.prepareStatement("select count(*) as total from matchs where idRonde = ?");
         pst.setInt(1,this.numero);
 
         try (ResultSet rs = pst.executeQuery()) {
@@ -132,10 +135,18 @@ public class Ronde extends ClasseMiroir implements Named {
                 nbMatchs = rs.getInt("total");
             }
         }
-    } catch (SQLException ex) {
-        NotificationError.sql(ex);
+
+        return nbMatchs;
     }
-    return nbMatchs;
+    
+    public int getNbMatchs(){
+        try (Connection con = ConnectionPool.getConnection()) {
+            return this.getNbMatchs(con);
+
+        } catch (SQLException ex) {
+            NotificationError.sql(ex);
+            return -1;
+        }
     }
 
     @Override
@@ -215,7 +226,10 @@ public class Ronde extends ClasseMiroir implements Named {
             pst.setInt(1, idTournois);
 
             try (ResultSet allU = pst.executeQuery()) {
-                return fromResultSetToList(allU);
+                return fromResultSetToList(allU)
+                        .stream()
+                        .sorted((a, b) -> a.numero - b.numero)
+                        .collect(Collectors.toList());
             }
         }
     }

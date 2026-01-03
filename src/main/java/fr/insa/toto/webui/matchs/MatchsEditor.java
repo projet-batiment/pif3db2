@@ -53,6 +53,11 @@ public class MatchsEditor extends Editor<Matchs> {
         this.currentEquipe = currentEquipe;
     }
 
+    private int idTournois = Ronde.ID_UNSAVED;
+    public void setIdTournois(int idTournois) {
+        this.idTournois = idTournois;
+    }
+
     @Override
     protected Matchs newObject() {
         return new Matchs();
@@ -96,12 +101,11 @@ public class MatchsEditor extends Editor<Matchs> {
     protected List<Matchs> openObject(Connection con) throws SQLException {
         var list = Matchs.tousLesMatchs(con);
 
-        var equipes = Equipe.toutesLesEquipes(con);
+        var equipes = Equipe.findByIdTournois(con, this.idTournois);
         equipeA.setItems(equipes);
         equipeB.setItems(equipes);
 
-        NotificationError.todo("uniquement les rondes du tournois actuel !!!");
-        var rondes = Ronde.toutesLesRondes(con);
+        var rondes = Ronde.findByIdTournois(con, this.idTournois);
         for (Ronde each: rondes) {
             each.populate(con);
         }
@@ -148,7 +152,7 @@ public class MatchsEditor extends Editor<Matchs> {
             this.object.checkSavable(con);
 
         } catch (NoSuchElementException ex) {
-            NotificationError.internError(ex.getLocalizedMessage());
+            NotificationError.internError(ex);
             return null;
 
         } catch (IllegalAttributeException ex) {

@@ -41,6 +41,7 @@ public class Tournois extends ClasseMiroir implements Named {
     private int nombreTerrains;
 
     private int nombreRondes = -1;
+    private int nombreMatchs = -1;
 
     public static class AsChild extends ChildFace {
         @Override
@@ -316,6 +317,10 @@ public class Tournois extends ClasseMiroir implements Named {
         return nombreRondes;
     }
 
+    public int getNombreMatchs() {
+        return nombreMatchs;
+    }
+
     public Tournois(int id, String nom, int nombreTerrains) {
         super(id);
         this.nom = nom;
@@ -355,7 +360,13 @@ public class Tournois extends ClasseMiroir implements Named {
 
     @Override
     public void populate(Connection con) throws SQLException {
-        this.nombreRondes = Ronde.findByIdTournois(con, this.getId()).size();
+        var rondes = Ronde.findByIdTournois(con, this.getId());
+        this.nombreRondes = rondes.size();
+        this.nombreMatchs = 0;
+
+        for (Ronde ronde: rondes) {
+            this.nombreMatchs += ronde.getNbMatchs(con);
+        }
     }
 
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {

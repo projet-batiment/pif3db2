@@ -18,23 +18,20 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.user;
 
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Span;
-import fr.insa.toto.webui.tournois.*;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.beuvron.utils.database.ClasseMiroir;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
-import fr.insa.toto.model.Tournois;
 import fr.insa.toto.model.User;
 import fr.insa.toto.webui.joueur.JoueurEditor;
 import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.utils.DialogDeleteChild;
 import fr.insa.toto.webui.utils.Editor;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.utils.Utils;
@@ -43,7 +40,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -70,6 +66,10 @@ public class UserEditor extends Editor<User> {
 
     private static final String ADMIN = "Administrateur";
     private static final String NORMAL = "Normal";
+
+    private static void deleteUserCallback(Joueur joueur) {
+        new DialogDeleteChild<>(Joueur.joueurs, joueur, () -> {}).open();
+    }
 
     @Override
     protected User newObject() {
@@ -239,13 +239,15 @@ public class UserEditor extends Editor<User> {
         viewJoueur.addClickListener(e -> {
             if (this.joueurId != null) {
                 try (Connection con = ConnectionPool.getConnection()) {
-                    new JoueurEditor().open(Joueur.findById(con, this.joueurId).get());
+                    var editor = new JoueurEditor();
+                    editor.setOnDeletedCallback(joueur -> deleteUserCallback(joueur));
+                    editor.open(Joueur.findById(con, this.joueurId).get());
                     super.close();
 
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.internError("L'utilisateur " + this.joueurId + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                    NotificationError.internError("Le joueur " + this.joueurId + " n'a pas été trouvé dans la base de données", ex);
                 }
             }
         });

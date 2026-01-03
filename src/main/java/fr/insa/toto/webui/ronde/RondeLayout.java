@@ -16,10 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.insa.toto.webui.equipe;
+package fr.insa.toto.webui.ronde;
 
+import fr.insa.toto.webui.ronde.*;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -28,7 +31,8 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouteParameters;
 import fr.insa.beuvron.utils.database.ConnectionPool;
-import fr.insa.toto.model.Equipe;
+import fr.insa.toto.model.Ronde;
+import fr.insa.toto.model.Tournois;
 import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
 import fr.insa.toto.webui.utils.Layout;
@@ -40,67 +44,77 @@ import java.util.NoSuchElementException;
  *
  * @author elio
  */
-public class EquipeLayout extends Layout implements BeforeEnterObserver {
-    private int equipeId;
-    private final SideNavItem board;
+public class RondeLayout extends Layout implements BeforeEnterObserver {
+    private int rondeId;
     private final SideNavItem matchs;
+    private final SideNavItem equipes;
     private final SideNavItem joueurs;
+    private final SideNavItem board;
 
-    private Select<Equipe> select;
+    private Select<Ronde> select;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         Integer id = Session.getId(0);
         if (id == null) {
-            Session.addErrorMessage("EquipeLayout: pas d'ID d'équipe en mémoire");
+            Session.addErrorMessage("RondeLayout: pas d'ID de ronde en mémoire");
             event.forwardTo(InternError.class);
         } else {
-            this.equipeId = id;
+            this.rondeId = id;
 
-            this.board.setPath(EquipeBoard.class);
-            this.matchs.setPath(EquipeMatchs.class);
-            this.joueurs.setPath(EquipeJoueur.class);
+            this.board.setPath(RondeBoard.class);
+//            this.matchs.setPath(RondeMatchs.class);
+//            this.equipes.setPath(RondeEquipe.class);
+//            this.joueurs.setPath(RondeJoueur.class);
 
             try (var con = ConnectionPool.getConnection()) {
-                var list = Equipe.toutesLesEquipes(con);
+                var ronde = Ronde.findById(con, rondeId).get();
+
+                var list = Ronde.findByIdTournois(con, ronde.getIdTournois());
+                for (var each: list)
+                    each.populate(con);
                 select.setItems(list);
-                select.setValue(Equipe.findById(con, equipeId).get());
+                select.setLabel("Rondes du tournoi " + ronde.getNomTournois());
+
+                select.setValue(ronde);
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
+
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données", ex);
+                NotificationError.internError("La ronde " + id + " n'a pas été trouvé dans la base de données", ex);
             }
         }
     }
 
-    public EquipeLayout() {
+    public RondeLayout() {
         select = new Select<>();
-        select.setItemLabelGenerator(Equipe::getNom);
-        select.setPlaceholder("Choisir une équipe...");
+        select.setItemLabelGenerator(Ronde::getName);
+        select.setPlaceholder("Choisir un tournoi...");
         select.addValueChangeListener(t -> {
             if (t.getValue() != null) {
-                this.equipeId = t.getValue().getId();
-                Session.setIds(this.equipeId);
+                this.rondeId = t.getValue().getId();
+                Session.setIds(this.rondeId);
                 UI.getCurrent().refreshCurrentRoute(true);
             }
         });
-        select.setLabel("Équipe");
 
-        SideNav sideNav = new SideNav();
+        SideNav sideNav = new SideNav("Cette ronde");
 
         this.board = new SideNavItem("Tableau de bord");
         sideNav.addItem(this.board);
-        this.matchs = new SideNavItem("Matchs");
-        sideNav.addItem(this.matchs);
         this.joueurs = new SideNavItem("Joueurs");
         sideNav.addItem(this.joueurs);
+        this.equipes = new SideNavItem("Équipes");
+        sideNav.addItem(this.equipes);
+        this.matchs = new SideNavItem("Matchs");
+        sideNav.addItem(this.matchs);
 
         sideNav.setWidthFull();
         sideNav.getStyle().set("display", "flex");
         sideNav.getStyle().set("flexDirection", "column");
 
         super.addToDrawer(new VerticalLayout(
-                new H2("Équipe"),
+                new H2("Ronde"),
                 select,
                 sideNav
         ));

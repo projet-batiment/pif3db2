@@ -70,7 +70,7 @@ public class JoueurBoard extends VerticalLayout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("Le joueur " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("Le joueur " + id + " n'a pas été trouvé dans la base de données", ex);
             }
         }
     }

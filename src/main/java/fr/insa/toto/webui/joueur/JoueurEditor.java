@@ -20,21 +20,19 @@ package fr.insa.toto.webui.joueur;
 
 import com.vaadin.flow.component.button.Button;
 import fr.insa.toto.webui.utils.Editor;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.Joueur;
 import fr.insa.toto.model.User;
 import fr.insa.toto.webui.user.UserEditor;
+import fr.insa.toto.webui.utils.DialogDeleteChild;
 import fr.insa.toto.webui.utils.NotificationError;
 import fr.insa.toto.webui.utils.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -47,6 +45,10 @@ public class JoueurEditor extends Editor<Joueur> {
 
     private Button addUser; 
     private Button openUser; 
+
+    private static void deleteUserCallback(User user) {
+        new DialogDeleteChild<>(User.users, user, () -> {}).open();
+    }
 
     @Override
     protected Joueur newObject() {
@@ -63,7 +65,11 @@ public class JoueurEditor extends Editor<Joueur> {
             this.categorie.setEnabled(true);
 
             if (this.object.getIdUser() == null) {
-                Utils.visibleAdmin(this.addUser);
+                if (this.object.getId() == Joueur.ID_UNSAVED) {
+                    this.addUser.setVisible(false);
+                } else {
+                    Utils.visibleAdmin(this.addUser);
+                }
                 this.openUser.setVisible(false);
             } else {
                 User user = null;
@@ -147,29 +153,32 @@ public class JoueurEditor extends Editor<Joueur> {
 
         addUser = new Button("Créer un utilisateur associé");
         addUser.addClickListener(e -> {
-            this.close();
+            super.close();
 
             if (this.object instanceof Joueur joueur) {
                 var editor = new UserEditor();
+                editor.setOnDeletedCallback(user -> deleteUserCallback(user));
                 editor.setJoueur(joueur);
                 editor.open(null);
             } else {
-                NotificationError.internError("Trying to create a user but joueur is null");
+                NotificationError.internError("Trying to create a user but joueur is null", null);
             }
         });
         openUser = new Button("Voir l'utilisateur associé");
         openUser.addClickListener(e -> {
             if (this.object instanceof Joueur joueur) {
                 try (Connection con = ConnectionPool.getConnection()) {
-                    new UserEditor().open(User.findById(con, joueur.getIdUser()).get());
+                    var editor = new UserEditor();
+                    editor.setOnDeletedCallback(user -> deleteUserCallback(user));
+                    editor.open(User.findById(con, joueur.getIdUser()).get());
                     super.close();
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.internError("L'utilisateur " + joueur.getIdUser() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                    NotificationError.internError("L'utilisateur " + joueur.getIdUser() + " n'a pas été trouvé dans la base de données", ex);
                 }
             } else {
-                NotificationError.internError("Trying to create a user but joueur is null");
+                NotificationError.internError("Trying to create a user but joueur is null", null);
             }
         });
 

@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.user;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -26,20 +27,19 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.User;
-import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
 
 /**
  *
  * @author elio
  */
-@Route(value = "user", layout = Layout.Default.class)
-public class UserBoard extends VerticalLayout implements BeforeEnterObserver {
+@Route(value = "user/current", layout = Layout.Default.class)
+public class UserBoardCurrent extends VerticalLayout implements BeforeEnterObserver {
     private User user;
     private H2 title;
     private Button edit;
@@ -47,21 +47,8 @@ public class UserBoard extends VerticalLayout implements BeforeEnterObserver {
     
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        if (! Session.ensureAdmin(event)) return;
+        if (! Session.ensureConnected(event)) return;
 
-        Integer id = Session.getId(0);
-        if (id == null) {
-            Session.addErrorMessage("UserBoard: pas d'ID d'utilisateur en mémoire");
-            event.forwardTo(InternError.class);
-        } else {
-            try (Connection con = ConnectionPool.getConnection()) {
-                super.add(new UserBoardContents(User.findById(con, id).get()));
-
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            } catch (NoSuchElementException ex) {
-                NotificationError.internError("L'utilisateur " + id + " n'a pas été trouvé dans la base de données", ex);
-            }
-        }
+        super.add(new UserBoardContents(Session.getUser()));
     }
 }

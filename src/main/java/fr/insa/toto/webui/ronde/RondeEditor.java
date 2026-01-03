@@ -26,6 +26,7 @@ import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -40,6 +41,8 @@ public class RondeEditor extends Editor<Ronde> {
         this.idTournois = idTournois;
     }
 
+    private int tournoisMaxRonde = 0;
+
     @Override
     protected Ronde newObject() {
         return new Ronde(this.idTournois);
@@ -48,25 +51,31 @@ public class RondeEditor extends Editor<Ronde> {
     protected void setObject() {
         if (this.object instanceof Ronde ronde) {
             this.numero.setValue("" + ronde.getNumero());
-            this.numero.setEnabled(true);
             this.enCours.setValue(ronde.isEnCours());
             this.enCours.setEnabled(true);
         } else {
             this.numero.setValue("");
-            this.numero.setEnabled(false);
             this.enCours.setValue(false);
             this.enCours.setEnabled(false);
         }
+
+        this.numero.setEnabled(false);
     }
 
     @Override
     protected List<Ronde> openObject(Connection con) throws SQLException {
-        return Ronde.toutesLesRondes(con);
+        var tournoiRondes = Ronde.findByIdTournois(con, this.idTournois);
+        try {
+            this.tournoisMaxRonde = tournoiRondes.getLast().getNumero();
+        } catch (NoSuchElementException ex) {
+            this.tournoisMaxRonde = 0;
+        }
+        return tournoiRondes;
     }
 
     public Ronde compile() {
         if (this.numero.getValue().isBlank()) {
-            NotificationError.userError("Il manque le surnom du ronde");
+            NotificationError.userError("Il manque le surnom de la ronde");
             return null;
         }
 
@@ -89,7 +98,7 @@ public class RondeEditor extends Editor<Ronde> {
     public RondeEditor() {
         nouveau = new Ronde(Ronde.ID_PORCELAINE, 0, 0, false);
 
-        super.setHeaderTitle("Aperçu du ronde");
+        super.setHeaderTitle("Aperçu de la ronde");
 
         super.setSelectItemLabelGenerator(each -> each.getId() == Ronde.ID_PORCELAINE ? "Nouvelle..." : each.getName());
         super.setSelectLabel("Ronde");

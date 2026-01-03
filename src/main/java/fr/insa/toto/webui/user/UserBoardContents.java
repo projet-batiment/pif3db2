@@ -18,6 +18,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
  */
 package fr.insa.toto.webui.user;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -26,42 +27,41 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import fr.insa.beuvron.utils.database.ConnectionPool;
 import fr.insa.toto.model.User;
-import fr.insa.toto.webui.session.InternError;
 import fr.insa.toto.webui.session.Session;
+import fr.insa.toto.webui.utils.DialogDelete;
 import fr.insa.toto.webui.utils.Layout;
 import fr.insa.toto.webui.utils.NotificationError;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
 
 /**
  *
  * @author elio
  */
-@Route(value = "user", layout = Layout.Default.class)
-public class UserBoard extends VerticalLayout implements BeforeEnterObserver {
-    private User user;
-    private H2 title;
-    private Button edit;
-    private UserEditor editor;
-    
-    @Override
-    public void beforeEnter(BeforeEnterEvent event) {
-        if (! Session.ensureAdmin(event)) return;
+public class UserBoardContents extends VerticalLayout {
+    public UserBoardContents(User user) {
+        var editor = new UserEditor();
 
-        Integer id = Session.getId(0);
-        if (id == null) {
-            Session.addErrorMessage("UserBoard: pas d'ID d'utilisateur en mémoire");
-            event.forwardTo(InternError.class);
-        } else {
-            try (Connection con = ConnectionPool.getConnection()) {
-                super.add(new UserBoardContents(User.findById(con, id).get()));
+        editor.setOnDeletedCallback(u -> {
+            new DialogDelete("l'utilisateur " + u.getName(), () -> {
+                try (Connection con = ConnectionPool.getConnection()) {
+                    u.deleteFromDB(con);
+                    UI.getCurrent().getPage().setLocation("logout");
+                } catch (SQLException ex) {
+                    NotificationError.sql(ex);
+                }
+            }).open();
+        });
 
-            } catch (SQLException ex) {
-                NotificationError.sql(ex);
-            } catch (NoSuchElementException ex) {
-                NotificationError.internError("L'utilisateur " + id + " n'a pas été trouvé dans la base de données", ex);
-            }
-        }
+        var title = new H2("Tableau de bord : utilisateur " + user.getUsername());
+
+        var edit = new Button("Éditer");
+        edit.addClickListener(e -> editor.open(user));
+
+        super.add(title, edit);
+    }
+
+    public UserBoardContents() {
+        this(new User());
     }
 }

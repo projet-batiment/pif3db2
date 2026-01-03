@@ -51,7 +51,7 @@ public class MatchsLayout extends Layout implements BeforeEnterObserver {
                     } catch (SQLException ex) {
                         NotificationError.sql(ex);
                     } catch (NoSuchElementException ex) {
-                        NotificationError.internError("L'un des éléments du match " + each.getId() + " n'a pas été trouvé : " + ex.getLocalizedMessage());
+                        NotificationError.internError("L'un des éléments du match " + each.getId() + " n'a pas été trouvé", ex);
                     }
                 });
                 select.setItems(list);
@@ -60,7 +60,7 @@ public class MatchsLayout extends Layout implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("Le match " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("Le match " + id + " n'a pas été trouvé dans la base de données", ex);
             }
         }
     }

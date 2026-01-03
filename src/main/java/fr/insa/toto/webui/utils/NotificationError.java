@@ -40,10 +40,16 @@ public class NotificationError extends Notification {
         Notification.show(s);
     }
 
-    public static final void internError(String message) {
-        String s = "Erreur interne : '" + message + "'";
+    public static final void internError(String message, Exception ex) {
+        String s = "Erreur interne : " + message;
         Notification.show(s);
         System.out.println(s);
+        if (ex != null)
+            ex.printStackTrace();
+    }
+
+    public static final void internError(Exception ex) {
+        internError(ex.getLocalizedMessage(), ex);
     }
 
     public static final void log(String message) {

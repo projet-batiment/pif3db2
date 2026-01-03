@@ -54,7 +54,7 @@ public class EquipeMatchs extends ParentMatchs implements BeforeEnterObserver {
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("L'équipe " + id + " n'a pas été trouvé dans la base de données", ex);
 
             } finally {
                 super.initialize(this.equipe.matchss);

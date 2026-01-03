@@ -51,6 +51,13 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
     private Grid<ChildType> grid;
     protected final Editor<ChildType> editor;
 
+    private boolean canCreateNew = true;
+
+    public void setCanCreateNew(boolean canCreateNew) {
+        this.canCreateNew = canCreateNew;
+        this.editor.setCanCreateNew(canCreateNew);
+    }
+
     private boolean initialized = false;
 
     private H2 title;
@@ -65,19 +72,24 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
             if (! this.initialized) {
                 this.initialized = true;
 
-                var bNew = new Button("Ajouter...");
-                bNew.addClickListener(t -> {
-                    editor.open(null);
-                });
-                Utils.visibleAdmin(bNew);
-                this.addColumn(new ComponentRenderer<>(each ->
+                var handy = this.addColumn(new ComponentRenderer<>(each ->
                     new HandyButtons(
                         this.parent,
                         each,
                         editor,
                         () -> this.updateGridList()
                     )
-                )).setHeader(bNew);
+                ));
+
+                if (this.canCreateNew) {
+                    var bNew = new Button("Ajouter...");
+                    bNew.addClickListener(t -> {
+                        editor.open(null);
+                    });
+                    Utils.visibleAdmin(bNew);
+
+                    handy.setHeader(bNew);
+                }
             }
 
             this.updateGridList();
@@ -92,7 +104,7 @@ public abstract class ParentChild<ChildType extends ClasseMiroir & Named> extend
                 try {
                     each.populate(con);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.internError("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé : " + ex.getLocalizedMessage());
+                    NotificationError.internError("L'un des éléments " + this.parent.child.duChild(each.getName()) + " n'a pas bien été sauvegardé", ex);
                 }
             }
             grid.setItems(list);

@@ -40,6 +40,12 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
     private final Select<T> select;
     protected T object;
 
+    private boolean canCreateNew = true;
+
+    public void setCanCreateNew(boolean canCreateNew) {
+        this.canCreateNew = canCreateNew;
+    }
+
     private Consumer<T> onSavedCallback;
 
     public void setOnSavedCallback(Consumer<T> onSavedCallback) {
@@ -89,10 +95,12 @@ public abstract class Editor<T extends ClasseMiroir> extends EditorDialog {
                 } catch (SQLException ex) {
                     NotificationError.sql(ex);
                 } catch (NoSuchElementException ex) {
-                    NotificationError.internError("L'un des éléments de l'objet édité " + each.getId() + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                    NotificationError.internError("L'un des éléments de l'objet édité " + each.getId() + " n'a pas été trouvé dans la base de données", ex);
                 }
             }
-            list.add(this.nouveau);
+
+            if (canCreateNew)
+                list.add(0, this.nouveau);
 
             select.setItems(list);
             select.setValue(object == null ? this.nouveau : object);

@@ -53,11 +53,15 @@ public class TournoisJoueur extends ParentJoueur implements BeforeEnterObserver 
             } catch (SQLException ex) {
                 NotificationError.sql(ex);
             } catch (NoSuchElementException ex) {
-                NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données : " + ex.getMessage());
+                NotificationError.internError("Le tournois " + id + " n'a pas été trouvé dans la base de données", ex);
 
             } finally {
                 super.initialize(this.tournois.joueurs);
             }
         }
+    }
+
+    public TournoisJoueur() {
+        super.setCanCreateNew(false);
     }
 }
