@@ -53,8 +53,8 @@ public abstract class ParentMatchs extends ParentChild<Matchs> {
         super(new MatchsEditor());
 
         super.addColumn(m -> m.getScoreEquipeA().equipe.getNom()).setHeader("Equipe A");
-        super.addColumn(m -> m.getScoreEquipeA().score.getScore());
-        super.addColumn(m -> m.getScoreEquipeB().score.getScore());
+        super.addColumn(m -> m.getScoreEquipeA().score.getScore()).setHeader("Score Equipe A");
+        super.addColumn(m -> m.getScoreEquipeB().score.getScore()).setHeader("Score Equipe B");
         super.addColumn(m -> m.getScoreEquipeB().equipe.getNom()).setHeader("Equipe B");
         super.addColumn(m -> m.getRonde().getName()).setHeader("Ronde");
     }

@@ -38,7 +38,7 @@ public class VuePrincipale extends VerticalLayout {
     public VuePrincipale() {
         this.add(new H2("Bienvenue !"));
 
-        this.add(new Span("Choisissez une page dans le menu à droite :"));
+        this.add(new Span("Choisissez une page dans le menu à gauche :"));
         this.add(new UnorderedList(
                 new ListItem("Catégorie \"Général\" : listes des objets communs à tous les tournois,"),
                 new ListItem("Catégorie \"Compte\" : ensemble des pages relatives à l'utilisateur connecté,"),

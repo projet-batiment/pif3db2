@@ -94,7 +94,7 @@ public class TournoisEditor extends Editor<Tournois> {
     public TournoisEditor() {
         nouveau = new Tournois(Tournois.ID_PORCELAINE, "Nouveau...", 0);
 
-        super.setHeaderTitle("Aperçu du tournois");
+        super.setHeaderTitle("Aperçu du tournoi");
 
         super.setSelectItemLabelGenerator(Tournois::getName);
         super.setSelectLabel("Tournois");
