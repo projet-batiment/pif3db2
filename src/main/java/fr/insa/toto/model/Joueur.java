@@ -194,6 +194,12 @@ public class Joueur extends ClasseMiroir implements Named {
         return st;
     }
 
+    @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        for (var each: Composition.findByIdJoueur(con, this.getId()))
+            each.deleteFromDB(con);
+    }
+
     public void update(Connection con) throws SQLException, EntiteNonSauvegardee {
         if (super.getId() == -1) {
             throw new EntiteNonSauvegardee();

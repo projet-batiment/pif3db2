@@ -358,7 +358,7 @@ public class Tournois extends ClasseMiroir implements Named {
 
     @Override
     protected Statement saveSansId(Connection con) throws SQLException {
-        var st = con.prepareStatement("insert into tournois (nom, nombreTerrains) values (?, ?)",
+        var st = con.prepareStatement("insert into tournoi (nom, nombreTerrains) values (?, ?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
         st.setString(1, nom);
         st.setInt(2, nombreTerrains);
@@ -383,7 +383,7 @@ public class Tournois extends ClasseMiroir implements Named {
             throw new EntiteNonSauvegardee();
         }
 
-        var st = con.prepareStatement("update tournois set nom = ?, nombreTerrains = ? where id = ?");
+        var st = con.prepareStatement("update tournoi set nom = ?, nombreTerrains = ? where id = ?");
         st.setString(1, nom);
         st.setInt(2, nombreTerrains);
         st.setInt(3, super.getId());
@@ -402,7 +402,7 @@ public class Tournois extends ClasseMiroir implements Named {
 
     public static List<Tournois> tousLesTournois(Connection con) throws SQLException {
         List<Tournois> res = new ArrayList<>();
-        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournois")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournoi")) {
             try (ResultSet allU = pst.executeQuery()) {
                 return fromResultSetToList(allU);
             }
@@ -410,7 +410,7 @@ public class Tournois extends ClasseMiroir implements Named {
     }
 
     public static Optional<Tournois> findById(Connection con, int id) throws SQLException {
-        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournois where id=?")) {
+        try (PreparedStatement pst = con.prepareStatement("select id,nom,nombreTerrains from tournoi where id=?")) {
             pst.setInt(1, id);
             ResultSet res = pst.executeQuery();
 

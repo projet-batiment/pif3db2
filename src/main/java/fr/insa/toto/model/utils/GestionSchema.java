@@ -462,7 +462,7 @@ public class GestionSchema {
         /// tables and unshared columns
 
         Beton.TableSkeleton tournois = new Beton.TableSkeleton(
-                "tournois",
+                "tournoi",
                 new Beton.ColumnSkeleton[]{
                     new Beton.ColumnSkeleton(
                             "nom",

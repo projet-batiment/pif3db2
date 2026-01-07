@@ -40,22 +40,22 @@ public class JoueurStats implements Serializable {
         List<JoueurStats> list = new ArrayList<>();
         // On lie le joueur à l'équipe (Composition), puis l'équipe au score (Match)
         String sql = """
-            SELECT T.nom AS Tournoi, E.nom AS Equipe,
-                   COUNT(M.id) AS NB,
-                   SUM(CASE WHEN S1.score > S2.score THEN 1 ELSE 0 END) AS V,
-                   SUM(CASE WHEN S1.score < S2.score THEN 1 ELSE 0 END) AS D,
-                   SUM(CASE WHEN S1.score = S2.score THEN 1 ELSE 0 END) AS N,
-                   SUM(S1.score) AS BI, SUM(S2.score) AS BE
-            FROM composition C
-            JOIN equipe E  ON C.idEquipe = E.id
-            JOIN score S1  ON E.id = S1.idEquipe
-            JOIN matchs M  ON S1.idMatch = M.id
-            JOIN score S2  ON M.id = S2.idMatch AND S2.idEquipe <> S1.idEquipe
-            JOIN ronde R   ON M.idRonde = R.id
-            JOIN tournois T ON R.idTournois = T.id
-            WHERE C.idJoueur = ?
-            GROUP BY T.id, T.nom, E.id, E.nom
-            ORDER BY T.nom ASC
+SELECT e.nom as Equipe, t.nom as Tournoi,
+       COUNT(m.id) AS NB,
+       sum(case when s1.score > s2.score then 1 else 0 end) as V,
+       sum(case when s1.score < s2.score then 1 else 0 end) as D,
+       sum(case when s1.score = s2.score then 1 else 0 end) as N,
+       sum(s1.score) as BI,
+        sum(s2.score) as BE
+FROM joueur j
+JOIN composition c on c.idJoueur = j.id
+JOIN equipe e on e.id = c.idEquipe
+JOIN tournoi t on t.id = e.idTournois
+JOIN score s1 on s1.idEquipe = e.id
+JOIN matchs m on m.id = s1.idMatch
+JOIN score s2 on s2.idMatch = m.id AND s2.idEquipe <> e.id
+WHERE j.id = ?
+GROUP BY e.id
         """;
         try (Connection con = ConnectionPool.getConnection();
              PreparedStatement pst = con.prepareStatement(sql)) {
