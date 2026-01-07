@@ -292,6 +292,15 @@ public class Tournois extends ClasseMiroir implements Named {
         }
     }
 
+    @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        for (var each: Ronde.findByIdTournois(con, this.getId()))
+            each.deleteFromDB(con);
+
+        for (var each: Equipe.findByIdTournois(con, this.getId()))
+            each.deleteFromDB(con);
+    }
+    
     private static final String nomTable = "tournoi";
     protected final String nomTable() {
         return this.nomTable;

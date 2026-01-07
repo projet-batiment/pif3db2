@@ -292,6 +292,12 @@ public class Ronde extends ClasseMiroir implements Named {
     }
 
     @Override
+    public void deleteChildren(Connection con) throws SQLException {
+        for (var each: Matchs.findByIdRonde(con, this.getId()))
+            each.deleteFromDB(con);
+    }
+
+    @Override
     protected Statement saveSansId(Connection con) throws SQLException {
         var st = con.prepareStatement("insert into ronde (idTournois, numero, enCours) values (?, ?, ?)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
